@@ -6,11 +6,12 @@
   <!-- for details see src/build.xml -->
 
   <!-- Ref. impl properties -->
-  <property name="version" value="1.0.4"/>
+  <property name="version" value="1.1.1"/>
   <property name="build_dir" value="build"/>
   <property name="class_dir" value="${build_dir}/classes"/>
   <property name="javadoc_dir" value="${build_dir}/javadoc"/>
-  <property name="jar_ri" value="jsr173_${version}_ri.jar"/>
+  <property name="jar_ri" value="${build_dir}/stax-${version}-dev.jar"/>
+  <property name="jar_src" value="${build_dir}/stax-src-${version}-dev.jar"/>  
   <property name="src" value="src"/>
   <property name="topdirs" value="com/bea/xml/stream/*.java,
                                        com/wutka/dtd/*.java,
@@ -24,8 +25,7 @@
   <property name="api_version" value="1.0"/>
   <property name="api_src_dir" value="${build_dir}/api_src"/>
   <property name="api_dir" value="api"/>
-  <property name="jar_api" value="${build_dir}/jsr173_${version}_api.jar"/>
-  <property name="jar_src" value="${build_dir}/jsr173_${version}_src.jar"/>  
+  <property name="jar_api" value="${build_dir}/stax-api-${api_version}.jar"/>
   <property name="src_api" value="src"/>
   <property name="api_dirs" value="javax/xml/*.java,
                     javax/xml/namespace/*.java,
@@ -47,7 +47,7 @@
     </path>
 
 
-  <target name="all" depends="clean,build,run"/>
+  <target name="all" depends="clean,build,ri_jar,run"/>
   <target name="clean">
     <delete dir="${build_dir}"/>
   </target>
@@ -98,6 +98,7 @@
   <target name="compile" depends="init,api">
     <!--javac srcdir="${src}:${api_src_dir}"-->
     <javac srcdir="${src}"
+      target="1.2"
       includes="${topdirs}"
       destdir="${class_dir}"
       debug="true">
@@ -117,6 +118,7 @@
   </target>
   <target name="test_compile" depends="api, test_init">
     <javac srcdir="${src}" includes="org/codehaus/stax/test/**/*.java"
+      target="1.2"
       destdir="${test_class_dir}"
       debug="true">
       <classpath>
