@@ -25,9 +25,11 @@
   <target name="clean">
     <delete dir="${build_dir}"/>
   </target>
-  <target name="api">
+  <target name="init">
     <mkdir dir="${build_dir}"/>
     <mkdir dir="${class_dir}"/>
+  </target>
+  <target name="api" depends="init">
     <!--mkdir dir="${api_src_dir}"/-->
     <!--unjar src="${jar_api}" dest="${class_dir}"/-->
     <javac srcdir="${src_api}"
@@ -41,7 +43,7 @@
     </javac>
     
   </target>
-  <target name="compile" depends="api">
+  <target name="compile" depends="init,api">
     <mkdir dir="${class_dir}"/>
     <!--javac srcdir="${src}:${api_src_dir}"-->
     <javac srcdir="${src}"
@@ -54,7 +56,7 @@
       </classpath>
     </javac>
   </target>
-  <target name="build" depends="api,compile"/>
+  <target name="build" depends="compile"/>
   <target name="run" depends="build">
     <java classname="com.bea.xml.stream.samples.EventParse" fork="true">
       <arg line="src/test/files/test.xml"/>
@@ -64,7 +66,7 @@
       </classpath>
     </java>
   </target>
-  <target name="ri_jar">
+  <target name="ri_jar" depends="compile">
     <jar jarfile="${jar_ri}">
       <fileset dir="${class_dir}"
         includes=
