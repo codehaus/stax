@@ -1,5 +1,7 @@
 package org.codehaus.stax.test.evt;
 
+import java.util.NoSuchElementException;
+
 import javax.xml.stream.*;
 import javax.xml.stream.events.*;
 
@@ -29,7 +31,6 @@ public class TestEventReader
             boolean ns = (i & 1) != 0;
             boolean coal = (i & 2) != 0;
             XMLEventReader er = getReader(XML, ns, coal);
-            XMLEvent ev;
             
             assertTokenType(START_DOCUMENT, er.nextEvent().getEventType());
             assertTokenType(DTD, er.nextEvent().getEventType());
@@ -39,6 +40,43 @@ public class TestEventReader
             assertTokenType(END_ELEMENT, er.nextEvent().getEventType());
             assertTokenType(END_DOCUMENT, er.nextEvent().getEventType());
             assertFalse(er.hasNext());
+        }
+    }
+
+    /**
+     * The main purpose of this test is to ensure that an exception
+     * is thrown at the end.
+     */
+    public void testIterationEndException()
+        throws XMLStreamException
+    {
+        String XML = "<root />";
+
+        for (int i = 0; i < 4; ++i) {
+            boolean coal = (i & 1) != 0;
+            boolean checkHasNext = (i & 2) != 0;
+            XMLEventReader er = getReader(XML, true, coal);
+            
+            assertTokenType(START_DOCUMENT, er.nextEvent().getEventType());
+            assertTokenType(START_ELEMENT, er.nextEvent().getEventType());
+            assertTokenType(END_ELEMENT, er.nextEvent().getEventType());
+            assertTokenType(END_DOCUMENT, er.nextEvent().getEventType());
+
+            if (checkHasNext) {
+                assertFalse(er.hasNext());
+            }
+
+            XMLEvent ev = null;
+            try {
+                ev = er.nextEvent();
+            } catch (NoSuchElementException nex) {
+                continue; // good
+            } catch (Throwable t) {
+                fail("Expected a NoSuchElementException after iterating through the document; got "+t);
+            }
+
+            // Shouldn't get this far...
+            fail("Expected a NoSuchElementException after iterating through the document; got event: "+ev);
         }
     }
 

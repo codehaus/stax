@@ -61,6 +61,7 @@ public class TestEntityAttrRead
             +"<!ENTITY unpEnt SYSTEM 'system-ent-id' NDATA not1>\n"
             +"<!ENTITY unpEnt2 SYSTEM 'system-ent-id' NDATA not1>\n"
             +"<!ATTLIST root ent ENTITIES 'unpEnt   unpEnt2  '>\n"
+            +"<!ATTLIST root ent2 ENTITIES '  unpEnt  '>\n"
             +"]>\n<root />";
         streamThrough(getValidatingReader(XML));
     }
@@ -108,6 +109,15 @@ public class TestEntityAttrRead
             +"<!NOTATION notX PUBLIC 'public-notation-id'>\n"
             +"<!ENTITY unpEnt SYSTEM 'system-ent-id' NDATA notX>\n"
             +"<!ATTLIST root ent ENTITIES 'foobar'>\n"
+            +"]>\n<root />";
+        streamThroughFailing(getValidatingReader(XML),
+                             "undeclared entity for ENTITIES default value");
+
+        XML = "<!DOCTYPE root [\n"
+            +"<!ELEMENT root EMPTY>\n"
+            +"<!NOTATION notX PUBLIC 'public-notation-id'>\n"
+            +"<!ENTITY unpEnt SYSTEM 'system-ent-id' NDATA notX>\n"
+            +"<!ATTLIST root ent ENTITIES 'unpEnt  notDeclEnt'>\n"
             +"]>\n<root />";
         streamThroughFailing(getValidatingReader(XML),
                              "undeclared entity for ENTITIES default value");
