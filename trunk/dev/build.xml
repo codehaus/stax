@@ -6,7 +6,7 @@
   <!-- for details see src/build.xml -->
 
   <!-- Ref. impl properties -->
-  <property name="version" value="1.0.3"/>
+  <property name="version" value="1.0.4"/>
   <property name="build_dir" value="build"/>
   <property name="class_dir" value="${build_dir}/classes"/>
   <property name="javadoc_dir" value="${build_dir}/javadoc"/>
@@ -35,6 +35,15 @@
   <property name="test_class_dir" value="${build_dir}/test-classes"/>
   <property name="test_results_dir" value="${build_dir}/test-results"/>
   <property name="test_jar" value="staxtest_${test_version}.jar"/>
+
+  <property name="lib" value="lib"/>
+
+    <path id="junit_libraries">
+        <fileset dir="${lib}">
+            <include name="lib/junit*.jar" />
+        </fileset>
+    </path>
+
 
   <target name="all" depends="clean,build,run"/>
   <target name="clean">
@@ -193,7 +202,8 @@
                 <pathelement location="${test_class_dir}" />
                 <!-- This is enough to get both API and RI classes: -->
                 <pathelement location="${class_dir}" />
-            </classpath>     
+        	<path refid="junit_libraries"/>
+	    </classpath>     
         </junit>
 
         <junitreport todir="${test_results_dir}">
