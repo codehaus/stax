@@ -37,11 +37,12 @@
       </classpath>
     </java>
   </target>
-  <target name="ri_jar">
+  <target name="ri_jar" depends="build">
     <jar jarfile="../jsr173_${version}_ri.jar">
       <fileset dir="../classes"
         includes=
-        "com/bea/xml/stream/,
+        "com/wutka/dtd/,
+         com/bea/xml/stream/,
          com/bea/xml/stream/samples/,
          com/bea/xml/stream/util/,
          com/bea/xml/stream/filters/,
@@ -53,7 +54,8 @@
     <jar jarfile="../jsr173_${version}_ri_src.jar">
       <fileset dir="../src"
         includes=
-        "com/bea/xml/stream/,
+        "com/wutka/dtd/,
+         com/bea/xml/stream/,
          com/bea/xml/stream/samples/,
          com/bea/xml/stream/util/,
          com/bea/xml/stream/filters/,

@@ -70,7 +70,8 @@
     <jar jarfile="${jar_ri}">
       <fileset dir="${class_dir}"
         includes=
-        "com/bea/xml/stream/,
+        "com/wutka/dtd/,
+         com/bea/xml/stream/,
          com/bea/xml/stream/samples/,
          com/bea/xml/stream/util/,
          com/bea/xml/stream/filters/,
@@ -82,7 +83,8 @@
     <jar jarfile="${jar_src}">
       <fileset dir="${src}"
         includes=
-        "com/bea/xml/stream/,
+        "com/wutka/dtd/,
+         com/bea/xml/stream/,
          com/bea/xml/stream/samples/,
          com/bea/xml/stream/util/,
          com/bea/xml/stream/filters/,
