@@ -66,12 +66,19 @@ public class TestCDataRead
     {
         XMLStreamReader sr = getReader(VALID_XML, false);
         assertTokenType(START_ELEMENT, sr.next());
-        assertTokenType(CDATA, sr.next());
+        int type = sr.next();
+        /* 07-Dec-2004, TSa: StAX specs actually allow returning
+         *   CHARACTERS too...
+         */
+        if (type != CHARACTERS) {
+            assertTokenType(CDATA, sr.next());
+        }
 
         StringBuffer sb = new StringBuffer(16000);
         do {
             sb.append(getAndVerifyText(sr));
-        } while (sr.next() == CDATA);
+            type = sr.next();
+        } while (type == CDATA || type == CHARACTERS);
         assertEquals(EXP_CDATA, sb.toString());
         assertTokenType(END_ELEMENT, sr.getEventType());
     }

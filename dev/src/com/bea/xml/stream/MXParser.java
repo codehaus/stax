@@ -792,7 +792,7 @@ public class MXParser
   public int getNamespaceCount() 
   {
     if (!isElementEvent(eventType)) {
-        throw new IllegalStateException("Current state not START_ELEMENT, END_ELEMENT");
+        throw new IllegalStateException("Current state not START_ELEMENT or END_ELEMENT");
     }
     return getNamespaceCount(depth);
   }
@@ -811,7 +811,7 @@ public class MXParser
   public String getNamespacePrefix(int pos)
   {
     if (!isElementEvent(eventType)) {
-        throw new IllegalStateException("Current state not START_ELEMENT, END_ELEMENT");
+        throw new IllegalStateException("Current state not START_ELEMENT or END_ELEMENT");
     }
     int currentDepth = depth;
     int end = getNamespaceCount(currentDepth);//eventType == XMLStreamConstants.END_ELEMENT ? elNamespaceCount[ depth + 1 ] : namespaceEnd;
@@ -827,7 +827,7 @@ public class MXParser
   public String getNamespaceURI(int pos)
   {
     if (!isElementEvent(eventType)) {
-        throw new IllegalStateException("Current state not START_ELEMENT, END_ELEMENT");
+        throw new IllegalStateException("Current state not START_ELEMENT or END_ELEMENT");
     }
     int currentDepth = depth;
     int end = getNamespaceCount(currentDepth); //eventType == XMLStreamConstants.END_ELEMENT ? elNamespaceCount[ depth + 1 ] : namespaceEnd;
@@ -844,7 +844,7 @@ public class MXParser
         //throws XMLStreamException
     {
         if (!isElementEvent(eventType)) {
-            throw new IllegalStateException("Current state not START_ELEMENT, END_ELEMENT");
+            throw new IllegalStateException("Current state not START_ELEMENT or END_ELEMENT");
         }
         //int count = namespaceCount[ depth ];
         if(prefix != null && !"".equals(prefix)) {
@@ -1137,10 +1137,28 @@ public class MXParser
     public void require(int type, String namespace, String name)
         throws XMLStreamException
     {
-        if (type != getEventType()
-            || (namespace != null && !namespace.equals (getNamespaceURI()))
-            || (name != null && !name.equals (getLocalName ())) )
-        {
+        int currType = getEventType();
+        boolean ok = (type == currType);
+
+        if (ok && name != null) {
+            if (currType == START_ELEMENT || currType == END_ELEMENT 
+                || currType == ENTITY_REFERENCE) {
+                ok = name.equals(getLocalName());
+            } else {
+                throw new XMLStreamException("Using non-null local name argument for require(); "
+                                             +ElementTypeNames.getEventTypeString(currType)
+                                             +" event does not have local name",
+                                             getLocation());
+            }
+        }
+
+        if (ok && namespace != null) {
+            if (currType == START_ELEMENT || currType == START_ELEMENT) {
+                ok = namespace.equals(getNamespaceURI());
+            }
+        }
+
+        if (!ok) {
             throw new XMLStreamException (
                 "expected event "+ElementTypeNames.getEventTypeString(type)
                     +(name != null ? " with name '"+name+"'" : "")
@@ -1156,7 +1174,8 @@ public class MXParser
                           ? " and" : "")
                     +(namespace != null && getNamespaceURI() != null && !namespace.equals (getNamespaceURI())
                           ? " namespace '"+getNamespaceURI()+"'" : "")
-                    +(" (postion:"+ getPositionDescription())+")");
+                    +(" (position:"+ getPositionDescription())+")",
+                getLocation());
         }
     }
 
@@ -1191,9 +1210,11 @@ public class MXParser
     throws XMLStreamException
   {
     next();
-    if((eventType == XMLStreamConstants.CHARACTERS && isWhiteSpace())||
-       eventType == XMLStreamConstants.COMMENT) {  // skip whitespace
-      next();
+    // Skip white space, comments and processing instructions:
+    while ((eventType == XMLStreamConstants.CHARACTERS && isWhiteSpace())
+           || eventType == XMLStreamConstants.COMMENT
+           || eventType == XMLStreamConstants.PROCESSING_INSTRUCTION) {
+        next();
     }
     if (eventType != XMLStreamConstants.START_ELEMENT && eventType != XMLStreamConstants.END_ELEMENT) {
       throw new XMLStreamException("expected XMLStreamConstants.START_ELEMENT or XMLStreamConstants.END_ELEMENT not "
@@ -1513,7 +1534,7 @@ public class MXParser
      * ENTITY_REFERENCE, which is not allowed here
      */
     if (!isElementEvent(eventType)) {
-        throw new IllegalStateException("Current state not START_ELEMENT, END_ELEMENT or ENTITY_REFERENCE");
+        throw new IllegalStateException("Current state not START_ELEMENT or END_ELEMENT");
     }
     return new QName(checkNull(getNamespaceURI()),
                      getLocalName(),
@@ -1528,7 +1549,7 @@ public class MXParser
         */
       // StAX specs indicate ENTITY_REFERENCE should return false
       return isElementEvent(eventType);
-  }      
+  }
   
   public String getVersion() {
     return xmlVersion;
@@ -2797,70 +2818,87 @@ public class MXParser
     int piTargetStart = pos;
     int piTargetBegin = pos;
     int piTargetEnd = -1;
+
     try {
-      boolean seenQ = false;
+      // Let's first scan for the PI target:
+      char ch;
 
-      while(true) {
-        // scan until it hits -->
-        char ch = more();
-        if(ch == '?') {
-          seenQ = true;
-        } else if(ch == '>') {
-          if(seenQ) {
-            break;  // found end sequence!!!!
+      while (true) {
+          ch = more();
+          if (ch == '?') {
+              // Let's assume it'll be followed by a '>'...
+              break;
+          } else if (isNameChar(ch)) {
+              ; // good
+          } else if (isS(ch)) {
+              break;
+          } else {
+              throw new XMLStreamException("unexpected character "+printable(ch)+" after processing instruction name; expected a white space or '?>'",
+                                           getLocation());
           }
-          seenQ = false;
-        } else {
-          if(piTargetEnd == -1 && isS(ch)) {
-            piTargetEnd = pos - 1;
-            piTargetBegin = piTargetEnd;
-            piTarget=new String(buf,piTargetStart,piTargetEnd-piTargetStart);
-            // [17] PITarget ::= Name - (('X' | 'x') ('M' | 'm') ('L' | 'l'))
-
-	    int targetLen = piTargetEnd - piTargetStart;
-
-            if(targetLen == 0) { // missing target 
-		piTargetEnd = -1; // to trigger exception outside of loop
-		break;
-	    }
-            if(targetLen == 3) {
-		if((buf[piTargetStart] == 'x' || buf[piTargetStart] == 'X')
-		   && (buf[piTargetStart+1] == 'm' || buf[piTargetStart+1] == 'M')
-		   && (buf[piTargetStart+2] == 'l' || buf[piTargetStart+2] == 'L')
-		   ) {
-		    if(piTargetStart != 2) {  //<?xml is allowed as first characters in input ...
-			throw new XMLStreamException(
-						     "processing instruction can not have PITarget with reserved xml name",
-						     getLocation());
-		    } else {
-			if(buf[piTargetStart] != 'x'
-			   && buf[piTargetStart+1] != 'm'
-			   && buf[piTargetStart+2] != 'l')
-			    {
-				throw new XMLStreamException(
-							     "XMLDecl must have xml name in lowercase",
-							     getLocation());
-			    }
-		    }
-		    parseXmlDecl(ch);
-		    isXMLDecl = true;
-		    break;
-		}
-            }
-          }
-          seenQ = false;
-        }
       }
+      
+      piTargetEnd = pos - 1;
+      piTarget=new String(buf,piTargetStart,piTargetEnd-piTargetStart);
+      // [17] PITarget ::= Name - (('X' | 'x') ('M' | 'm') ('L' | 'l'))
+
+      // Let's first verify there was a target:
+      int targetLen = piTargetEnd - piTargetStart;
+      if(targetLen == 0) { // missing target 
+          throw new XMLStreamException("processing instruction must have PITarget name", getLocation());
+      }
+
+      /* And then let's skip (unnecessary) white space, if we hit white
+       * space.
+       */
+      if (ch != '?') {
+          do {
+              ch = more();
+          } while (isS(ch));
+      }
+
+      // Ok, got the target name; need to check it then:
+      piTargetBegin = pos-1;
+      
+      // Do we now have the xml declaration?
+      if(targetLen == 3
+         && ((buf[piTargetStart] == 'x' || buf[piTargetStart] == 'X')
+             && (buf[piTargetStart+1] == 'm' || buf[piTargetStart+1] == 'M')
+             && (buf[piTargetStart+2] == 'l' || buf[piTargetStart+2] == 'L')
+             )) {
+          if(piTargetStart != 2) {  //<?xml is allowed as first characters in input ...
+              throw new XMLStreamException("processing instruction can not have PITarget with reserved xml name",
+                                           getLocation());
+          } else {
+              if(buf[piTargetStart] != 'x'
+                 && buf[piTargetStart+1] != 'm'
+                 && buf[piTargetStart+2] != 'l') {
+                  throw new XMLStreamException("XMLDecl must have xml name in lowercase",
+                                               getLocation());
+              }
+              parseXmlDecl(ch);
+              isXMLDecl = true;
+          }
+      } else { // nope, just a regular PI:
+          data_loop:
+          while(true) {
+              while (ch != '?') {
+                  ch = more();
+              }
+              do {
+                  ch = more();
+                  if (ch == '>') {
+                      break data_loop;
+                  }
+              } while (ch == '?');
+          }
+      }
+
     } catch(EOFException ex) {
       // detect EOF and create meaningful error ...
-      throw new XMLStreamException(
-                                   "processing instruction started on line "+curLine+" and column "+curColumn
+      throw new XMLStreamException("processing instruction started on line "+curLine+" and column "+curColumn
                                    +" was not closed",
                                    getLocation(), ex);
-    }
-    if(piTargetEnd == -1) {
-      throw new XMLStreamException(
-                                   "processing instruction must have PITarget name", getLocation());
     }
     if(tokenize) posEnd = pos - 2;
     piData = new String(buf,piTargetBegin,posEnd - piTargetBegin);
