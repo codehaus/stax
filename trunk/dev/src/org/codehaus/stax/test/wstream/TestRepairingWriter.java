@@ -54,7 +54,7 @@ public class TestRepairingWriter
 
         /* And then let's parse and verify it all:
          */
-
+//System.err.println("Doc -> '"+strw.toString()+"'");
         XMLStreamReader sr = constructNsStreamReader(strw.toString());
         assertTokenType(START_DOCUMENT, sr.getEventType(), sr);
 
