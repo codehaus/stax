@@ -1,0 +1,420 @@
+package org.codehaus.stax.test.stream;
+
+import javax.xml.stream.*;
+
+/**
+ * Unit test suite that tests handling of various kinds of entities.
+ */
+public class TestEntityRead
+    extends BaseStreamTest
+{
+    public TestEntityRead(String name) {
+        super(name);
+    }
+
+    /**
+     * Method that tests properties of unresolved DTD event.
+     */
+    public void testEntityProperties()
+        throws XMLStreamException
+    {
+        // Ns-awareness should make no different, but let's double-check it:
+        doTestProperties(true);
+        doTestProperties(false);
+    }
+
+    public void testValidPredefdEntities()
+        throws XMLStreamException
+    {
+        String EXP = "Testing \"this\" & 'that' !? !";
+        String XML = "<root>Testing &quot;this&quot; &amp; &apos;that&apos; &#x21;&#63; &#33;</root>";
+
+        XMLStreamReader sr = getReader(XML, false, true, true);
+
+        assertTokenType(START_ELEMENT, sr.next());
+        assertTokenType(CHARACTERS, sr.next());
+
+        String actual = getAndVerifyText(sr);
+        assertEquals(EXP, actual);
+    }
+
+    public void testValidGeneralEntities()
+        throws XMLStreamException
+    {
+        String EXP = "y yabc abc&";
+        String XML = "<!DOCTYPE root [\n"
+            +"<!ENTITY x 'y'><!ENTITY aa 'abc'>\n"
+            +"<!ENTITY both '&x;&aa;'\n>"
+            +"<!ENTITY myAmp '&amp;'\n>"
+            +"]>\n"
+            +"<root>&x; &both; &aa;&myAmp;</root>";
+
+        XMLStreamReader sr = getReader(XML, false, true, true);
+
+        assertTokenType(DTD, sr.next());
+        int type = sr.next();
+        if (type == SPACE) {
+            type = sr.next();
+        }
+        assertTokenType(START_ELEMENT, type);
+        assertTokenType(CHARACTERS, sr.next());
+
+        String actual = getAndVerifyText(sr);
+        assertEquals(EXP, actual);
+
+        /* !!! TBI: test things like:
+         *
+         * - Allow using single and double quotes in entity expansion value
+         *   via param entity expansion (see next entry)
+         * - Rules for expanding char entities vs. generic entities (esp.
+         *   regarding parameter entities)
+         */
+    }
+
+    /* !!! This test would not be meaningful; would need to use parameter
+     *   entities... but to allow those to be used to test for proper
+     *   quote handling, external DTD subset would have to be used (int.
+     *   subset only allows PEs to expand to full declaration, not partial)
+     */
+    /*
+    public void testValidWithQuotes()
+        throws XMLStreamException
+    {
+        String XML = "<!DOCTYPE root [\n"
+            +"<!ENTITY myapos \"'quoted1'\">\n"
+            +"<!ENTITY myquot '\"quoted1\"'>\n"
+            +"<!ENTITY ent1 '&myapos;&myquot'>\n"
+            +"<!ENTITY ent2 \"&myapos;&myquot\">\n"
+            +"]>\n"
+            +"<root>&ent1;  &ent2;</root>";
+
+        XMLStreamReader sr = getReader(XML, false, false, true);
+        // Should be just fine, no exceptions should be thrown
+        streamThrough(sr);
+    }
+    */
+
+    /**
+     * Test that checks that generic parsed entities are returned as
+     * entity reference events, when automatic entity expansion is disabled.
+     */
+    public void testUnexpandedEntities()
+        throws XMLStreamException
+    {
+        String TEXT1 = "&quot;Start&quot;";
+        String TEXT2 = "&End...";
+        String XML = "<!DOCTYPE root [\n"
+            +" <!ENTITY myent 'data'>]>\n"
+            +"<root>&amp;Start&quot;&myent;End&#33;</root>";
+
+        XMLStreamReader sr = getReader(XML, false, true, false);
+
+        assertTokenType(DTD, sr.next());
+        int type = sr.next();
+
+        // May or may not get SPACE events in epilog (before root)
+        while (type == SPACE) {
+            type = sr.next();
+        }
+
+        assertTokenType(START_ELEMENT, type);
+
+        assertTokenType(CHARACTERS, sr.next());
+        assertEquals("&Start\"", getAndVerifyText(sr));
+
+        assertTokenType(ENTITY_REFERENCE, sr.next());
+        assertEquals("myent", sr.getLocalName());
+        assertEquals("data", getAndVerifyText(sr));
+
+        assertTokenType(CHARACTERS, sr.next());
+        assertEquals("End!", getAndVerifyText(sr));
+
+        assertTokenType(END_ELEMENT, sr.next());
+        assertTokenType(END_DOCUMENT, sr.next());
+
+        /* And then, for good measure, let's just do a longer
+         * one, but without exact type checks, and both with and
+         * without coalescing:
+         */
+        
+        XML = "<!DOCTYPE root [\n"
+            +" <!ENTITY myent 'data'>]>\n"
+            +"<root>&amp;Start&quot;&myent;End&#33;\n"
+            +"   &#x21;&myent;&myent;<![CDATA[!]]>&myent;<![CDATA[...]]>&amp;"
+            +"</root>";
+
+        // First, no coalescing
+        sr = getReader(XML, false, false, false);
+        streamThrough(sr);
+
+        // then with coalescing
+        sr = getReader(XML, false, true, false);
+        streamThrough(sr);
+    }
+
+    /**
+     * Test that checks that entities that expand to elements, comments
+     * and processing instructions are properly handled.
+     */
+    public void testElementEntities()
+        throws XMLStreamException
+    {
+        String XML = "<!DOCTYPE root [\n"
+            +" <!ENTITY ent1 '<tag>text</tag>'>\n"
+            +" <!ENTITY ent2 '<!--comment-->'>\n"
+            +" <!ENTITY ent3 '<?proc instr?>'>\n"
+            +" <!ENTITY ent4a '&ent4b;'>\n"
+            +" <!ENTITY ent4b '&#65;'>\n"
+            +"]>\n"
+            +"<root>&ent1;&ent2;&ent3;&ent4a;</root>";
+
+        XMLStreamReader sr = getReader(XML, true, true, true);
+
+        assertTokenType(DTD, sr.next());
+        // May or may not get whitespace
+        int type = sr.next();
+        if (type == SPACE) {
+            type = sr.next();
+        }
+        assertTokenType(START_ELEMENT, type);
+        assertEquals("root", sr.getLocalName());
+
+        // First, entity that expands to element
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals("tag", sr.getLocalName());
+        assertTokenType(CHARACTERS, sr.next());
+        assertEquals("text", sr.getText());
+        assertTokenType(END_ELEMENT, sr.next());
+        assertEquals("tag", sr.getLocalName());
+
+        // Then one that expands to comment
+        assertTokenType(COMMENT, sr.next());
+        assertEquals("comment", sr.getText());
+
+        // Then one that expands to a PI
+        assertTokenType(PROCESSING_INSTRUCTION, sr.next());
+        assertEquals("proc", sr.getPITarget());
+        assertEquals("instr", sr.getPIData().trim());
+
+        // Then one that expands to text (single char)
+        assertTokenType(CHARACTERS, sr.next());
+        assertEquals("A", sr.getText());
+
+        assertTokenType(END_ELEMENT, sr.next());
+        assertEquals("root", sr.getLocalName());
+    }
+
+    /**
+     * Test that ensures that entities can have quotes in them, if quotes
+     * are expanded from (parameter) entities. For that need to use
+     * external entities, or at least ext. subset.
+     */
+    /*
+    public void testValidEntityWithQuotes()
+        throws XMLStreamException
+    {
+    }
+    */
+
+    public void testInvalidEntityUndeclared()
+        throws XMLStreamException
+    {
+        XMLStreamReader sr = getReader("<root>&myent;</root>",
+                                       true, false, true);
+        try {
+            streamThrough(sr);
+            fail("Expected an exception for invalid comment content");
+        } catch (Exception e) { }
+    }
+
+    public void testInvalidEntityRecursive()
+        throws XMLStreamException
+    {
+        XMLStreamReader sr = getReader
+            ("<!DOCTYPE root [\n"
+             +"<!ENTITY ent1 '&ent2;'>\n"
+             +"<!ENTITY ent2 '&ent2;'>\n"
+             +"]> <root>&ent1;</root>",
+             false, true, true);
+
+        streamThroughFailing(sr, "recursive general entity/ies");
+
+        /* !!! TBI: test things like:
+         *
+         * - Incorrectly nested entities (only start element, no end etc)
+         */
+    }
+
+    public void testInvalidEntityPEInIntSubset()
+        throws XMLStreamException
+    {
+        /* Although PEs are allowed in int. subset, they can only be
+         * used to replace whole declarations; not in entity value
+         * expansions.
+         */
+        XMLStreamReader sr = getReader
+            ("<!DOCTYPE root [\n"
+             +"<!ENTITY % pe 'xxx'>\n"
+             +"<!ENTITY foobar '%pe;'>\n"
+             +"]> <root />",
+             false, true, true);
+
+        streamThroughFailing(sr, "declaring a parameter entity in the internal DTD subset");
+    }
+
+    /**
+     * Test that ensures that an invalid 'partial' entity is caught;
+     * partial meaning that only beginning part of an entity (ie ampersand
+     * and zero or more of the first characters of entity id) come from
+     * another expanded entity, and rest comes from content following.
+     * Such partial entities are not legal according to XML specs.
+     */
+    public void testInvalidEntityPartial()
+        throws XMLStreamException
+    {
+        XMLStreamReader sr = getReader
+            ("<!DOCTYPE root [\n"
+             +"<!ENTITY partial '&amp'>\n"
+             +"]><root>&partial;;</root>",
+             false, false, true);
+
+        assertTokenType(DTD, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+
+        try {
+            int type;
+            while ((type = sr.next()) == CHARACTERS) {
+                ;
+            }
+            fail("Expected an exception for partial entity reference: current token after text: "+tokenTypeDesc(type));
+        } catch (Exception e) { }
+    }
+
+    /*
+    ////////////////////////////////////////
+    // Private methods, shared test code
+    ////////////////////////////////////////
+     */
+
+    private void doTestProperties(boolean nsAware)
+        throws XMLStreamException
+    {
+        XMLStreamReader sr = getReader
+            ("<!DOCTYPE root [\n"
+             +"<!ENTITY myent 'value'>\n"
+             +"<!ENTITY ent2 PUBLIC 'myurl' 'whatever.xml'>\n"
+             +"]><root>&myent;&ent2;</root>",
+             nsAware, false, false);
+
+        assertTokenType(DTD, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertTokenType(ENTITY_REFERENCE, sr.next());
+
+        /* Ok, now we can test actual properties we
+         * are interested in:
+         */
+
+        // Type info
+        assertEquals(false, sr.isStartElement());
+        assertEquals(false, sr.isEndElement());
+        assertEquals(false, sr.isCharacters());
+        assertEquals(false, sr.isWhiteSpace());
+
+        // indirect type info
+        /* 29-Jul-2004: It's kind of unintuitive, but API says hasName()
+         *   is only true for start/end elements...
+         */
+        assertEquals(false, sr.hasName());
+
+        /* And this returns true at least for internal entities, like the one
+         * we hit first
+         */
+        assertEquals(true, sr.hasText());
+
+        // Now, local name is accessible, still:
+        assertEquals("myent", sr.getLocalName());
+
+        // And replacement text too:
+        assertEquals("value", getAndVerifyText(sr));
+        
+        assertNotNull(sr.getLocation());
+        if (nsAware) {
+            assertNotNull(sr.getNamespaceContext());
+        }
+
+        // No exception expected, just nulls:
+        assertNull(sr.getPrefix());
+        assertNull(sr.getNamespaceURI());
+
+        // And then let's check methods that should throw specific exception
+        for (int i = 0; i < 3; ++i) {
+            String method = "";
+
+            try {
+                Object result = null;
+                switch (i) {
+                case 0:
+                    method = "getName";
+                    result = sr.getName();
+                    break;
+                case 1:
+                    method = "getNamespaceCount";
+                    result = new Integer(sr.getNamespaceCount());
+                    break;
+                case 2:
+                    method = "getAttributeCount";
+                    result = new Integer(sr.getAttributeCount());
+                    break;
+                }
+                fail("Expected IllegalArgumentException, when calling "
+                     +method+"() for COMMENT");
+            } catch (IllegalStateException iae) {
+                ; // good
+            }
+        }
+
+        /* StAX JavaDocs just say 'Proc. instr. target/data, or null', NOT
+         * that there should be an exception...
+         */
+        assertNull(sr.getPITarget());
+        assertNull(sr.getPIData());
+
+
+        // // Ok, and the second entity:
+        assertTokenType(ENTITY_REFERENCE, sr.next());
+
+        assertEquals("ent2", sr.getLocalName());
+
+        /* Now, text replacement... it seems like hasText() should still
+         * return true, by default, but getText() (etc) should return
+         * null?
+         */
+        assertNull(sr.getText());
+        assertNull(sr.getTextCharacters());
+        assertEquals(0, sr.getTextLength());
+
+        // // ok, should be good:
+        assertTokenType(END_ELEMENT, sr.next());
+        assertTokenType(END_DOCUMENT, sr.next());
+
+    }
+
+    /*
+    ////////////////////////////////////////
+    // Private methods, other
+    ////////////////////////////////////////
+     */
+
+    private XMLStreamReader getReader(String contents, boolean nsAware,
+                                      boolean coalescing, boolean replEntities)
+        throws XMLStreamException
+    {
+        XMLInputFactory f = getInputFactory();
+        setNamespaceAware(f, nsAware);
+        setSupportDTD(f, true);
+        setCoalescing(f, coalescing);
+        setReplaceEntities(f, replEntities);
+        setValidating(f, false);
+        return constructStreamReader(f, contents);
+    }
+}
