@@ -60,10 +60,13 @@ public class BaseStaxTest
      */
 
     XMLInputFactory mInputFactory;
+    XMLOutputFactory mOutputFactory;
 
     protected BaseStaxTest(String name) {
         super(name);
     }
+
+    protected BaseStaxTest() { super(); }
 
     /*
     //////////////////////////////////////////////////
@@ -82,6 +85,19 @@ public class BaseStaxTest
     protected static XMLInputFactory getNewInputFactory()
     {
         return XMLInputFactory.newInstance();
+    }
+
+    protected XMLOutputFactory getOutputFactory()
+    {
+        if (mOutputFactory == null) {
+            mOutputFactory = getNewOutputFactory();
+        }
+        return mOutputFactory;
+    }
+
+    protected static XMLOutputFactory getNewOutputFactory()
+    {
+        return XMLOutputFactory.newInstance();
     }
 
     protected static XMLStreamReader constructStreamReader(XMLInputFactory f, String content)
@@ -104,6 +120,14 @@ public class BaseStaxTest
                                                      new FileReader(inf));
         assertEquals(START_DOCUMENT, sr.getEventType());
         return sr;
+    }
+
+    protected XMLStreamReader constructNsStreamReader(String content)
+        throws XMLStreamException
+    {
+        XMLInputFactory f = getInputFactory();
+        setNamespaceAware(f, true);
+        return f.createXMLStreamReader(new StringReader(content));
     }
 
     /*
