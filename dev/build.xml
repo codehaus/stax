@@ -1,4 +1,4 @@
-<!-- This is build script ... -->
+<!-- This is build script ...  testing -->
 <project name="stax" default="run">
   <!-- for details see src/build.xml -->
   <property name="version" value="1.0.2"/>
