@@ -42,7 +42,7 @@
 
     <path id="junit_libraries">
         <fileset dir="${lib}">
-            <include name="lib/junit*.jar" />
+            <include name="junit/junit*.jar" />
         </fileset>
     </path>
 
@@ -121,6 +121,7 @@
       debug="true">
       <classpath>
         <pathelement path="${class_dir}" />
+        <path refid="junit_libraries"/>
       </classpath>
     </javac>
   </target>
