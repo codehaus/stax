@@ -291,6 +291,53 @@ public class TestSimpleWriter
         assertTokenType(END_DOCUMENT, sr.next());
     }
 
+    public void testEmptyElements()
+        throws IOException, XMLStreamException
+    {
+        StringWriter strw = new StringWriter();
+        XMLStreamWriter w = getNonRepairingWriter(strw);
+
+        w.writeStartDocument();
+
+        w.writeStartElement("root");
+        w.writeStartElement("branch");
+        w.writeEmptyElement("leaf");
+
+        w.writeEndElement(); // branch
+        w.writeComment("comment"); // should be at same level as branch
+        w.writeEndElement(); // root elem
+        w.writeEndDocument();
+        w.close();
+        
+        /* And then let's parse and verify it all:
+         */
+//System.err.println("DEBUG: doc = '"+strw.toString()+"'");
+        XMLStreamReader sr = constructNsStreamReader(strw.toString());
+        assertTokenType(START_DOCUMENT, sr.getEventType());
+
+        // root element
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals("root", sr.getLocalName());
+        // branch:
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals("branch", sr.getLocalName());
+        // leaf
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals("leaf", sr.getLocalName());
+        assertTokenType(END_ELEMENT, sr.next());
+        assertEquals("leaf", sr.getLocalName());
+        assertTokenType(END_ELEMENT, sr.next());
+        assertEquals("branch", sr.getLocalName());
+
+        assertTokenType(COMMENT, sr.next());
+        assertEquals("comment", getAndVerifyText(sr));
+
+        assertTokenType(END_ELEMENT, sr.next());
+        assertEquals("root", sr.getLocalName());
+
+        assertTokenType(END_DOCUMENT, sr.next());
+    }
+
     public void testEntityRef()
         throws IOException, XMLStreamException
     {
