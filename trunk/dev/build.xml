@@ -24,10 +24,11 @@
   <property name="api_version" value="1.0"/>
   <property name="api_src_dir" value="${build_dir}/api_src"/>
   <property name="api_dir" value="api"/>
-  <!--property name="jar_api" value="${api_dir}/jsr173_${version}_api.jar"/-->
-  <!--property name="jar_src" value="${api_dir}/jsr173_${version}_src.jar"/-->  
+  <property name="jar_api" value="${build_dir}/jsr173_${version}_api.jar"/>
+  <property name="jar_src" value="${build_dir}/jsr173_${version}_src.jar"/>  
   <property name="src_api" value="src"/>
-  <property name="api_dirs" value="javax/xml/namespace/*.java,
+  <property name="api_dirs" value="javax/xml/*.java,
+                    javax/xml/namespace/*.java,
   					javax/xml/stream/**/*.java"/>
 
   <!-- Unit test (StaxTest) package properties -->
@@ -63,6 +64,7 @@
     <!--mkdir dir="${api_src_dir}"/-->
     <!--unjar src="${jar_api}" dest="${class_dir}"/-->
     <javac srcdir="${src_api}"
+      target="1.2"
       includes="${api_dirs}"
       destdir="${class_dir}"
       debug="true">
@@ -72,6 +74,24 @@
       </classpath>
     </javac>
     
+
+    <jar jarfile="${jar_api}">
+      <!-- Let's add bit more information into jar... like version -->
+      <manifest>
+            <attribute name="Built-By" value="${user.name}"/>
+            <attribute name="Specification-Title"   value="StAX"/>
+            <attribute name="Specification-Version" value="${api_version}"/>
+            <attribute name="Specification-Vendor"  value="JCP-173"/>
+            <attribute name="Implementation-Title"   value="StAX 1.0 API"/>
+            <attribute name="Implementation-Version" value="${api_version}"/>
+            <attribute name="Implementation-Vendor"  value="JCP"/>
+      </manifest>
+      <fileset dir="${class_dir}"
+        includes=
+        "javax/xml/
+        "/>
+    </jar>
+
   </target>
 
   <!-- Main Ref. Impl. compilation: -->

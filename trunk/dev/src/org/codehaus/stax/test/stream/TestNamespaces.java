@@ -118,6 +118,62 @@ public class TestNamespaces
         assertFalse(sr.hasNext());
     }
 
+    final String VALID_NS_XML2
+        ="<?xml version='1.0' ?>"
+        +"<root xmlns:a='myurl' xmlns=\"http://foo\">text"
+        +"<empty attr='&amp;'/><a:empty /></root>";
+
+    /**
+     * Another unit test that checks that valid namespace declarations
+     * are handled properly.
+     */
+    public void testMultipleValidNs()
+        throws XMLStreamException
+    {
+        XMLStreamReader sr = getNsReader(VALID_NS_XML2, true);
+        assertEquals(START_ELEMENT, sr.next());
+
+        // Let's thoroughly check the root elem
+        assertEquals(2, sr.getNamespaceCount());
+        assertEquals(0, sr.getAttributeCount());
+        assertNull(sr.getPrefix());
+        assertEquals("root", sr.getLocalName());
+        assertEquals("http://foo", sr.getNamespaceURI());
+        assertEquals("myurl", sr.getNamespaceURI("a"));
+
+        // first empty elem
+        while (sr.next() == CHARACTERS) { }
+        assertTokenType(START_ELEMENT, sr.getEventType());
+        assertEquals(0, sr.getNamespaceCount());
+        assertEquals(1, sr.getAttributeCount());
+        assertNull(sr.getPrefix());
+        assertEquals("empty", sr.getLocalName());
+        assertEquals("http://foo", sr.getNamespaceURI());
+        assertEquals("myurl", sr.getNamespaceURI("a"));
+        assertEquals("", sr.getAttributeNamespace(0));
+        assertNull(sr.getAttributePrefix(0));
+        assertEquals("&", sr.getAttributeValue(0));
+        assertTokenType(END_ELEMENT, sr.next());
+
+        // second empty elem
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals(0, sr.getNamespaceCount());
+        assertEquals(0, sr.getAttributeCount());
+        assertEquals("empty", sr.getLocalName());
+        assertEquals("a", sr.getPrefix());
+        assertEquals("myurl", sr.getNamespaceURI());
+        assertEquals("myurl", sr.getNamespaceURI("a"));
+        assertEquals("http://foo", sr.getNamespaceURI(""));
+        assertTokenType(END_ELEMENT, sr.next());
+
+        // And closing 'root'
+        assertTokenType(END_ELEMENT, sr.next());
+        assertEquals("root", sr.getLocalName());
+        assertEquals("http://foo", sr.getNamespaceURI());
+
+        assertTokenType(END_DOCUMENT, sr.next());
+    }
+
     public void testValidNonNs()
         throws XMLStreamException
     {
