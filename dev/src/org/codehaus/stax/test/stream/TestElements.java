@@ -214,7 +214,7 @@ public class TestElements
             DEFAULT_URI_NS : DEFAULT_URI_NON_NS;
 
         // First, need to get <root>
-        assertEquals(START_ELEMENT, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
         assertEquals("root", sr.getLocalName());
         String prefix = sr.getPrefix();
         assertNull("Missing prefix should be reported as null", prefix);
