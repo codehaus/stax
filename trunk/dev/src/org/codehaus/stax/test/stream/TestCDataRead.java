@@ -71,7 +71,10 @@ public class TestCDataRead
          *   CHARACTERS too...
          */
         if (type != CHARACTERS) {
-            assertTokenType(CDATA, sr.next());
+            assertEquals("Unexpected token type ("
+                         +tokenTypeDesc(type)
+                         +") returned; expected CDATA or CHARACTERS",
+                         CDATA, type);
         }
 
         StringBuffer sb = new StringBuffer(16000);
