@@ -1,0 +1,93 @@
+<project name="stax" default="all">
+  <!-- for details see src/build.xml -->
+  <property name="version" value="1.0.2"/>
+  <property name="build_dir" value="build"/>
+  <property name="class_dir" value="${build_dir}/classes"/>
+  <property name="api_src_dir" value="${build_dir}/api_src"/>
+  <property name="api_dir" value="api"/>
+  <!--property name="jar_api" value="${api_dir}/jsr173_${version}_api.jar"/-->
+  <!--property name="jar_src" value="${api_dir}/jsr173_${version}_src.jar"/-->  
+  <property name="jar_ri" value="jsr173_${version}_ri.jar"/>
+  <property name="src" value="src"/>
+  <property name="src_api" value="src"/>
+  <property name="api_dirs" value="javax/xml/namespace/*.java,
+  					javax/xml/stream/**/*.java"/>
+  <property name="topdirs" value="com/bea/xml/stream/*.java,
+                                       com/wutka/dtd/*.java,
+                                       com/bea/xml/stream/samples/*.java,
+                                       com/bea/xml/stream/util/*.java,
+                                       com/bea/xml/stream/filters/*.java,
+                                       com/bea/xml/stream/reader/*.java,
+                                       com/bea/xml/stream/events/*.java"/>
+
+  <target name="all" depends="clean,build,run"/>
+  <target name="clean">
+    <delete dir="${build_dir}"/>
+  </target>
+  <target name="api">
+    <mkdir dir="${build_dir}"/>
+    <mkdir dir="${class_dir}"/>
+    <!--mkdir dir="${api_src_dir}"/-->
+    <!--unjar src="${jar_api}" dest="${class_dir}"/-->
+    <javac srcdir="${src_api}"
+      includes="${api_dirs}"
+      destdir="${class_dir}"
+      debug="true">
+      <classpath>
+        <pathelement path="${java.class.path}"/>
+        <pathelement path="${class_dir}"/>
+      </classpath>
+    </javac>
+    
+  </target>
+  <target name="compile" depends="api">
+    <mkdir dir="${class_dir}"/>
+    <!--javac srcdir="${src}:${api_src_dir}"-->
+    <javac srcdir="${src}"
+      includes="${topdirs}"
+      destdir="${class_dir}"
+      debug="true">
+      <classpath>
+        <pathelement path="${java.class.path}"/>
+        <pathelement path="${class_dir}"/>
+      </classpath>
+    </javac>
+  </target>
+  <target name="build" depends="api,compile"/>
+  <target name="run">
+    <java classname="com.bea.xml.stream.samples.EventParse" fork="true">
+      <arg line="test/files/test.xml"/>
+      <classpath>
+        <pathelement path="${class_dir}"/>
+        <pathelement path="${java.class.path}"/>
+      </classpath>
+    </java>
+  </target>
+  <target name="ri_jar">
+    <jar jarfile="${jar_ri}">
+      <fileset dir="${class_dir}"
+        includes=
+        "com/bea/xml/stream/,
+         com/bea/xml/stream/samples/,
+         com/bea/xml/stream/util/,
+         com/bea/xml/stream/filters/,
+         com/bea/xml/stream/reader/,
+         com/bea/xml/stream/events/"/>
+    </jar>
+  </target>
+  <target name="ri_src_jar">
+    <jar jarfile="${jar_src}">
+      <fileset dir="${src}"
+        includes=
+        "com/bea/xml/stream/,
+         com/bea/xml/stream/samples/,
+         com/bea/xml/stream/util/,
+         com/bea/xml/stream/filters/,
+         com/bea/xml/stream/reader/,
+         com/bea/xml/stream/events/"/>
+    </jar>
+  </target>
+
+</project>
+    
+   
