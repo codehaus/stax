@@ -173,8 +173,13 @@ public class TestDoctypeDecl
 
         XMLStreamReader sr = getReader(VALID_TEST, nsAware);
 
-        assertEquals(DTD, sr.next());
-        assertEquals(START_ELEMENT, sr.next());
+        assertTokenType(DTD, sr.next());
+        // May or may not get SPACE... if we get it, will skip
+        int type;
+        while ((type = sr.next()) == SPACE) {
+            ;
+        }
+        assertTokenType(START_ELEMENT, type);
     }
 
     private void doTestSimpleInvalid(boolean nsAware)
