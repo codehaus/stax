@@ -1,0 +1,44 @@
+<project default="default" xmlns:j="jelly:core" xmlns:ant="jelly:ant" xmlns:maven="jelly:maven">
+
+  <goal name="default" prereqs="clean, jar"/>
+
+  <goal name="dc">
+    <attain>
+      <attainGoal name="clean"/>
+      <attainGoal name="site:deploy"/>
+      <j:set var="maven.test.skip" value="true"/>
+      <attainGoal name="jar:deploy"/>
+      <attainGoal name="dist:deploy"/>
+    </attain>
+  </goal>
+
+  <goal name="do-release" prereqs="clean, release, site, dist:deploy-bin, dist:deploy-src, jar:deploy"
+    description="Performs a release of the source, binary and jar distros">
+  </goal>
+
+  <postGoal name="dist:prepare-src-filesystem">
+    <!-- lets zap the build.xml -->
+    <delete file="${maven.dist.src.assembly.dir}/build.xml"/>
+  </postGoal>
+
+  <postGoal name="dist:prepare-bin-filesystem">
+    <mkdir dir="${maven.dist.bin.assembly.dir}/lib"/>
+    <j:forEach var="lib" items="${pom.artifacts}">
+      <j:if test="${lib.name.startsWith('xml') || lib.name.startsWith('common')}">
+        <copy file="${lib.path}" todir="${maven.dist.bin.assembly.dir}/lib"/>
+      </j:if>
+    </j:forEach>
+
+    <delete dir="${maven.dist.bin.assembly.dir}/docs/clover"/>
+  </postGoal>
+
+  <goal name="setclasspath">
+    <path id="test.classpath">
+      <pathelement path="${maven.build.dest}"/>
+      <pathelement path="target/classes"/>
+      <pathelement path="target/test-classes"/>
+      <path refid="maven.dependency.classpath"/>
+    </path>
+  </goal>
+
+</project>

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <pomVersion>3</pomVersion>
+  <name>StAX</name>
+  <id>stax</id>
+  <currentVersion>1.1.1-dev</currentVersion>
+
+  <inceptionYear>2004</inceptionYear>
+
+  <package>com.bea.xml</package>
+
+
+  <shortDescription>
+  	 StAX is the reference implementation of the StAX API
+  </shortDescription>
+
+  <gumpRepositoryId>stax</gumpRepositoryId>
+
+  <description>
+  	 StAX is the reference implementation of the StAX API
+  </description>
+
+  <url>http://stax.codehaus.org/</url>
+  <issueTrackingUrl>http://jira.codehaus.org/browse/STAX</issueTrackingUrl>
+
+  <!-- to help DC use beaver
+  <siteAddress>beaver.codehaus.org</siteAddress>
+  -->
+  <siteAddress>stax.codehaus.org</siteAddress>
+  <siteDirectory>/home/projects/stax/public_html/maven</siteDirectory>
+  <distributionDirectory>/home/projects/stax/dist</distributionDirectory>
+
+  <repository>
+    <connection>scm:cvs:pserver:anonymous@cvs.stax.codehaus.org:/home/projects/stax/scm:stax</connection>
+    <developerConnection>scm:cvs:ext:${maven.username}@cvs.stax.codehaus.org:/home/projects/stax/scm:stax</developerConnection>
+    <url>http://cvs.stax.codehaus.org/stax/</url>
+  </repository>
+
+  <mailingLists>
+    <mailingList>
+      <name>StAX Builders List</name>
+      <subscribe>stax_builders-subscribe@yahoogroups.com</subscribe>
+      <unsubscribe>stax_builders-unsubscribe@yahoogroups.com</unsubscribe>
+      <archive>http://groups.yahoo.com/group/stax_builders/</archive>
+    </mailingList>
+  </mailingLists>
+
+  <versions>
+    <version>
+      <id>1.0-beta-1</id>
+      <name>1.0-beta-1</name>
+      <tag>1.0-beta-1</tag>
+    </version>
+  </versions>
+  <branches></branches>
+
+  <developers>
+    <developer>
+      <name>Chris Fry</name>
+      <id>chris</id>
+      <email></email>
+      <organization>BEA</organization>
+    </developer>
+    <developer>
+      <name>James Strachan</name>
+      <id>jstrachan</id>
+      <email>jstrachan@protique.com</email>
+      <organization>Protique</organization>
+    </developer>
+  </developers>
+
+
+  <contributors>
+
+  </contributors>
+
+  <dependencies>
+
+    <!-- StAX API -->
+    <dependency>
+      <id>xmlbeans+jsr173-api</id>
+      <version>2.0-dev</version>
+    </dependency>
+
+    <!-- for unit test cases -->
+    <dependency>
+      <id>junit</id>
+      <version>3.8.1</version>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <nagEmailAddress>dev@stax.codehaus.org</nagEmailAddress>
+    <sourceDirectory>src</sourceDirectory>
+    <unitTestSourceDirectory>test</unitTestSourceDirectory>
+
+    <integrationUnitTestSourceDirectory/>
+    <aspectSourceDirectory/>
+
+    <unitTest>
+      <resources>
+        <resource>
+          <directory>test</directory>
+          <includes>
+            <include>**/*.properties</include>
+            <include>**/*.xml</include>
+          </includes>
+        </resource>
+      </resources>
+      <includes>
+        <include>**/*Test.*</include>
+      </includes>
+    </unitTest>
+
+    <resources>
+      <resource>
+        <directory>src/conf</directory>
+        <includes>
+          <include>**/*</include>
+        </includes>
+      </resource>
+    </resources>
+  </build>
+
+  <reports>
+    <!--
+     |
+     | These should all be completely self contained. You should be able
+     | to generate each of them individually without needing the final
+     | xdoc transformation.
+     |
+     | Each report plugin with it's POM and plugin.jelly logic should
+     | contain everything needed to produced the report.
+     |
+    -->
+
+    <report>maven-jdepend-plugin</report>
+    <report>maven-clover-plugin</report>
+    <!-- re-enable when we can get the warnings down to less than a few Mb!
+    <report>maven-checkstyle-plugin</report>
+    <report>maven-simian-plugin</report>
+    <report>maven-faq-plugin</report>
+    -->
+    <report>maven-changes-plugin</report>
+    <report>maven-changelog-plugin</report>
+    <report>maven-file-activity-plugin</report>
+    <report>maven-developer-activity-plugin</report>
+    <report>maven-javadoc-plugin</report>
+    <report>maven-jxr-plugin</report>
+    <report>maven-junit-report-plugin</report>
+    <report>maven-tasklist-plugin</report>
+    <report>maven-pmd-plugin</report>
+
+  </reports>
+</project>
