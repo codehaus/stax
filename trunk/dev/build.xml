@@ -1,4 +1,4 @@
-<project name="stax" default="all">
+<project name="stax" default="run">
   <!-- for details see src/build.xml -->
   <property name="version" value="1.0.2"/>
   <property name="build_dir" value="build"/>
@@ -54,9 +54,9 @@
     </javac>
   </target>
   <target name="build" depends="api,compile"/>
-  <target name="run">
+  <target name="run" depends="build">
     <java classname="com.bea.xml.stream.samples.EventParse" fork="true">
-      <arg line="test/files/test.xml"/>
+      <arg line="src/test/files/test.xml"/>
       <classpath>
         <pathelement path="${class_dir}"/>
         <pathelement path="${java.class.path}"/>
