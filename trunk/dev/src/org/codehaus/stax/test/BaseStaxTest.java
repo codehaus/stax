@@ -288,10 +288,21 @@ public class BaseStaxTest
 
     protected static void assertTokenType(int expType, int actType)
     {
-        if (expType != actType) {
-            fail("Expected token "+tokenTypeDesc(expType)
-                 +"; got "+tokenTypeDesc(actType)+".");
+        if (expType == actType) {
+            return;
         }
+        fail("Expected token "+tokenTypeDesc(expType)
+             +"; got "+tokenTypeDesc(actType)+".");
+    }
+
+    protected static void assertTokenType(int expType, int actType,
+                                          XMLStreamReader sr)
+    {
+        if (expType == actType) {
+            return;
+        }
+        fail("Expected token "+tokenTypeDesc(expType)
+             +"; got "+tokenTypeDesc(actType, sr)+".");
     }
 
     protected static void assertTextualTokenType(int actType)
@@ -352,7 +363,28 @@ public class BaseStaxTest
     protected static String tokenTypeDesc(int tt)
     {
         String desc = (String) mTokenTypes.get(new Integer(tt));
-        return (desc == null) ? ("["+tt+"]") : desc;
+        if (desc == null) {
+            return "["+tt+"]";
+        }
+        return desc;
+    }
+
+    final static int MAX_DESC_TEXT_CHARS = 8;
+
+    protected static String tokenTypeDesc(int tt, XMLStreamReader sr)
+    {
+        String desc = tokenTypeDesc(tt);
+        // Let's show first 8 chars or so...
+        if (tt == CHARACTERS || tt == SPACE || tt == CDATA) {
+            String str = sr.getText();
+            if (str.length() > MAX_DESC_TEXT_CHARS) {
+                desc = "\""+str.substring(0, MAX_DESC_TEXT_CHARS) + "\"[...]";
+            } else {
+                desc = "\"" + desc + "\"";
+            }
+            desc = " ("+desc+")";
+        }
+        return desc;
     }
 
     protected static String printable(char ch)
