@@ -351,12 +351,14 @@ public class MXParser
         }
     }
 
-    // namespace stack
     /* TSa, 28-Oct-2004: Need to either initialize them here, or check for
      *   nulls later on. This seems to work
      */
     private final static String[] NO_STRINGS = new String[0];
     private final static int[] NO_INTS = new int[0];
+    private final static char[] NO_CHARS = new char[0];
+
+    // namespace stack
 
     protected int namespaceEnd;
     protected String namespacePrefix[] = NO_STRINGS;
@@ -768,7 +770,12 @@ public class MXParser
         entityNameBuf[entityEnd] = entityName.toCharArray();
 
         entityReplacement[entityEnd] = replacementText;
-        entityReplacementBuf[entityEnd] = replacementText.toCharArray();
+	/* 06-Nov-2004, TSa: Null is apparently returned for external
+	 *   entities (including parsed ones); to prevent an NPE, let's
+	 *   just use a shared dummy array... (could use null too?)
+	 */
+	char[] ch = (replacementText == null) ? NO_CHARS : replacementText.toCharArray();
+        entityReplacementBuf[entityEnd] = ch;
         if(!allStringsInterned) {
             entityNameHash[ entityEnd ] =
                 fastHash(entityNameBuf[entityEnd], 0, entityNameBuf[entityEnd].length);
