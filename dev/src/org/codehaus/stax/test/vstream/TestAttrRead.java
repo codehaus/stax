@@ -49,6 +49,47 @@ public class TestAttrRead
         streamThrough(getValidatingReader(XML, true));
     }
 
+    /**
+     * Unit test that verifies that the attribute type declaration information
+     * is properly parsed and accessible via stream reader.
+     */
+    public void testAttributeTypes()
+        throws XMLStreamException
+    {
+        String XML = "<!DOCTYPE root [\n"
+            +"<!ELEMENT root EMPTY>\n"
+            +"<!ATTLIST root cdata CDATA #IMPLIED>\n"
+            +"<!ATTLIST root id ID #IMPLIED>\n"
+            +"<!ATTLIST root nmtoken NMTOKEN #IMPLIED>\n"
+            +"<!ATTLIST root nmtokens NMTOKENS #IMPLIED>\n"
+            +"]>\n"
+            +"<root"
+            +" cdata='content'"
+            +" id='node1'"
+            +" nmtoken='token'"
+            +" nmtokens='token1 token2'"
+            +"/>";
+        /* Could/should extend to cover all types... but this should be
+         * enough to at least determined reader does pass through the
+         * type info (instead of always returning CDATA)
+         */
+        XMLStreamReader sr = getValidatingReader(XML, true);
+
+        assertTokenType(DTD, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+
+        assertEquals(4, sr.getAttributeCount());
+        for (int i = 0; i < 4; ++i) {
+            String ln = sr.getAttributeLocalName(i);
+            String type = sr.getAttributeType(i);
+            String expType = ln.toUpperCase();
+            assertNotNull("Attribute type should never be null; CDATA should be returned if information not known/available");
+            assertEquals("Incorrect attribute type for attribute '"+ln+"'",
+                         expType, type);
+        }
+        assertTokenType(END_ELEMENT, sr.next());
+    }
+
     public void testValidRequiredAttr()
         throws XMLStreamException
     {
@@ -112,6 +153,10 @@ public class TestAttrRead
                              "fixed attribute value not matching declaration");
     }
 
+    /**
+     * Unit test that verifies that the default attribute values are properly
+     * used on validating mode.
+     */
     public void testDefaultAttr()
         throws XMLStreamException
     {
