@@ -35,6 +35,7 @@
   <property name="test_class_dir" value="${build_dir}/test-classes"/>
   <property name="test_results_dir" value="${build_dir}/test-results"/>
   <property name="test_jar" value="staxtest_${test_version}.jar"/>
+  <property name="test_src_jar" value="staxtest_${test_version}_src.jar"/>
 
   <property name="lib" value="lib"/>
 
@@ -89,12 +90,12 @@
 
   <!-- Targets for compiling StaxTest classes
     -->
-  <target name="init_test">
+  <target name="test_init">
     <mkdir dir="${test_class_dir}"/>
     <mkdir dir="${test_results_dir}"/>
     <mkdir dir="${test_results_dir}/xml"/>
   </target>
-  <target name="compile_test" depends="api, init_test">
+  <target name="test_compile" depends="api, test_init">
     <javac srcdir="${src}" includes="org/codehaus/stax/test/**/*.java"
       destdir="${test_class_dir}"
       debug="true">
@@ -159,8 +160,8 @@
     </javadoc>
   </target> 
 
-  <!-- Package the test suite "binary" -->
-  <target name="test_jar">
+  <!-- Package the test suite jar, usable by other implementations -->
+  <target name="test_jar" depends="test_compile">
     <jar jarfile="${test_jar}">
       <manifest>
             <attribute name="Built-By" value="${user.name}"/>
@@ -171,6 +172,13 @@
             <attribute name="Implementation-Version" value="${test_version}"/>
             <attribute name="Implementation-Vendor"  value="Codehaus"/>
       </manifest>
+      <fileset dir="${test_class_dir}" includes="org/codehaus/stax/test/" />
+    </jar>
+  </target>
+
+  <!-- And test suite sources -->
+  <target name="test_src_jar">
+    <jar jarfile="${test_src_jar}">
       <fileset dir="${src}" includes="org/codehaus/stax/test/" />
     </jar>
   </target>
@@ -189,7 +197,7 @@
     </java>
   </target>
 
-  <target name="test" depends="compile, compile_test">
+  <target name="test" depends="compile, test_compile">
       <junit fork="no" printsummary="yes" haltonfailure="no"
          showoutput="yes">
             <batchtest fork="no" todir="${test_results_dir}/xml">
@@ -215,5 +223,3 @@
     </target>
 
 </project>
-    
-   
