@@ -1,7 +1,7 @@
 <!-- This is ANT build script -->
 <project name="stax" default="run">
   <!-- for details see src/build.xml -->
-  <property name="version" value="1.0.2"/>
+  <property name="version" value="1.0.3"/>
   <property name="build_dir" value="build"/>
   <property name="class_dir" value="${build_dir}/classes"/>
   <property name="api_src_dir" value="${build_dir}/api_src"/>
