@@ -115,4 +115,135 @@ public class TestRepairingWriter
 
         assertTokenType(END_DOCUMENT, sr.next(), sr);
     }
+
+    public void testAttributeSimple()
+        throws IOException, XMLStreamException
+    {
+        StringWriter strw = new StringWriter();
+        XMLStreamWriter w = getRepairingWriter(strw);
+        final String URL_P1 = "http://p1.org";
+        final String ATTR_VALUE = "'value'&\"another\"";
+
+        w.writeStartDocument();
+        w.writeStartElement("", "test");
+        w.writeAttribute(URL_P1, "attr", ATTR_VALUE);
+        w.writeEndElement();
+        w.writeEndDocument();
+        w.close();
+
+        /* And then let's parse and verify it all:
+         */
+        XMLStreamReader sr = constructNsStreamReader(strw.toString());
+        assertTokenType(START_DOCUMENT, sr.getEventType(), sr);
+
+        // root element
+        assertTokenType(START_ELEMENT, sr.next(), sr);
+        assertEquals("test", sr.getLocalName());
+        assertNoNsURI(sr);
+
+        assertEquals(1, sr.getAttributeCount());
+        assertEquals("attr", sr.getAttributeLocalName(0));
+        assertEquals(URL_P1, sr.getAttributeNamespace(0));
+        assertEquals(ATTR_VALUE, sr.getAttributeValue(0));
+
+        assertTokenType(END_ELEMENT, sr.next(), sr);
+        assertEquals("test", sr.getLocalName());
+        assertNoNsURI(sr);
+
+        assertTokenType(END_DOCUMENT, sr.next(), sr);
+    }
+
+    public void testAttributes()
+        throws IOException, XMLStreamException
+    {
+        StringWriter strw = new StringWriter();
+        XMLStreamWriter w = getRepairingWriter(strw);
+        final String URL_P1 = "http://p1.org";
+        final String URL_DEF = "urn:default";
+        final String ATTR_VALUE = "'value\"";
+        final String ATTR_VALUE2 = "<tag>";
+
+        w.writeStartDocument();
+
+        /* Calling this method should be optional; but if we call it,
+         * exceptation is that it does properly bind the prefix and URL
+         * as the 'preferred' combination. In this case we'll just try
+         * to make URL bound as the default namespace
+         */
+        w.setDefaultNamespace(URL_DEF);
+        w.writeStartElement(URL_DEF, "test");
+
+        /* And let's further make element and attribute(s) belong to that
+         * same namespace
+         */
+        w.writeStartElement("", "leaf", URL_DEF);
+        w.writeAttribute(URL_DEF, "attr", ATTR_VALUE);
+        w.writeEndElement();
+
+        w.writeEmptyElement("", "leaf"); // in empty/no namespace!
+
+        w.writeStartElement(URL_DEF, "leaf");
+        w.writeAttribute("", "attr2", ATTR_VALUE2); // in empty/no namespace
+        w.writeEndElement();
+
+        w.writeEndElement(); // root elem
+        w.writeEndDocument();
+        w.close();
+
+        /* And then let's parse and verify it all:
+         */
+//System.err.println("DEBUG: doc = '"+strw.toString()+"'");
+
+        XMLStreamReader sr = constructNsStreamReader(strw.toString());
+        assertTokenType(START_DOCUMENT, sr.getEventType(), sr);
+
+        // root element
+        assertTokenType(START_ELEMENT, sr.next(), sr);
+        assertEquals("test", sr.getLocalName());
+        assertEquals(URL_DEF, sr.getNamespaceURI());
+        
+        // first leaf:
+        assertTokenType(START_ELEMENT, sr.next(), sr);
+        assertEquals("leaf", sr.getLocalName());
+        assertEquals(URL_DEF, sr.getNamespaceURI());
+        assertEquals(1, sr.getAttributeCount());
+        assertEquals("attr", sr.getAttributeLocalName(0));
+        assertEquals(URL_DEF, sr.getAttributeNamespace(0));
+        assertEquals(ATTR_VALUE, sr.getAttributeValue(0));
+        assertTokenType(END_ELEMENT, sr.next(), sr);
+        assertEquals("leaf", sr.getLocalName());
+        assertEquals(URL_DEF, sr.getNamespaceURI());
+
+        // empty leaf
+        assertTokenType(START_ELEMENT, sr.next(), sr);
+        assertEquals("leaf", sr.getLocalName());
+        assertEquals("", sr.getNamespaceURI());
+        assertTokenType(END_ELEMENT, sr.next(), sr);
+        assertEquals("leaf", sr.getLocalName());
+        assertEquals("", sr.getNamespaceURI());
+        
+        // third leaf
+        assertTokenType(START_ELEMENT, sr.next(), sr);
+        assertEquals("leaf", sr.getLocalName());
+        assertEquals(URL_DEF, sr.getNamespaceURI());
+
+        assertEquals(1, sr.getAttributeCount());
+        assertEquals("attr2", sr.getAttributeLocalName(0));
+        String nsURI = sr.getAttributeNamespace(0);
+        if (nsURI != null && nsURI.length() > 0) {
+            fail("Attribute 'attr2' should not belong to a namespace; reported to belong to '"+nsURI+"'");
+        }
+        assertEquals(ATTR_VALUE2, sr.getAttributeValue(0));
+
+        assertTokenType(END_ELEMENT, sr.next(), sr);
+        assertEquals("leaf", sr.getLocalName());
+        assertEquals(URL_DEF, sr.getNamespaceURI());
+
+        // closing root element
+        assertTokenType(END_ELEMENT, sr.next(), sr);
+        assertEquals("test", sr.getLocalName());
+        assertEquals(URL_DEF, sr.getNamespaceURI());
+
+        assertTokenType(END_DOCUMENT, sr.next(), sr);
+    }
 }
