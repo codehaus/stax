@@ -344,7 +344,7 @@ public class TestSimpleWriter
         // !!! TBI
     }
 
-    public void testProcInstrTargetOnly()
+    public void testProcInstr()
         throws IOException, XMLStreamException
     {
         StringWriter strw = new StringWriter();
