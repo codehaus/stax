@@ -56,10 +56,10 @@ public class TestRepairingWriter
          */
 
         XMLStreamReader sr = constructNsStreamReader(strw.toString());
-        assertTokenType(START_DOCUMENT, sr.getEventType());
+        assertTokenType(START_DOCUMENT, sr.getEventType(), sr);
 
         // root element
-        assertTokenType(START_ELEMENT, sr.next());
+        assertTokenType(START_ELEMENT, sr.next(), sr);
         assertEquals("test", sr.getLocalName());
         // ??? is writer obligated to honor the prefix suggestion
         assertEquals(URL_P1, sr.getNamespaceURI());
@@ -69,50 +69,50 @@ public class TestRepairingWriter
          */
         
         // first branch:
-        assertTokenType(START_ELEMENT, sr.next());
+        assertTokenType(START_ELEMENT, sr.next(), sr);
         assertEquals("branch", sr.getLocalName());
         assertEquals(URL_P2, sr.getNamespaceURI());
 
         // first leaf
-        assertTokenType(START_ELEMENT, sr.next());
+        assertTokenType(START_ELEMENT, sr.next(), sr);
         assertEquals("leaf", sr.getLocalName());
         assertEquals(URL_DEF, sr.getNamespaceURI());
 
-        assertTokenType(CHARACTERS, sr.next());
+        assertTokenType(CHARACTERS, sr.next(), sr);
         assertEquals(TEXT, getAllText(sr));
         // not: getAllText ^^^ moves cursor!
 
-        assertTokenType(END_ELEMENT, sr.getEventType());
+        assertTokenType(END_ELEMENT, sr.getEventType(), sr);
         assertEquals("leaf", sr.getLocalName());
         assertEquals(URL_DEF, sr.getNamespaceURI());
 
         // another leaf:
-        assertTokenType(START_ELEMENT, sr.next());
+        assertTokenType(START_ELEMENT, sr.next(), sr);
         assertEquals("leaf", sr.getLocalName());
         assertEquals(URL_P1, sr.getNamespaceURI());
 
-        assertTokenType(END_ELEMENT, sr.next());
+        assertTokenType(END_ELEMENT, sr.next(), sr);
         assertEquals("leaf", sr.getLocalName());
         assertEquals(URL_P1, sr.getNamespaceURI());
 
         // "third"
-        assertTokenType(START_ELEMENT, sr.next());
+        assertTokenType(START_ELEMENT, sr.next(), sr);
         assertEquals("third", sr.getLocalName());
         assertNoNsURI(sr);
-        assertTokenType(END_ELEMENT, sr.next());
+        assertTokenType(END_ELEMENT, sr.next(), sr);
         assertEquals("third", sr.getLocalName());
         assertNoNsURI(sr);
 
         // (close) branch
-        assertTokenType(END_ELEMENT, sr.next());
+        assertTokenType(END_ELEMENT, sr.next(), sr);
         assertEquals("branch", sr.getLocalName());
         assertEquals(URL_P2, sr.getNamespaceURI());
 
         // closing root element
-        assertTokenType(END_ELEMENT, sr.next());
+        assertTokenType(END_ELEMENT, sr.next(), sr);
         assertEquals("test", sr.getLocalName());
         assertEquals(URL_P1, sr.getNamespaceURI());
 
-        assertTokenType(END_DOCUMENT, sr.next());
+        assertTokenType(END_DOCUMENT, sr.next(), sr);
     }
 }
