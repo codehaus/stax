@@ -42,38 +42,6 @@ public class BaseStreamTest
     //////////////////////////////////////////////////
      */
 
-    /**
-     * Method that not only gets currently available text from the 
-     * reader, but also checks that its consistenly accessible using
-     * different StAX methods.
-     */
-    protected static String getAndVerifyText(XMLStreamReader sr)
-        throws XMLStreamException
-    {
-        int expLen = sr.getTextLength();
-        /* Hmmh. It's only ok to return empty text for DTD event... well,
-         * maybe also for CDATA, since empty CDATA blocks are legal?
-         */
-        /* !!! 01-Sep-2004, TSa:
-         *  note: theoretically, in coalescing mode, it could be possible
-         *  to have empty CDATA section(s) get converted to CHARACTERS,
-         *  which would be empty... may need to enhance this to check that
-         *  mode is not coalescing? Or something
-         */
-        if (sr.getEventType() == CHARACTERS) {
-            assertTrue("Stream reader should never return empty Strings.",  (expLen > 0));
-        }
-        String text = sr.getText();
-        assertNotNull("getText() should never return null.", text);
-        assertEquals("Expected text length of "+expLen+", got "+text.length(),
-		     expLen, text.length());
-        char[] textChars = sr.getTextCharacters();
-        int start = sr.getTextStart();
-        String text2 = new String(textChars, start, expLen);
-        assertEquals(text, text2);
-        return text;
-    }
-
     /*
     //////////////////////////////////////////////////
     // Higher-level test methods

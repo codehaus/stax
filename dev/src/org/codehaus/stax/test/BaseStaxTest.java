@@ -211,6 +211,77 @@ public class BaseStaxTest
 
     /*
     //////////////////////////////////////////////////
+    // Stream reader accessors
+    //////////////////////////////////////////////////
+     */
+
+    /**
+     * Method that not only gets currently available text from the 
+     * reader, but also checks that its consistenly accessible using
+     * different StAX methods.
+     */
+    protected static String getAndVerifyText(XMLStreamReader sr)
+        throws XMLStreamException
+    {
+        int expLen = sr.getTextLength();
+        /* Hmmh. It's only ok to return empty text for DTD event... well,
+         * maybe also for CDATA, since empty CDATA blocks are legal?
+         */
+        /* !!! 01-Sep-2004, TSa:
+         *  note: theoretically, in coalescing mode, it could be possible
+         *  to have empty CDATA section(s) get converted to CHARACTERS,
+         *  which would be empty... may need to enhance this to check that
+         *  mode is not coalescing? Or something
+         */
+        if (sr.getEventType() == CHARACTERS) {
+            assertTrue("Stream reader should never return empty Strings.",  (expLen > 0));
+        }
+        String text = sr.getText();
+        assertNotNull("getText() should never return null.", text);
+        assertEquals("Expected text length of "+expLen+", got "+text.length(),
+		     expLen, text.length());
+        char[] textChars = sr.getTextCharacters();
+        int start = sr.getTextStart();
+        String text2 = new String(textChars, start, expLen);
+        assertEquals(text, text2);
+        return text;
+    }
+
+    protected static String getAllText(XMLStreamReader sr)
+        throws XMLStreamException
+    {
+        StringBuffer sb = new StringBuffer();
+        while (true) {
+            int tt = sr.getEventType();
+            if (tt != CHARACTERS && tt != SPACE) {
+                break;
+            }
+            sb.append(getAndVerifyText(sr));
+            sr.next();
+        }
+        return sb.toString();
+    }
+
+    protected static String getAllCData(XMLStreamReader sr)
+        throws XMLStreamException
+    {
+        StringBuffer sb = new StringBuffer();
+        while (true) {
+            /* Note: CDATA sections CAN be reported as CHARACTERS, but
+             * not as SPACE
+             */
+            int tt = sr.getEventType();
+            if (tt != CHARACTERS && tt != CDATA) {
+                break;
+            }
+            sb.append(getAndVerifyText(sr));
+            sr.next();
+        }
+        return sb.toString();
+    }
+
+    /*
+    //////////////////////////////////////////////////
     // Derived assert/fail methods
     //////////////////////////////////////////////////
      */
@@ -218,16 +289,17 @@ public class BaseStaxTest
     protected static void assertTokenType(int expType, int actType)
     {
         if (expType != actType) {
-            String expStr = (String) mTokenTypes.get(new Integer(expType));
-            String actStr = (String) mTokenTypes.get(new Integer(actType));
+            fail("Expected token "+tokenTypeDesc(expType)
+                 +"; got "+tokenTypeDesc(actType)+".");
+        }
+    }
 
-            if (expStr == null) {
-                expStr = ""+expType;
-            }
-            if (actStr == null) {
-                actStr = ""+actType;
-            }
-            fail("Expected token "+expStr+"; got "+actStr+".");
+    protected static void assertTextualTokenType(int actType)
+    {
+        if (actType != CHARACTERS && actType != SPACE
+            && actType != CDATA) {
+            fail("Expected textual token (CHARACTERS, SPACE or CDATA)"
+                 +"; got "+tokenTypeDesc(actType)+".");
         }
     }
 
@@ -236,6 +308,39 @@ public class BaseStaxTest
         // !!! TODO: Indicate position where Strings differ
         fail(msg+": expected "+quotedPrintable(exp)+", got "
              +quotedPrintable(act));
+    }
+
+    /**
+     * Specific method makes sense, since it's not 100% clear whether
+     * it's legal to use both null and "" when no prefix was found
+     */
+    protected static void assertNoPrefix(XMLStreamReader sr)
+        throws XMLStreamException
+    {
+        String prefix = sr.getPrefix();
+        if (prefix != null && prefix.length() > 0) {
+            fail("Excepted no (or empty) prefix: got '"+prefix+"'");
+        }
+    }
+
+    /**
+     * Similar to {@link #assertNoPrefix}, it's not clear whether
+     * "no namespace" (or default namespace) should be null or ""
+     */
+    protected static void assertNoNsURI(XMLStreamReader sr)
+        throws XMLStreamException
+    {
+        String uri = sr.getNamespaceURI();
+        if (uri != null && uri.length() > 0) {
+            fail("Excepted no (or empty) namespace URI: got '"+uri+"'");
+        }
+    }
+
+    protected static void assertNoPrefixOrNs(XMLStreamReader sr)
+        throws XMLStreamException
+    {
+        assertNoPrefix(sr);
+        assertNoNsURI(sr);
     }
 
     /*
