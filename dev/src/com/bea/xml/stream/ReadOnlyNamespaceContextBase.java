@@ -18,6 +18,7 @@ package com.bea.xml.stream;
 import java.util.Iterator;
 import java.util.HashSet;
 
+import javax.xml.XMLConstants;
 import javax.xml.namespace.NamespaceContext;
 
 /**
@@ -51,9 +52,9 @@ public class ReadOnlyNamespaceContextBase
         }
       }
       if("xml".equals( prefix )) {
-        return MXParser.XML_URI;
+        return XMLConstants.XML_NS_URI;
       } else if("xmlns".equals( prefix )) {
-        return MXParser.XMLNS_URI;
+        return XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
       }
     } else {
       for( int i = uris.length -1; i >= 0; i--) {
