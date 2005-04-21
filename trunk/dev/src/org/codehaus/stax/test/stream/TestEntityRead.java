@@ -205,6 +205,37 @@ public class TestEntityRead
     }
 
     /**
+     * Test that verifies that it is possible to quote CDATA end marker
+     * ("]]>") using character and general entities.
+     */
+    public void testQuotedCDataEndMarker()
+        throws XMLStreamException
+    {
+        try {
+            // First, using pre-defined/char entities
+            String XML = "<root>"
+                +"Ok the usual one: ]]&gt;"
+                +" and then alternatives: &#93;]>"
+                +", &#93;&#93;&gr;"
+                +"</root>";
+            XMLStreamReader sr = getReader(XML, true, false, true);
+            streamThrough(sr);
+            
+            // Then using general entities:
+            XML = "<!DOCTYPE root [\n"
+                +"<!ENTITY doubleBracket ']]'>\n"
+                +"]\n"
+                +"<root>"
+                +" &doubleBracket;> and &doubleBracket&lt;"
+                +"</root>";
+            sr = getReader(XML, true, false, true);
+            streamThrough(sr);
+        } catch (Exception e) {
+            fail("Didn't except problems with quoted ']]>'; got: "+e);
+        }
+    }
+
+    /**
      * Test that ensures that entities can have quotes in them, if quotes
      * are expanded from (parameter) entities. For that need to use
      * external entities, or at least ext. subset.
@@ -405,6 +436,11 @@ public class TestEntityRead
     ////////////////////////////////////////
      */
 
+    /**
+     * Note: all readers for this set of unit tests enable DTD handling;
+     * otherwise entity definitions wouldn't be read. Validation shouldn't
+     * need to be enabled just for that purpose.
+     */
     private XMLStreamReader getReader(String contents, boolean nsAware,
                                       boolean coalescing, boolean replEntities)
         throws XMLStreamException

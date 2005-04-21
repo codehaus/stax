@@ -102,7 +102,7 @@ public class TestTextCoalescing
         assertTokenType(END_DOCUMENT, sr.next());
     }
 
-    public void testInvalidText()
+    public void testInvalidTextWithCDataEndMarker()
         throws XMLStreamException
     {
         String XML = "<root>   ]]>   </root>";
