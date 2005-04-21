@@ -228,9 +228,9 @@ public class TestEntityRead
             // Then using general entities:
             String XML = "<!DOCTYPE root [\n"
                 +"<!ENTITY doubleBracket ']]'>\n"
-                +"]\n"
+                +"]>\n"
                 +"<root>"
-                +" &doubleBracket;> and &doubleBracket&gt;"
+                +" &doubleBracket;> and &doubleBracket;&gt;"
                 +"</root>";
             XMLStreamReader sr = getReader(XML, true, false, true);
             streamThrough(sr);
