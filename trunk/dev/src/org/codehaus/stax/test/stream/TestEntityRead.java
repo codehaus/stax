@@ -216,22 +216,26 @@ public class TestEntityRead
             String XML = "<root>"
                 +"Ok the usual one: ]]&gt;"
                 +" and then alternatives: &#93;]>"
-                +", &#93;&#93;&gr;"
+                +", &#93;&#93;&gt;"
                 +"</root>";
             XMLStreamReader sr = getReader(XML, true, false, true);
             streamThrough(sr);
-            
+        } catch (Exception e) {
+            fail("Didn't except problems with pre-def/char entity quoted ']]>'; got: "+e);
+        }
+
+        try {
             // Then using general entities:
-            XML = "<!DOCTYPE root [\n"
+            String XML = "<!DOCTYPE root [\n"
                 +"<!ENTITY doubleBracket ']]'>\n"
                 +"]\n"
                 +"<root>"
-                +" &doubleBracket;> and &doubleBracket&lt;"
+                +" &doubleBracket;> and &doubleBracket&gt;"
                 +"</root>";
-            sr = getReader(XML, true, false, true);
+            XMLStreamReader sr = getReader(XML, true, false, true);
             streamThrough(sr);
         } catch (Exception e) {
-            fail("Didn't except problems with quoted ']]>'; got: "+e);
+            fail("Didn't except problems with general entity quoted ']]>'; got: "+e);
         }
     }
 
