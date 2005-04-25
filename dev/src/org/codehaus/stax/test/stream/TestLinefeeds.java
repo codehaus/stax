@@ -14,6 +14,9 @@ public class TestLinefeeds
     final String IN_SPACES2  = "\r\r \n \r";
     final String OUT_SPACES2 = "\n\n \n \n";
 
+    final String IN_MIXED1  = "Something\nwonderful (?)\rhas...\r\r\n happened ";
+    final String OUT_MIXED1 = "Something\nwonderful (?)\nhas...\n\n happened ";
+
     public TestLinefeeds(String name) {
         super(name);
     }
@@ -82,14 +85,8 @@ public class TestLinefeeds
          * combination failed (from stack trace)
          */
         doTestLfInCData(false, false);
-
-
         doTestLfInCData(false, true);
-
-
         doTestLfInCData(true, false);
-
-
         doTestLfInCData(true, true);
     }
 
@@ -185,6 +182,50 @@ public class TestLinefeeds
             String exp = "["+OUT_SPACES1+OUT_SPACES2+"]";
 
             assertEquals(printable(exp), printable(data));
+
+            // Plus, should get the close element too
+            assertEquals(END_ELEMENT, sr.next());
+            assertEquals("root", sr.getLocalName());
+            assertEquals(null, sr.getPrefix());
+
+            // And then the end doc
+            assertEquals(END_DOCUMENT, sr.next());
+        }
+    }
+
+    public void testLfInComment()
+        throws XMLStreamException
+    {
+        final String contents = "<root>"
+            +"<!--"+IN_SPACES1+"-->"
+            +"<!--"+IN_SPACES2+"-->"
+            +"<!--"+IN_MIXED1+"-->"
+            +"</root>";
+
+        /* There really shouldn't be any difference between coalescing/non
+         * or namespace aware/non-ns modes, but let's try out the combinations
+         * just in case (some implementations may internally have differing
+         * handling)
+         */
+        for (int i = 0; i < 4; ++i) {
+            XMLInputFactory f = getInputFactory();
+            setCoalescing(f, ((i & 1) == 0));
+            setNamespaceAware(f, ((i & 2) == 0));
+
+            XMLStreamReader sr = constructStreamReader(f, contents);
+
+            // Then should get the root element:
+            // Either way, needs to have the root element now
+            assertEquals(START_ELEMENT, sr.next());
+            assertEquals("root", sr.getLocalName());
+            assertEquals(null, sr.getPrefix());
+
+            assertEquals(COMMENT, sr.next());
+            assertEquals(printable(OUT_SPACES1), printable(sr.getText()));
+            assertEquals(COMMENT, sr.next());
+            assertEquals(printable(OUT_SPACES2), printable(sr.getText()));
+            assertEquals(COMMENT, sr.next());
+            assertEquals(printable(OUT_MIXED1), printable(sr.getText()));
 
             // Plus, should get the close element too
             assertEquals(END_ELEMENT, sr.next());
