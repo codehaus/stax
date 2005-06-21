@@ -258,6 +258,30 @@ public class TestNamespaces
         testPotentiallyInvalid(false);
     }
 
+    public void testDefaultNs()
+        throws XMLStreamException
+    {
+        final String XML = "<root xmlns='url' />";
+
+        XMLStreamReader sr = getNsReader(XML, true);
+        assertEquals(START_ELEMENT, sr.next());
+        assertEquals("root", sr.getLocalName());
+        /* 07-Jun-2005, TSa: Prefix may probably be either null or empty
+         *   String?
+         */
+        //assertEquals("", sr.getPrefix());
+        assertEquals("url", sr.getNamespaceURI());
+        NamespaceContext ctxt = sr.getNamespaceContext();
+        assertEquals(1, sr.getNamespaceCount());
+        assertEquals("url", sr.getNamespaceURI(0));
+        assertEquals("", sr.getNamespacePrefix(0));
+
+        assertEquals("url", ctxt.getNamespaceURI(""));
+        assertEquals("", ctxt.getPrefix("url"));
+        assertNull(ctxt.getNamespaceURI("b"));
+        assertNull(ctxt.getPrefix("ns:b"));
+    }
+
     /**
      * Test case that verifies that namespaces properly nest, and
      * inner definitions (ns in child element) can mask outer

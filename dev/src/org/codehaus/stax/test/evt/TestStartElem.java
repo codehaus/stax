@@ -55,9 +55,73 @@ public class TestStartElem
         assertEquals("http://my", nsCtxt.getNamespaceURI(""));
         assertEquals("ns:attrs", nsCtxt.getNamespaceURI("a"));
 
+        // Plus, let's check the other namespace access:
+        Iterator it = se.getNamespaces();
+        assertEquals(2, countElements(it));
+
         assertTokenType(END_ELEMENT, er.nextEvent().getEventType());
         assertTokenType(END_DOCUMENT, er.nextEvent().getEventType());
         assertFalse(er.hasNext());
+    }
+
+    public void testNestedStartElemNs()
+        throws XMLStreamException
+    {
+        String XML = "<root><leaf xmlns='x' />"
+            +"<branch xmlns:a='b'><leaf xmlns:a='c' /></branch>"
+            +"</root>";
+
+        XMLEventReader er = getReader(XML, true, false);
+        assertTokenType(START_DOCUMENT, er.nextEvent().getEventType());
+        XMLEvent evt = er.nextEvent();
+        assertTokenType(START_ELEMENT, evt.getEventType());
+        StartElement se = evt.asStartElement();
+
+        // Let's first check that it has 1 declaration:
+        assertEquals(0, countElements(se.getNamespaces()));
+        NamespaceContext nsCtxt = se.getNamespaceContext();
+        assertNotNull("StartElement.getNamespaceContext() should never return null", nsCtxt);
+        assertNull(nsCtxt.getPrefix("a"));
+        assertNull(nsCtxt.getNamespaceURI("b"));
+
+        // then first leaf:
+        evt = er.nextEvent();
+        assertTrue(evt.isStartElement());
+        se = evt.asStartElement();
+        assertEquals("leaf", se.getName().getLocalPart());
+        assertEquals(1, countElements(se.getNamespaces()));
+        assertEquals("x", se.getName().getNamespaceURI());
+        nsCtxt = se.getNamespaceContext();
+        assertEquals("x", nsCtxt.getNamespaceURI(""));
+        assertEquals("", nsCtxt.getPrefix("x"));
+
+        assertTrue(er.nextEvent().isEndElement());
+
+        // Ok, branch:
+        evt = er.nextEvent();
+        assertTrue(evt.isStartElement());
+        se = evt.asStartElement();
+        assertEquals("branch", se.getName().getLocalPart());
+        assertEquals(1, countElements(se.getNamespaces()));
+        nsCtxt = se.getNamespaceContext();
+        assertEquals("a", nsCtxt.getPrefix("b"));
+        assertEquals("b", nsCtxt.getNamespaceURI("a"));
+
+        // second leaf
+        evt = er.nextEvent();
+        assertTrue(evt.isStartElement());
+        se = evt.asStartElement();
+        nsCtxt = se.getNamespaceContext();
+        assertEquals("leaf", se.getName().getLocalPart());
+        assertEquals(1, countElements(se.getNamespaces()));
+        nsCtxt = se.getNamespaceContext();
+        assertEquals("a", nsCtxt.getPrefix("c"));
+        assertEquals("c", nsCtxt.getNamespaceURI("a"));
+        // ok, but how about masking:
+        assertNull(nsCtxt.getPrefix("b"));
+
+        // Ok, fine... others we don't care about:
+        assertTrue(er.nextEvent().isEndElement());
     }
 
     /*
@@ -65,6 +129,17 @@ public class TestStartElem
     // Internal methods:
     /////////////////////////////////////////////////
      */
+
+    private int countElements(Iterator it) {
+        int count = 0;
+        if (it != null) {
+            while (it.hasNext()) {
+                ++count;
+                it.next();
+            }
+        }
+        return count;
+    }
 
     private XMLEventReader getReader(String contents, boolean nsAware,
                                      boolean coalesce)
