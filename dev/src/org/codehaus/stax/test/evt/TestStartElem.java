@@ -3,6 +3,7 @@ package org.codehaus.stax.test.evt;
 import java.util.*;
 
 import javax.xml.namespace.NamespaceContext;
+import javax.xml.namespace.QName;
 import javax.xml.stream.*;
 import javax.xml.stream.events.*;
 
@@ -17,6 +18,10 @@ public class TestStartElem
         super(name);
     }
 
+    /**
+     * Simple tests to ensure that the namespace declarations are properly
+     * parsed and accessible via {@link StartElement}.
+     */
     public void testStartElemNs()
         throws XMLStreamException
     {
@@ -124,6 +129,47 @@ public class TestStartElem
         assertTrue(er.nextEvent().isEndElement());
     }
 
+    /**
+     * Test to check that attributes can be accessed normally via
+     * {@link StartElement} instances.
+     */
+    public void testStartElemAttrs()
+        throws XMLStreamException
+    {
+        String XML = "<root xmlns:a='ns:attrs' "
+            +"attr1='value1' a:attr2='value2'"
+            +"><leaf xmlns='url:ns2' attr='x' /></root>";
+
+        XMLEventReader er = getReader(XML, true, false);
+        assertTokenType(START_DOCUMENT, er.nextEvent().getEventType());
+
+        XMLEvent evt = er.nextEvent();
+        assertTokenType(START_ELEMENT, evt.getEventType());
+        StartElement se = evt.asStartElement();
+
+	assertAttr(se, "", "attr1", "value1");
+	assertAttr(se, "ns:attrs", "attr2", "value2");
+	assertAttr(se, "", "attr2", null);
+	assertAttr(se, "ns:attrs", "attr1", null);
+
+        evt = er.nextEvent();
+        assertTokenType(START_ELEMENT, evt.getEventType());
+        se = evt.asStartElement();
+
+	// One we should find (note: def. ns is not used!)
+	assertAttr(se, "", "attr", "x");
+
+	// and then ones that aren't there...
+	assertAttr(se, "url:ns2", "attr", null);
+	assertAttr(se, "url:ns2", "x", null);
+	assertAttr(se, "ns:foo", "foobar", null);
+	assertAttr(se, "", "attr1", null);
+
+        assertTokenType(END_ELEMENT, er.nextEvent().getEventType());
+        assertTokenType(END_ELEMENT, er.nextEvent().getEventType());
+        assertTokenType(END_DOCUMENT, er.nextEvent().getEventType());
+    }
+
     /*
     /////////////////////////////////////////////////
     // Internal methods:
@@ -139,6 +185,21 @@ public class TestStartElem
             }
         }
         return count;
+    }
+
+    private void assertAttr(StartElement se, String nsURI, String localName,
+			    String expValue)
+    {
+	QName qn = new QName(nsURI, localName);
+	Attribute attr = se.getAttributeByName(qn);
+
+	if (expValue == null) {
+	    assertNull("Should not find attribute '"+qn+"'", attr);
+	} else {
+	    assertNotNull("Should find attribute '"+qn+"' but got null", attr);
+	    assertEquals("Attribute '"+qn+"' has unexpected value",
+			 expValue, attr.getValue());
+	}
     }
 
     private XMLEventReader getReader(String contents, boolean nsAware,
