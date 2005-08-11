@@ -31,6 +31,21 @@ public class TestEnumAttrRead
         streamThrough(getValidatingReader(XML, true));
     }
 
+
+    public void testValidAttrDecl2()
+        throws XMLStreamException
+    {
+        /* Following should be ok, only problematic if DTD parser is
+         * either trying to match SGML comments, or otherwise unhappy
+         * about hyphen starting an NMTOKEN.
+         */
+        String XML = "<!DOCTYPE root [\n"
+            +"<!ELEMENT root EMPTY>\n"
+            +"<!ATTLIST root attr (- | on | -- | off-white) #IMPLIED>\n"
+            +"]>\n<root />";
+        streamThrough(getReader(XML));
+    }
+
     public void testInvalidAttrDecl()
         throws XMLStreamException
     {
