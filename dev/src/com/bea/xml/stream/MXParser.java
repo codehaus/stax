@@ -1216,6 +1216,9 @@ public class MXParser
     next();
     // Skip white space, comments and processing instructions:
     while ((eventType == XMLStreamConstants.CHARACTERS && isWhiteSpace())
+           || (eventType == XMLStreamConstants.CDATA && isWhiteSpace())
+           // skip whitespace
+           || eventType == XMLStreamConstants.SPACE
            || eventType == XMLStreamConstants.COMMENT
            || eventType == XMLStreamConstants.PROCESSING_INSTRUCTION) {
         next();
