@@ -7,7 +7,7 @@
 <!-- a comment -->
 <?pi a pi?>
 <?name ?>
-<? ?>
+
 <doc xmlns="rootbaseuri" xmlns:a="http:a" a:x="y">
 <h:hello xmlns:h="testuri1" xmlns="baseuri">
 <h:a>foo bar foo</h:a>
