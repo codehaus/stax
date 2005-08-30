@@ -36,7 +36,11 @@ import com.wutka.dtd.DTDAttlist;
 import com.wutka.dtd.DTDAttribute;
 
 
-
+/**
+ * XML Streaming Parser.
+ *
+ * @author Aleksander Slominski
+ */
 public class MXParser
   implements XMLStreamReader, Location
 {
@@ -72,15 +76,15 @@ public class MXParser
     };
     
     // TODO - cwitt : split TEXT into CHARACTERS and WHITESPACE
-    private static final int TEXT=0x00004000; 
+    private static final int TEXT=0x00004000;
     // TODO - cwitt : remove DOCDECL ?
-    private static final int DOCDECL=0x00008000; 
+    private static final int DOCDECL=0x00008000;
     // TODO - cwitt : move to XMLEvent ?
     // will not be available in event interface (info under start_document
     // in that case), just in cursor
   //private static final int XML_DECLARATION=0x00010000;
     // NOTE - cwitt : from XmlPullParser interface
-    public static final String NO_NAMESPACE = "";    
+    public static final String NO_NAMESPACE = "";
     
     /**
      * Implementation notice:
@@ -366,7 +370,7 @@ public class MXParser
     protected int namespaceEnd;
     protected String namespacePrefix[] = NO_STRINGS;
     protected int namespacePrefixHash[];
-    protected String namespaceUri[] = NO_STRINGS; 
+    protected String namespaceUri[] = NO_STRINGS;
 
     protected void ensureNamespacesCapacity(int size) {
         int namespaceSize = namespacePrefix != null ? namespacePrefix.length : 0;
@@ -629,12 +633,12 @@ public class MXParser
         if(name == null) throw new IllegalArgumentException("feature name should not be nulll");
         if(FEATURE_PROCESS_NAMESPACES.equals(name)) {
             if(eventType != XMLStreamConstants.START_DOCUMENT) throw new XMLStreamException(
-                    "namespace processing feature can only be changed before parsing", 
+                    "namespace processing feature can only be changed before parsing",
                     getLocation());
             processNamespaces = state;
             //        } else if(FEATURE_REPORT_NAMESPACE_ATTRIBUTES.equals(name)) {
             //      if(type != XMLStreamConstants.START_DOCUMENT) throw new XMLStreamException(
-            //              "namespace reporting feature can only be changed before parsing", 
+            //              "namespace reporting feature can only be changed before parsing",
             // getLineNumber(), getColumnNumber(), getPositionDescription(), null);
             //            reportNsAttribs = state;
         } else if(FEATURE_NAMES_INTERNED.equals(name)) {
@@ -687,7 +691,7 @@ public class MXParser
     }
 
 
-  public boolean checkForXMLDecl() 
+  public boolean checkForXMLDecl()
     throws XMLStreamException
   {
     try {
@@ -744,7 +748,7 @@ public class MXParser
                 }
             } catch (UnsupportedEncodingException une) {
                 throw new XMLStreamException(
-                    "could not create reader for encoding "+inputEncoding+" : "+une, 
+                    "could not create reader for encoding "+inputEncoding+" : "+une,
                     getLocation(), une);
             }
         } else {
@@ -773,11 +777,11 @@ public class MXParser
         entityNameBuf[entityEnd] = entityName.toCharArray();
 
         entityReplacement[entityEnd] = replacementText;
-	/* 06-Nov-2004, TSa: Null is apparently returned for external
-	 *   entities (including parsed ones); to prevent an NPE, let's
-	 *   just use a shared dummy array... (could use null too?)
-	 */
-	char[] ch = (replacementText == null) ? NO_CHARS : replacementText.toCharArray();
+        /* 06-Nov-2004, TSa: Null is apparently returned for external
+         *   entities (including parsed ones); to prevent an NPE, let's
+         *   just use a shared dummy array... (could use null too?)
+         */
+        char[] ch = (replacementText == null) ? NO_CHARS : replacementText.toCharArray();
         entityReplacementBuf[entityEnd] = ch;
         if(!allStringsInterned) {
             entityNameHash[ entityEnd ] =
@@ -789,7 +793,7 @@ public class MXParser
     }
 
 
-  public int getNamespaceCount() 
+  public int getNamespaceCount()
   {
     if (!isElementEvent(eventType)) {
         throw new IllegalStateException("Current state not START_ELEMENT or END_ELEMENT");
@@ -951,11 +955,11 @@ public class MXParser
             return true;
 
         // COMMENT - cwitt : our interface doesn't define this
-        // (and is 'meant to be slightly different anyway' - quote cfry)                        
+        // (and is 'meant to be slightly different anyway' - quote cfry)
         // throw new XMLStreamException("no content available to check for whitespaces");
 
         } else {
-            return false; 
+            return false;
         }
     }
   
@@ -971,7 +975,7 @@ public class MXParser
             //      } else {
             return null;
             //      }
-        } else 
+        } else
         */
         if(eventType == XMLStreamConstants.ENTITY_REFERENCE) {
             return text;
@@ -1042,8 +1046,8 @@ public class MXParser
     public String getAttributeNamespace(int index)
     {
         if(eventType != XMLStreamConstants.START_ELEMENT) {
-	    throw new IllegalStateException("only START_ELEMENT can have attributes");
-	}
+            throw new IllegalStateException("only START_ELEMENT can have attributes");
+        }
         if(processNamespaces == false) return NO_NAMESPACE;
         if(index < 0 || index >= attributeCount) throw new IndexOutOfBoundsException(
                 "attribute position must be 0.."+(attributeCount-1)+" and not "+index);
@@ -1053,8 +1057,8 @@ public class MXParser
     public String getAttributeLocalName(int index)
     {
         if(eventType != XMLStreamConstants.START_ELEMENT) {
-	    throw new IllegalStateException("only START_ELEMENT can have attributes");
-	}
+            throw new IllegalStateException("only START_ELEMENT can have attributes");
+        }
         if(index < 0 || index >= attributeCount) throw new IndexOutOfBoundsException(
                 "attribute position must be 0.."+(attributeCount-1)+" and not "+index);
         return attributeName[ index ];
@@ -1063,8 +1067,8 @@ public class MXParser
     public String getAttributePrefix(int index)
     {
         if(eventType != XMLStreamConstants.START_ELEMENT) {
-	    throw new IllegalStateException("only START_ELEMENT can have attributes");
-	}
+            throw new IllegalStateException("only START_ELEMENT can have attributes");
+        }
         if(processNamespaces == false) return null;
         if(index < 0 || index >= attributeCount) throw new IndexOutOfBoundsException(
                 "attribute position must be 0.."+(attributeCount-1)+" and not "+index);
@@ -1073,8 +1077,8 @@ public class MXParser
 
     public String getAttributeType(int index) {
         if(eventType != XMLStreamConstants.START_ELEMENT) {
-	    throw new IllegalStateException("only START_ELEMENT can have attributes");
-	}
+            throw new IllegalStateException("only START_ELEMENT can have attributes");
+        }
         if(index < 0 || index >= attributeCount) throw new IndexOutOfBoundsException(
                 "attribute position must be 0.."+(attributeCount-1)+" and not "+index);
         return "CDATA";
@@ -1082,8 +1086,8 @@ public class MXParser
 
     public boolean isAttributeSpecified(int index) {
         if(eventType != XMLStreamConstants.START_ELEMENT) {
-	    throw new IllegalStateException("only START_ELEMENT can have attributes");
-	}
+            throw new IllegalStateException("only START_ELEMENT can have attributes");
+        }
         if(index < 0 || index >= attributeCount) throw new IndexOutOfBoundsException(
                 "attribute position must be 0.."+(attributeCount-1)+" and not "+index);
         return true;
@@ -1092,8 +1096,8 @@ public class MXParser
     public String getAttributeValue(int index)
     {
         if(eventType != XMLStreamConstants.START_ELEMENT) {
-	    throw new IllegalStateException("only START_ELEMENT can have attributes");
-	}
+            throw new IllegalStateException("only START_ELEMENT can have attributes");
+        }
         if(index < 0 || index >= attributeCount) throw new IndexOutOfBoundsException(
                 "attribute position must be 0.."+(attributeCount-1)+" and not "+index);
         return attributeValue[ index ];
@@ -1103,8 +1107,8 @@ public class MXParser
                                     String name)
     {
         if(eventType != XMLStreamConstants.START_ELEMENT) {
-	    throw new IllegalStateException("only START_ELEMENT can have attributes");
-	}
+            throw new IllegalStateException("only START_ELEMENT can have attributes");
+        }
         if(name == null) {
             throw new IllegalArgumentException("attribute name can not be null");
         }
@@ -1141,7 +1145,7 @@ public class MXParser
         boolean ok = (type == currType);
 
         if (ok && name != null) {
-            if (currType == START_ELEMENT || currType == END_ELEMENT 
+            if (currType == START_ELEMENT || currType == END_ELEMENT
                 || currType == ENTITY_REFERENCE) {
                 ok = name.equals(getLocalName());
             } else {
@@ -1183,7 +1187,7 @@ public class MXParser
     {
         if(getEventType() != XMLStreamConstants.START_ELEMENT) {
             throw new XMLStreamException(
-                "parser must be on START_ELEMENT to read next text", 
+                "parser must be on START_ELEMENT to read next text",
                 getLocation());
         }
         int eventType = next();
@@ -1193,7 +1197,7 @@ public class MXParser
             if(eventType != XMLStreamConstants.END_ELEMENT) {
                 throw new XMLStreamException(
                     "TEXT must be immediately followed by END_ELEMENT and not "
-                    +ElementTypeNames.getEventTypeString(getEventType()), 
+                    +ElementTypeNames.getEventTypeString(getEventType()),
                     getLocation());
             }
             return result;
@@ -1201,12 +1205,12 @@ public class MXParser
             return "";
         } else {
             throw new XMLStreamException(
-                "parser must be on START_ELEMENT or TEXT to read text", 
+                "parser must be on START_ELEMENT or TEXT to read text",
                 getLocation());
         }
     }
 
-  public int nextTag() 
+  public int nextTag()
     throws XMLStreamException
   {
     next();
@@ -1218,14 +1222,14 @@ public class MXParser
     }
     if (eventType != XMLStreamConstants.START_ELEMENT && eventType != XMLStreamConstants.END_ELEMENT) {
       throw new XMLStreamException("expected XMLStreamConstants.START_ELEMENT or XMLStreamConstants.END_ELEMENT not "
-                                   +ElementTypeNames.getEventTypeString(getEventType()),                                          
+                                   +ElementTypeNames.getEventTypeString(getEventType()),
                                    getLocation());
     }
     return eventType;
   }
 
-  public String getElementText() 
-    throws XMLStreamException 
+  public String getElementText()
+    throws XMLStreamException
   {
     StringBuffer buf = new StringBuffer();
     if(getEventType() != START_ELEMENT)
@@ -1243,9 +1247,9 @@ public class MXParser
   }
 
   public int next() throws XMLStreamException {
-    tokenize = true;    
+    tokenize = true;
     pcEnd = pcStart = 0;
-    usePC = false;    
+    usePC = false;
     return nextImpl();
   }
   
@@ -1254,8 +1258,8 @@ public class MXParser
     return nextImpl();
   }
   
-  public int nextElement() throws XMLStreamException {     
-    return nextTag();      
+  public int nextElement() throws XMLStreamException {
+    return nextTag();
   }
   
   public boolean hasNext() throws XMLStreamException {
@@ -1263,7 +1267,7 @@ public class MXParser
   }
 
   public void skip() throws XMLStreamException {
-    nextToken();   
+    nextToken();
   }
 
   public void close() throws XMLStreamException {
@@ -1272,19 +1276,19 @@ public class MXParser
   
   public boolean isStartElement() {
     return (eventType == XMLStreamConstants.START_ELEMENT);
-  }        
+  }
   
   public boolean isEndElement() {
     return (eventType == XMLStreamConstants.END_ELEMENT);
-  }        
+  }
   
   public boolean isCharacters() {
     return (eventType == XMLStreamConstants.CHARACTERS);
-  }        
+  }
   
   public boolean isEOF() {
     return (eventType == XMLStreamConstants.END_DOCUMENT);
-  }        
+  }
   
   public boolean moveToStartElement() throws XMLStreamException {
     if (isStartElement()) return true;
@@ -1294,9 +1298,9 @@ public class MXParser
         next();
     }
     return false;
-  }        
+  }
   
-  public boolean moveToStartElement(String localName) 
+  public boolean moveToStartElement(String localName)
     throws XMLStreamException
   {
     if (localName == null) return false;
@@ -1306,7 +1310,7 @@ public class MXParser
       next();
     }
     return false;
-  }        
+  }
   
   public boolean moveToStartElement(String localName, String namespaceUri)
     throws XMLStreamException
@@ -1318,7 +1322,7 @@ public class MXParser
       next();
     }
     return false;
-  }        
+  }
   
   public boolean moveToEndElement() throws XMLStreamException {
     if (isEndElement()) return true;
@@ -1328,7 +1332,7 @@ public class MXParser
         next();
     }
     return false;
-  }        
+  }
   
   public boolean moveToEndElement(String localName)
     throws XMLStreamException
@@ -1340,10 +1344,10 @@ public class MXParser
       next();
     }
     return false;
-  }        
+  }
   
   public boolean moveToEndElement(String localName, String namespaceUri)
-    throws XMLStreamException 
+    throws XMLStreamException
   {
     if (localName == null || namespaceUri == null) return false;
     while(moveToEndElement(localName)) {
@@ -1352,7 +1356,7 @@ public class MXParser
       next();
     }
     return false;
-  }        
+  }
   
   public boolean hasAttributes() {
     if (getAttributeCount() > 0)
@@ -1362,11 +1366,11 @@ public class MXParser
   
   public boolean hasNamespaces() {
     if(getNamespaceCount() > 0)
-      return true;  
+      return true;
     return false;
-  }    
+  }
 
-  public Iterator getAttributes() {    
+  public Iterator getAttributes() {
     if (!hasAttributes()) return EmptyIterator.emptyIterator;
     int attributeCount = getAttributeCount();
     ArrayList atts = new ArrayList();
@@ -1384,7 +1388,7 @@ public class MXParser
                                                  int namespaceCount) {
     ArrayList ns = new ArrayList();
     int startNs = elNamespaceCount[ depth - 1 ];
-    for (int i = 0; i < namespaceCount; i++){  
+    for (int i = 0; i < namespaceCount; i++){
       String prefix = getLocalNamespacePrefix(i+startNs);
       if(prefix == null){
         ns.add(new NamespaceBase(getLocalNamespaceURI(i+startNs)));
@@ -1437,7 +1441,7 @@ public class MXParser
     if (getTextStart()+sourceStart >= getTextLength())
       throw new ArrayIndexOutOfBoundsException();
     int numCopy;
-    if (getTextStart()+sourceStart+length < getTextLength()) 
+    if (getTextStart()+sourceStart+length < getTextLength())
       numCopy = length;
     else
       numCopy = getTextLength() - (getTextStart()+sourceStart);
@@ -1493,14 +1497,14 @@ public class MXParser
   
   public String getValue() {
     return getText();
-  }    
+  }
   
   public String getEncoding() {
     return getInputEncoding();
   }
   
-  public int getCharacterOffset() {   
-    // TODO - cwitt : which buffer are we using? 
+  public int getCharacterOffset() {
+    // TODO - cwitt : which buffer are we using?
     return posEnd;
   }
 
@@ -1543,7 +1547,7 @@ public class MXParser
   
   public boolean hasName() {
         /*
-    return (0 != (eventType  & (XMLStreamConstants.START_ELEMENT 
+    return (0 != (eventType  & (XMLStreamConstants.START_ELEMENT
                             | XMLStreamConstants.END_ELEMENT
                             | XMLStreamConstants.ENTITY_REFERENCE)));
         */
@@ -1569,7 +1573,7 @@ public class MXParser
   // COMMENT - cwitt : end of added XMLStreamReader impl
   
   protected int nextImpl() throws XMLStreamException
-  {      
+  {
     try {
       
       text = null;
@@ -1683,7 +1687,7 @@ public class MXParser
                 //                if(tokenize) return eventType = XMLStreamConstants.CDATA;
               } else {
                 throw new XMLStreamException(
-                                             "unexpected character in markup "+printable(ch), 
+                                             "unexpected character in markup "+printable(ch),
                                              getLocation());
               }
 
@@ -1700,7 +1704,7 @@ public class MXParser
               return eventType = parseStartTag();
             } else {
               throw new XMLStreamException(
-                                           "unexpected character in markup "+printable(ch), 
+                                           "unexpected character in markup "+printable(ch),
                                            getLocation());
             }
             // do content comapctation if it makes sense!!!!
@@ -1850,7 +1854,7 @@ public class MXParser
             if(ch == '\uFFFE') {
                 throw new XMLStreamException(
                     "first character in input was UNICODE noncharacter (0xFFFE)"+
-                        "- input requires int swapping", 
+                        "- input requires int swapping",
                     getLocation());
             }
             if(ch == '\uFEFF') {
@@ -1887,7 +1891,7 @@ public class MXParser
                     if(ch == 'D') {
                         if(seenDocdecl) {
                             throw new XMLStreamException(
-                                "only one docdecl allowed in XML document", 
+                                "only one docdecl allowed in XML document",
                                 getLocation());
                         }
                         seenDocdecl = true;
@@ -1898,19 +1902,19 @@ public class MXParser
                         if(tokenize) return eventType = XMLStreamConstants.COMMENT;
                     } else {
                         throw new XMLStreamException(
-                            "unexpected markup <!"+printable(ch), 
+                            "unexpected markup <!"+printable(ch),
                             getLocation());
                     }
                 } else if(ch == '/') {
                     throw new XMLStreamException(
-                        "expected start tag name and not "+printable(ch), 
+                        "expected start tag name and not "+printable(ch),
                         getLocation());
                 } else if(isNameStartChar(ch)) {
                     seenRoot = true;
                     return parseStartTag();
                 } else {
                     throw new XMLStreamException(
-                        "expected start tag name and not "+printable(ch), 
+                        "expected start tag name and not "+printable(ch),
                         getLocation());
                 }
             } else if(isS(ch)) {
@@ -1933,7 +1937,7 @@ public class MXParser
     {
         if(eventType == XMLStreamConstants.END_DOCUMENT) {
             throw new XMLStreamException(
-              "already reached end document", 
+              "already reached end document",
               getLocation());
         }
         if(reachedEnd) {
@@ -1976,16 +1980,16 @@ public class MXParser
                             if(tokenize) return eventType = XMLStreamConstants.COMMENT;
                         } else {
                             throw new XMLStreamException(
-                                "unexpected markup <!"+printable(ch), 
+                                "unexpected markup <!"+printable(ch),
                                 getLocation());
                         }
                     } else if(ch == '/') {
                         throw new XMLStreamException(
-                            "end tag not allowed in epilog but got "+printable(ch), 
+                            "end tag not allowed in epilog but got "+printable(ch),
                             getLocation());
                     } else if(isNameStartChar(ch)) {
                         throw new XMLStreamException(
-                            "start tag not allowed in epilog but got "+printable(ch), 
+                            "start tag not allowed in epilog but got "+printable(ch),
                             getLocation());
                     } else {
                         throw new XMLStreamException(
@@ -2031,7 +2035,7 @@ public class MXParser
         char ch = more();
         if(!isNameStartChar(ch)) {
             throw new XMLStreamException(
-                "expected name start and not "+printable(ch), 
+                "expected name start and not "+printable(ch),
                 getLocation());
         }
         posStart = pos - 3;
@@ -2117,7 +2121,7 @@ public class MXParser
                 "when namespaces processing enabled colon can not be at element name start",
                 getLocation());
         while(true) {
-            ch = more();           
+            ch = more();
             if(!isNameChar(ch)) break;
             if(ch == ':' && processNamespaces) {
                 if(colonPos != -1) throw new XMLStreamException(
@@ -2178,7 +2182,7 @@ public class MXParser
                 continue;
             } else {
                 throw new XMLStreamException(
-                    "start tag unexpected character "+printable(ch), 
+                    "start tag unexpected character "+printable(ch),
                     getLocation());
             }
             //ch = more(); // skip space
@@ -2243,7 +2247,7 @@ public class MXParser
                         String attr2 = attributeName[i];
                         if(attributeUri[i] != null) attr2 = attributeUri[i]+":"+attr2;
                         throw new XMLStreamException(
-                            "duplicated attributes "+attr1+" and "+attr2, 
+                            "duplicated attributes "+attr1+" and "+attr2,
                             getLocation());
                     }
                 }
@@ -2268,7 +2272,7 @@ public class MXParser
                         String attr1 = attributeName[j];
                         String attr2 = attributeName[i];
                         throw new XMLStreamException(
-                            "duplicated attributes "+attr1+" and "+attr2, 
+                            "duplicated attributes "+attr1+" and "+attr2,
                             getLocation());
                     }
                 }
@@ -2290,8 +2294,8 @@ public class MXParser
         return XMLStreamConstants.START_ELEMENT;
     }
 
-  protected void addDefaultAttributes(String elementName) 
-    throws XMLStreamException 
+  protected void addDefaultAttributes(String elementName)
+    throws XMLStreamException
   {
     if (defaultAttributes == null) return;
     DTDAttlist attList = (DTDAttlist) defaultAttributes.get(elementName);
@@ -2352,7 +2356,7 @@ public class MXParser
                     else if(xmlnsPos == 5) {
                         if(ch != ':') throw new XMLStreamException(
                                 "after xmlns in attribute name must be colon"
-                                    +"when namespaces are enabled", 
+                                    +"when namespaces are enabled",
                                 getLocation());
                         //colonPos = pos - 1 + bufAbsoluteStart;
                     }
@@ -2431,7 +2435,7 @@ public class MXParser
         char delimit = ch;
         if(delimit != '"' && delimit != '\'') throw new XMLStreamException(
                 "attribute value must start with quotation or apostrophe not "
-                    +printable(delimit), 
+                    +printable(delimit),
                 getLocation());
         // parse until delimit or < and resolve Reference
         //[67] Reference ::= EntityRef | CharRef
@@ -2732,9 +2736,9 @@ public class MXParser
 
     protected void parseComment()
         throws XMLStreamException
-    {        
+    {
         // implements XML 1.0 Section 2.5 XMLStreamConstants.COMMENTs
-        //ASSUMPTION: seen <!-     
+        //ASSUMPTION: seen <!-
         
         try {
             
@@ -2749,8 +2753,8 @@ public class MXParser
             boolean seenDash = false;
             boolean seenDashDash = false;
             while(true) {
-                // scan until it hits -->              
-                ch = more();               
+                // scan until it hits -->
+                ch = more();
                 if(seenDashDash && ch != '>') {
                     throw new XMLStreamException(
                         "in COMMENT after two dashes (--) next character must be >"
@@ -2780,11 +2784,11 @@ public class MXParser
                 "COMMENT started on line "+curLine+" and column "+curColumn+" was not closed",
                 getLocation(), ex);
         }
-        if(tokenize) posEnd = pos - 3;      
+        if(tokenize) posEnd = pos - 3;
 
         } catch (EOFException eofe) {
             throw new XMLStreamException(eofe);
-        }        
+        }
     }
 
   public String getPITarget() {
@@ -2844,7 +2848,7 @@ public class MXParser
 
       // Let's first verify there was a target:
       int targetLen = piTargetEnd - piTargetStart;
-      if(targetLen == 0) { // missing target 
+      if(targetLen == 0) { // missing target
           throw new XMLStreamException("processing instruction must have PITarget name", getLocation());
       }
 
@@ -3031,10 +3035,10 @@ public class MXParser
         ch = skipS(ch);
         if(ch != '?') {
             ch = skipS(ch);
-	    /* 07-Nov-2004, TSa: This is wrong (see bug #187); encoding
-	     *    declaration is optional: may as well get stand-alone
-	     *    declaration at this point.
-	     */
+            /* 07-Nov-2004, TSa: This is wrong (see bug #187); encoding
+             *    declaration is optional: may as well get stand-alone
+             *    declaration at this point.
+             */
             ch = requireInput(ch, ENCODING);
             ch = skipS(ch);
             if(ch != '=') {
@@ -3107,7 +3111,7 @@ public class MXParser
                         "expected 'yes' or 'no' after standalone and not "
                             +printable(ch), getLocation());
                 }
-		standaloneSet = true;
+                standaloneSet = true;
                 if(ch != quotChar) {
                     throw new XMLStreamException(
                         "expected "+quotChar+" after standalone value not "
@@ -3131,7 +3135,7 @@ public class MXParser
 
         } catch (EOFException eofe) {
             throw new XMLStreamException(eofe);
-        }        
+        }
     }
 
     protected void parseDocdecl()
@@ -3140,39 +3144,39 @@ public class MXParser
         //ASSUMPTION: seen <!D
         posStart = pos-3;
         try {
-	  if(more() != 'O'
-	     || more() != 'C'
-	     || more() != 'T'
-	     || more() != 'Y'
-	     || more() != 'P'
-	     || more() != 'E') {
-	      throw new XMLStreamException("expected <!DOCTYPE", getLocation());
-	  }
-	  
-	  // do simple and crude scanning for end of doctype
-	  
-	  // [28]  doctypedecl ::= '<!DOCTYPE' S Name (S ExternalID)? S? ('['
-	  //                      (markupdecl | DeclSep)* ']' S?)? '>'
+          if(more() != 'O'
+             || more() != 'C'
+             || more() != 'T'
+             || more() != 'Y'
+             || more() != 'P'
+             || more() != 'E') {
+              throw new XMLStreamException("expected <!DOCTYPE", getLocation());
+          }
+          
+          // do simple and crude scanning for end of doctype
+          
+          // [28]  doctypedecl ::= '<!DOCTYPE' S Name (S ExternalID)? S? ('['
+          //                      (markupdecl | DeclSep)* ']' S?)? '>'
 
-	  /* 07-Nov-2004, TSa: Should be fairly easy to verify (obligatory)
-	   *   root element, and optional public/system ids too.
-	   */
+          /* 07-Nov-2004, TSa: Should be fairly easy to verify (obligatory)
+           *   root element, and optional public/system ids too.
+           */
 
-	  int bracketLevel = 0;
-	  while(true) {
-	      char ch = more();
-	      if(ch == '[') ++bracketLevel;
-	      if(ch == ']') --bracketLevel;
-	      if(ch == '>' && bracketLevel == 0) break;
-	  }
-	  posEnd = pos ;
-	  processDTD();
+          int bracketLevel = 0;
+          while(true) {
+              char ch = more();
+              if(ch == '[') ++bracketLevel;
+              if(ch == ']') --bracketLevel;
+              if(ch == '>' && bracketLevel == 0) break;
+          }
+          posEnd = pos ;
+          processDTD();
         } catch (EOFException eofe) {
             throw new XMLStreamException(eofe);
         }
     }
 
-  protected void processDTD() 
+  protected void processDTD()
     throws XMLStreamException
   {
     try {
@@ -3184,7 +3188,7 @@ public class MXParser
         DTDParser dtdParser = new DTDParser(
                               new java.io.StringReader(expectedDTD));
         DTD dtd = dtdParser.parse();
-        java.io.StringWriter out = new java.io.StringWriter(); 
+        java.io.StringWriter out = new java.io.StringWriter();
         // Get general entities
         Vector v = dtd.getItemsByType(
             (new com.wutka.dtd.DTDEntity()).getClass());
@@ -3208,7 +3212,7 @@ public class MXParser
 
             DTDAttribute att = atts[i];
             if (att.getDefaultValue() != null) {
-              if (defaultAttributes == null) 
+              if (defaultAttributes == null)
                 defaultAttributes = new HashMap();
               defaultAttributes.put(list.getName(),
                                     list);
@@ -3236,14 +3240,14 @@ public class MXParser
       try {
 
         if(more() != 'C'
-	   || more() != 'D'
-	   || more() != 'A'
-	   || more() != 'T'
-	   || more() != 'A'
-	   || more() != '['
-	   ) {
-	    throw new XMLStreamException("expected <[CDATA[ for CDATA start", getLocation());
-	}
+           || more() != 'D'
+           || more() != 'A'
+           || more() != 'T'
+           || more() != 'A'
+           || more() != '['
+           ) {
+            throw new XMLStreamException("expected <[CDATA[ for CDATA start", getLocation());
+        }
       } catch (EOFException eofe) {
         throw new XMLStreamException(eofe);
       }
