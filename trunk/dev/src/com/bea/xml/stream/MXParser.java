@@ -3038,51 +3038,53 @@ public class MXParser
         ch = skipS(ch);
         if(ch != '?') {
             ch = skipS(ch);
-            /* 07-Nov-2004, TSa: This is wrong (see bug #187); encoding
-             *    declaration is optional: may as well get stand-alone
-             *    declaration at this point.
-             */
-            ch = requireInput(ch, ENCODING);
-            ch = skipS(ch);
-            if(ch != '=') {
-                throw new XMLStreamException(
-                    "expected equals sign (=) after encoding and not "+printable(ch), getLocation());
-            }
-            ch = more();
-            ch = skipS(ch);
-            if(ch != '\'' && ch != '"') {
-                throw new XMLStreamException(
-                    "expected apostrophe (') or quotation mark (\") after encoding and not "
-                        +printable(ch), getLocation());
-            }
-            char quotChar = ch;
-            int encodingStart = pos;
-            ch = more();
-            // [81] EncName ::= [A-Za-z] ([A-Za-z0-9._] | '-')*
-            if((ch  < 'a' || ch > 'z') && (ch  < 'A' || ch > 'Z'))
-            {
-                throw new XMLStreamException(
-                    "<?xml encoding name expected to start with [A-Za-z]"
-                        +" not "+printable(ch), getLocation());
-            }
-            ch = more();
-            while(ch != quotChar) {
-                if((ch  < 'a' || ch > 'z') && (ch  < 'A' || ch > 'Z') && (ch  < '0' || ch > '9')
-                   && ch != '.' && ch != '_' && ch != '-')
+            
+            if(ch == ENCODING[0]) {
+                /* 07-Nov-2004, TSa: This is wrong (see bug #187); encoding
+                 *    declaration is optional: may as well get stand-alone
+                 *    declaration at this point.
+                 */
+                ch = requireInput(ch, ENCODING);
+                ch = skipS(ch);
+                if(ch != '=') {
+                    throw new XMLStreamException(
+                        "expected equals sign (=) after encoding and not "+printable(ch), getLocation());
+                }
+                ch = more();
+                ch = skipS(ch);
+                if(ch != '\'' && ch != '"') {
+                    throw new XMLStreamException(
+                        "expected apostrophe (') or quotation mark (\") after encoding and not "
+                            +printable(ch), getLocation());
+                }
+                char quotChar = ch;
+                int encodingStart = pos;
+                ch = more();
+                // [81] EncName ::= [A-Za-z] ([A-Za-z0-9._] | '-')*
+                if((ch  < 'a' || ch > 'z') && (ch  < 'A' || ch > 'Z'))
                 {
                     throw new XMLStreamException(
-                        "<?xml encoding value expected to be in ([A-Za-z0-9._] | '-')"
+                        "<?xml encoding name expected to start with [A-Za-z]"
                             +" not "+printable(ch), getLocation());
                 }
                 ch = more();
+                while(ch != quotChar) {
+                    if((ch  < 'a' || ch > 'z') && (ch  < 'A' || ch > 'Z') && (ch  < '0' || ch > '9')
+                       && ch != '.' && ch != '_' && ch != '-')
+                    {
+                        throw new XMLStreamException(
+                            "<?xml encoding value expected to be in ([A-Za-z0-9._] | '-')"
+                                +" not "+printable(ch), getLocation());
+                    }
+                    ch = more();
+                }
+                int encodingEnd = pos - 1;
+                //String encodingName = newStringIntern(buf, encodingStart, encodingEnd);
+                // TODO reconcile with setInput encodingName
+                charEncodingScheme = newString(buf, encodingStart, encodingEnd-encodingStart);
+                ch = more();
+                ch = skipS(ch);
             }
-            int encodingEnd = pos - 1;
-            //String encodingName = newStringIntern(buf, encodingStart, encodingEnd);
-            // TODO reconcile with setInput encodingName
-            charEncodingScheme = newString(buf, encodingStart, encodingEnd-encodingStart);
-            ch = more();
-            ch = skipS(ch);
-
             // [32] SDDecl ::= S 'standalone' Eq (("'" ('yes' | 'no') "'") | ('"' ('yes' | 'no') '"'))
             if(ch != '?') {
                 ch = skipS(ch);
@@ -3100,7 +3102,7 @@ public class MXParser
                         "expected apostrophe (') or quotation mark (\") after encoding and not "
                             +printable(ch), getLocation());
                 }
-                quotChar = ch;
+                char quotChar = ch;
                 int standaloneStart = pos;
                 ch = more();
                 if(ch == 'y') {
