@@ -36,7 +36,7 @@ public class ConfigurationContextBase
   private static String STREAM_FILTER = "RI_STREAM_FILTER";
   private static String NOTATIONS = "javax.xml.stream.notations";
   private static String ENTITIES = "javax.xml.stream.entities";
-
+  static final String REPORT_CDATA = "http://java.sun.com/xml/stream/properties/report-cdata-event";
   static {
     supportedFeatures = new HashSet();
     supportedFeatures.add(XMLInputFactory.IS_VALIDATING);
@@ -51,7 +51,7 @@ public class ConfigurationContextBase
     supportedFeatures.add(XMLInputFactory.ALLOCATOR);
     supportedFeatures.add(NOTATIONS);
     supportedFeatures.add(ENTITIES);
-
+    supportedFeatures.add(REPORT_CDATA);
   };
 
   private Hashtable features = new Hashtable();
