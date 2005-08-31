@@ -34,6 +34,7 @@ import com.wutka.dtd.DTD;
 import com.wutka.dtd.DTDEntity;
 import com.wutka.dtd.DTDAttlist;
 import com.wutka.dtd.DTDAttribute;
+import javax.xml.stream.XMLInputFactory;
 
 
 /**
@@ -51,7 +52,11 @@ public class MXParser
     
     public static final String FEATURE_PROCESS_DOCDECL =
         "http://xmlpull.org/v1/doc/features.html#process-docdecl";
-        //"http://java.sun.com/xml/stream/properties/report-cdata-event"
+    //"http://java.sun.com/xml/stream/properties/report-cdata-event"
+    
+    
+    private boolean reportCdataEvent = false;
+    
     /**
      * These constants are used for diagnostics messages, and need to
      * match with ones from {@link XMLStreamConstants}.
@@ -1493,6 +1498,7 @@ public class MXParser
          */
         return (eventType == XMLStreamConstants.CHARACTERS
                     || eventType == XMLStreamConstants.DTD
+                    || eventType == XMLStreamConstants.CDATA
                     || eventType == XMLStreamConstants.COMMENT
                     || eventType == XMLStreamConstants.SPACE
                     || eventType == XMLStreamConstants.ENTITY_REFERENCE);
@@ -1688,6 +1694,7 @@ public class MXParser
                                     if( !usePC && hadCharData ) needsMerging = true;
                                 }
                                 //                if(tokenize) return eventType = XMLStreamConstants.CDATA;
+                                if(reportCdataEvent) return eventType = XMLStreamConstants.CDATA;
                             } else {
                                 throw new XMLStreamException(
                                     "unexpected character in markup "+printable(ch),
@@ -1757,6 +1764,10 @@ public class MXParser
                             pc[pcEnd++] = resolvedEntity[ i ];
                             
                         }
+                        // fix for disappearing char if last entiry ref
+                        //see http://www.extreme.indiana.edu/bugzilla/show_bug.cgi?id=192
+                        hadCharData = true;
+                        
                         //assert needsMerging == false;
                     } else {
                         
@@ -3435,6 +3446,8 @@ public class MXParser
     private ConfigurationContextBase configurationContext;
     public void setConfigurationContext(ConfigurationContextBase c) {
         configurationContext = c;
+        boolean isCoalescing = Boolean.TRUE.equals(c.getProperty(XMLInputFactory.IS_COALESCING));
+        reportCdataEvent = Boolean.TRUE.equals(c.getProperty(ConfigurationContextBase.REPORT_CDATA));
     }
     public ConfigurationContextBase getConfigurationContext() {
         return configurationContext;
