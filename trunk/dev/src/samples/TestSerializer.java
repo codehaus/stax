@@ -5,7 +5,7 @@ import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 /**
- * Requires StAX RI 1.0 (JSR 173) available at http://stax.codehaus.org/
+ * Requires StAX RI 1.0 (JSR 173) available at http://stax.codehaus.org/Donwload
  */
 public class TestSerializer
 {
