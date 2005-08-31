@@ -515,7 +515,7 @@ public class MXParser
             char[] newEntityReplacementBuf[] = new char[newSize][];
             if(entityName != null) {
                 System.arraycopy(entityName, 0, newEntityName, 0, entityEnd);
-                System.arraycopy(entityReplacementBuf, 0, newEntityReplacement, 0, entityEnd);
+                System.arraycopy(entityNameBuf, 0, newEntityNameBuf, 0, entityEnd);
                 System.arraycopy(entityReplacement, 0, newEntityReplacement, 0, entityEnd);
                 System.arraycopy(entityReplacementBuf, 0, newEntityReplacementBuf, 0, entityEnd);
             }
