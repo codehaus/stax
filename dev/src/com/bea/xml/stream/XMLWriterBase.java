@@ -34,7 +34,7 @@ import java.nio.charset.CharsetEncoder;
  * <p> The base output class.</p>
  */
 
-public class XMLWriterBase 
+public class XMLWriterBase
   extends ReaderToWriter
   implements XMLStreamWriter
 {
@@ -45,7 +45,7 @@ public class XMLWriterBase
   private ConfigurationContextBase config;
   private CharsetEncoder encoder;
   
-  // these two stacks are used to implement the 
+  // these two stacks are used to implement the
   // writeEndElement() method
   private Stack localNameStack = new Stack();
   private Stack prefixStack = new Stack();
@@ -66,7 +66,7 @@ public class XMLWriterBase
     setStreamWriter(this);
     if (writer instanceof OutputStreamWriter) {
       String charsetName = ((OutputStreamWriter) writer).getEncoding();
-      this.encoder = Charset.forName(charsetName).newEncoder(); 
+      this.encoder = Charset.forName(charsetName).newEncoder();
     } else {
       this.encoder = null;
     }
@@ -77,7 +77,7 @@ public class XMLWriterBase
     isPrefixDefaulting = config.isPrefixDefaulting();
   }
 
-  protected void write(String s) 
+  protected void write(String s)
     throws XMLStreamException
   {
     try {
@@ -120,7 +120,7 @@ public class XMLWriterBase
   protected void writeCharactersInternal(char characters[],
                                          int start,
                                          int length,
-                                         boolean isAttributeValue) 
+                                         boolean isAttributeValue)
     throws XMLStreamException
   {
     if(length == 0) return;
@@ -193,7 +193,7 @@ public class XMLWriterBase
     }
   }
 
-  protected void closeStartElement() 
+  protected void closeStartElement()
     throws XMLStreamException
   {
     if (startElementOpened) {
@@ -206,7 +206,7 @@ public class XMLWriterBase
     return startElementOpened;
   }
 
-  protected void closeStartTag() 
+  protected void closeStartTag()
     throws XMLStreamException
   {
     flushNamespace();
@@ -218,17 +218,17 @@ public class XMLWriterBase
       write(">");
   }
 
-  private void openStartElement() 
+  private void openStartElement()
     throws XMLStreamException
   {
-    if (startElementOpened) 
+    if (startElementOpened)
       closeStartTag();
     else
       startElementOpened = true;
   }
 
   
-  protected String writeName(String prefix,String namespaceURI, String localName) 
+  protected String writeName(String prefix,String namespaceURI, String localName)
     throws XMLStreamException
   {
     if (!("".equals(namespaceURI)))
@@ -258,7 +258,7 @@ public class XMLWriterBase
   }
 
 
-  protected void openStartTag() 
+  protected void openStartTag()
     throws XMLStreamException
   {
     write("<");
@@ -283,14 +283,14 @@ public class XMLWriterBase
     defaultPrefixCount++;
     prefix = "ns"+defaultPrefixCount;
     setPrefix(prefix,uri);
-  }   
+  }
 
   private void removeNamespace(String uri) {
     if (!isPrefixDefaulting || needToWrite == null) return;
     needToWrite.remove(uri);
   }
 
-  private void flushNamespace() 
+  private void flushNamespace()
     throws XMLStreamException
   {
     if (!isPrefixDefaulting || needToWrite == null) return;
@@ -308,8 +308,8 @@ public class XMLWriterBase
   }
 
 
-  protected void writeStartElementInternal(String namespaceURI, String localName) 
-    throws XMLStreamException 
+  protected void writeStartElementInternal(String namespaceURI, String localName)
+    throws XMLStreamException
   {
     if (namespaceURI == null)
       throw new IllegalArgumentException("The namespace URI may not be null");
@@ -324,8 +324,8 @@ public class XMLWriterBase
     uriStack.push(namespaceURI);
   }
 
-  public void writeStartElement(String namespaceURI, String localName) 
-    throws XMLStreamException 
+  public void writeStartElement(String namespaceURI, String localName)
+    throws XMLStreamException
   {
     context.openScope();
     writeStartElementInternal(namespaceURI,localName);
@@ -335,8 +335,8 @@ public class XMLWriterBase
 
   public void writeStartElement(String prefix,
                                 String localName,
-                                String namespaceURI) 
-    throws XMLStreamException 
+                                String namespaceURI)
+    throws XMLStreamException
   {
     if (namespaceURI == null)
       throw new IllegalArgumentException("The namespace URI may not be null");
@@ -350,15 +350,15 @@ public class XMLWriterBase
     writeStartElementInternal(namespaceURI,localName);
   }
 
-  public void writeStartElement(String localName) 
+  public void writeStartElement(String localName)
     throws XMLStreamException
   {
     context.openScope();
     writeStartElement("",localName);
   }
 
-  public void writeEmptyElement(String namespaceURI, String localName) 
-    throws XMLStreamException 
+  public void writeEmptyElement(String namespaceURI, String localName)
+    throws XMLStreamException
   {
     openStartElement();
     prepareNamespace(namespaceURI);
@@ -367,10 +367,10 @@ public class XMLWriterBase
     writeName("",namespaceURI,localName);
   }
 
-  public void writeEmptyElement(String prefix, 
+  public void writeEmptyElement(String prefix,
                                 String localName,
-                                String namespaceURI) 
-    throws XMLStreamException 
+                                String namespaceURI)
+    throws XMLStreamException
   {
     openStartElement();
     prepareNamespace(namespaceURI);
@@ -381,37 +381,41 @@ public class XMLWriterBase
     write(localName);
   }
 
-  public void writeEmptyElement(String localName) 
-    throws XMLStreamException 
+  public void writeEmptyElement(String localName)
+    throws XMLStreamException
   {
     writeEmptyElement("",localName);
   }
 
-  protected void openEndTag() 
+  protected void openEndTag()
     throws XMLStreamException
   {
     write("</");
   }
-  protected void closeEndTag() 
+  protected void closeEndTag()
     throws XMLStreamException
   {
     write(">");
   }
-  public void writeEndElement() 
-    throws XMLStreamException 
+  public void writeEndElement()
+    throws XMLStreamException
   {
+      //boolean wasEmpty = startElementOpened;
+      boolean wasEmpty = isEmpty = isOpen();
     closeStartElement();
     String prefix = (String) prefixStack.pop();
     String local = (String) localNameStack.pop();
     uriStack.pop();
-    openEndTag();
-    writeName(prefix,"",local);
-    closeEndTag();
+      if(!wasEmpty) {
+        openEndTag();
+        writeName(prefix,"",local);
+        closeEndTag();
+      }
     context.closeScope();
   }
 
-  public void writeRaw(String data) 
-    throws XMLStreamException 
+  public void writeRaw(String data)
+    throws XMLStreamException
   {
     closeStartElement();
     write(data);
@@ -428,21 +432,21 @@ public class XMLWriterBase
     }
   }
 
-  public void writeEndDocument() 
-    throws XMLStreamException 
+  public void writeEndDocument()
+    throws XMLStreamException
   {
     while(!localNameStack.isEmpty())
       writeEndElement();
   }
 
-  public void writeAttribute(String localName, String value) 
+  public void writeAttribute(String localName, String value)
     throws XMLStreamException
   {
     writeAttribute("",localName,value);
   }
   public void writeAttribute(String namespaceURI,
                              String localName,
-                             String value) 
+                             String value)
     throws XMLStreamException
   {
     if (!isOpen())
@@ -458,7 +462,7 @@ public class XMLWriterBase
   public void writeAttribute(String prefix,
                              String namespaceURI,
                              String localName,
-                             String value) 
+                             String value)
     throws XMLStreamException
   {
     if (!isOpen())
@@ -472,8 +476,8 @@ public class XMLWriterBase
     write("\"");
   }
 
-  public void writeNamespace(String prefix, String namespaceURI) 
-    throws XMLStreamException 
+  public void writeNamespace(String prefix, String namespaceURI)
+    throws XMLStreamException
   {
     if(!isOpen())
      throw new XMLStreamException("A start element must be written before a namespace");
@@ -490,7 +494,7 @@ public class XMLWriterBase
   }
 
   public void writeDefaultNamespace(String namespaceURI)
-    throws XMLStreamException 
+    throws XMLStreamException
   {
     if(!isOpen())
      throw new XMLStreamException("A start element must be written before the default namespace");
@@ -501,7 +505,7 @@ public class XMLWriterBase
     setPrefix(DEFAULTNS,namespaceURI);
   }
 
-  public void writeComment(String data) 
+  public void writeComment(String data)
     throws XMLStreamException
   {
     closeStartElement();
@@ -511,7 +515,7 @@ public class XMLWriterBase
     write("-->");
   }
 
-  public void writeProcessingInstruction(String target) 
+  public void writeProcessingInstruction(String target)
     throws XMLStreamException
   {
     closeStartElement();
@@ -519,7 +523,7 @@ public class XMLWriterBase
   }
 
   public void writeProcessingInstruction(String target,
-                                         String text) 
+                                         String text)
     throws XMLStreamException
   {
     closeStartElement();
@@ -532,12 +536,12 @@ public class XMLWriterBase
     write("?>");
   }
 
-  public void writeDTD(String dtd) 
+  public void writeDTD(String dtd)
     throws XMLStreamException
   {
     write(dtd);
   }
-  public void writeCData(String data) 
+  public void writeCData(String data)
     throws XMLStreamException
   {
     closeStartElement();
@@ -547,7 +551,7 @@ public class XMLWriterBase
     write("]]>");
   }
 
-  public void writeEntityRef(String name) 
+  public void writeEntityRef(String name)
     throws XMLStreamException
   {
     closeStartElement();
@@ -556,13 +560,13 @@ public class XMLWriterBase
     write(";");
   }
 
-  public void writeStartDocument() 
+  public void writeStartDocument()
     throws XMLStreamException
   {
     write("<?xml version='1.0' encoding='utf-8'?>");
   }
 
-  public void writeStartDocument(String version) 
+  public void writeStartDocument(String version)
     throws XMLStreamException
   {
     write("<?xml version='");
@@ -571,7 +575,7 @@ public class XMLWriterBase
   }
 
   public void writeStartDocument(String encoding,
-                                 String version) 
+                                 String version)
     throws XMLStreamException
   {
     write("<?xml version='");
@@ -581,34 +585,34 @@ public class XMLWriterBase
     write("'?>");
   }
 
-  public void writeCharacters(String text) 
+  public void writeCharacters(String text)
     throws XMLStreamException
   {
     closeStartElement();
     writeCharactersInternal(text.toCharArray(),0,text.length(),false);
   }
 
-  public void writeCharacters(char[] text, int start, int len) 
+  public void writeCharacters(char[] text, int start, int len)
     throws XMLStreamException
   {
     closeStartElement();
     writeCharactersInternal(text,start,len,false);
   }
 
-  public String getPrefix(String uri) 
+  public String getPrefix(String uri)
     throws XMLStreamException
   {
     return context.getPrefix(uri);
   }
 
-  public void setPrefix(String prefix, String uri) 
+  public void setPrefix(String prefix, String uri)
     throws XMLStreamException
   {
     needToWrite(uri);
     context.bindNamespace(prefix,uri);
   }
 
-  public void setDefaultNamespace(String uri) 
+  public void setDefaultNamespace(String uri)
     throws XMLStreamException
   {
     needToWrite(uri);
@@ -616,7 +620,7 @@ public class XMLWriterBase
   }
 
   public void setNamespaceContext(NamespaceContext context)
-    throws XMLStreamException 
+    throws XMLStreamException
   {
     if (context == null) throw new NullPointerException("The namespace "+
                                                         " context may"+
@@ -638,7 +642,7 @@ public class XMLWriterBase
 
     /*******
     Writer w = new java.io.OutputStreamWriter(System.out);
-    XMLWriterBase writer = 
+    XMLWriterBase writer =
       new XMLWriterBase(w);
     writer.writeStartDocument();
     writer.setPrefix("c","http://c");
@@ -673,7 +677,7 @@ public class XMLWriterBase
     writer2.writeCharacters("foo bar foo");
     writer2.writeCharacters("bad char coming[");
     char c = 0x1024;
-    char[] array = new char[1]; 
+    char[] array = new char[1];
     array[0]=c;
     writer2.writeCharacters(new String(array));
     writer2.writeCharacters("]");
