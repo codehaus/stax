@@ -213,6 +213,7 @@ public class XMLWriterBase
         throws XMLStreamException
     {
         flushNamespace();
+        clearNeedsWritingNs();
         if (isEmpty) {
             write ("/>");
             isEmpty = false;
@@ -308,7 +309,6 @@ public class XMLWriterBase
             writeNamespace(prefix,uri);
         }
         needToWrite.clear();
-        clearNeedsWritingNs();
     }
     
     
