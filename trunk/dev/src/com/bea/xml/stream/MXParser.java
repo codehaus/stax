@@ -2884,7 +2884,8 @@ public class MXParser
                            && (buf[piTargetStart+1] == 'm' || buf[piTargetStart+1] == 'M')
                            && (buf[piTargetStart+2] == 'l' || buf[piTargetStart+2] == 'L')
                       )) {
-                if(piTargetStart != 2) {  //<?xml is allowed as first characters in input ...
+                //if(piTargetStart != 2) {  //<?xml is allowed as first characters in input ...
+                if(piTargetStart > 3) {  //<?xml is allowed as first characters in input ...
                     throw new XMLStreamException("processing instruction can not have PITarget with reserved xml name",
                                                  getLocation());
                 } else {
