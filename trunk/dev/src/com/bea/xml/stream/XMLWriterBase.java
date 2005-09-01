@@ -14,21 +14,19 @@
  */
 package com.bea.xml.stream;
 
-import com.bea.xml.stream.util.SymbolTable;
 import com.bea.xml.stream.util.NamespaceContextImpl;
 import com.bea.xml.stream.util.Stack;
-
-import java.io.Writer;
-import java.io.OutputStreamWriter;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Iterator;
-import javax.xml.stream.XMLStreamWriter;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.namespace.NamespaceContext;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.util.HashSet;
+import java.util.Iterator;
+import javax.xml.namespace.NamespaceContext;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 
 /**
  * <p> The base output class.</p>
@@ -147,9 +145,9 @@ public class XMLWriterBase
             if (c == 13 || c == 9 || (isAttributeValue  && c < 32 ) //crude ...
                     || (!isAttributeValue && encoder != null && !encoder.canEncode(c)))
             {
-                    fastPath = false;
-                    break;
-                }
+                fastPath = false;
+                break;
+            }
         }
         
         if(fastPath) {
@@ -187,7 +185,7 @@ public class XMLWriterBase
                 default:
                     if (c == 13 || c == 9 || (isAttributeValue && c < 32)
                             || (!isAttributeValue && encoder != null && !encoder.canEncode(c)))
-                        {
+                    {
                         write("&#");
                         write(Integer.toString(c));
                         write(';');
@@ -310,6 +308,7 @@ public class XMLWriterBase
             writeNamespace(prefix,uri);
         }
         needToWrite.clear();
+        clearNeedsWritingNs();
     }
     
     
@@ -490,12 +489,26 @@ public class XMLWriterBase
             writeDefaultNamespace(namespaceURI);
             return;
         }
-        write(" xmlns:");
-        write(prefix);
-        write("=\"");
-        write(namespaceURI);
-        write("\"");
-        setPrefix(prefix,namespaceURI);
+        if( needsWritingNs(prefix) ) {
+            write(" xmlns:");
+            write(prefix);
+            write("=\"");
+            write(namespaceURI);
+            write("\"");
+            setPrefix(prefix,namespaceURI);
+        }
+    }
+    
+    private HashSet setNeedsWritingNs = new HashSet();
+    private void clearNeedsWritingNs() {
+        setNeedsWritingNs.clear();
+    }
+    private boolean needsWritingNs(String prefix) {
+        boolean needs = ! setNeedsWritingNs.contains(prefix);
+        if(needs) {
+            setNeedsWritingNs.add(prefix);
+        }
+        return needs;
     }
     
     public void writeDefaultNamespace(String namespaceURI)
@@ -503,11 +516,13 @@ public class XMLWriterBase
     {
         if(!isOpen())
             throw new XMLStreamException("A start element must be written before the default namespace");
-        write(" xmlns");
-        write("=\"");
-        write(namespaceURI);
-        write("\"");
-        setPrefix(DEFAULTNS,namespaceURI);
+        if( needsWritingNs(DEFAULTNS) ) {
+            write(" xmlns");
+            write("=\"");
+            write(namespaceURI);
+            write("\"");
+            setPrefix(DEFAULTNS,namespaceURI);
+        }
     }
     
     public void writeComment(String data)
