@@ -40,12 +40,18 @@
 
   <property name="lib" value="lib"/>
 
-    <path id="junit_libraries">
+  <path id="junit_libraries">
         <fileset dir="${lib}">
             <include name="junit/junit*.jar" />
         </fileset>
-    </path>
+  </path>
 
+  <path id="test_classpath">
+        <path refid="junit_libraries" />
+        <pathelement path="${test_class_dir}" />
+        <!-- This is enough to get both API and RI classes: -->
+        <pathelement path="${class_dir}" />
+  </path>
 
   <target name="all" depends="clean,build,ri_jar,run"/>
   <target name="clean">
@@ -220,29 +226,53 @@
     </java>
   </target>
 
-  <target name="test" depends="compile, test_compile">
-      <junit fork="no" printsummary="yes" haltonfailure="no"
-         showoutput="yes">
+  <!-- By default, let's only run "non-validating" test case, since
+     - RI doesn't implement validation, and it's easier to control it
+     - here than having all validation unit tests check for support
+    -->
+
+  <target name="test" depends="test_core" />
+
+  <target name="test_all" depends="test_core, test_validation" />
+
+  <!-- Core includes tests for other StAX 1.0 features except for DTD
+     - validation (which is optional)
+    -->
+  <target name="test_core" depends="compile, test_compile">
+    <junit fork="no" printsummary="yes" haltonfailure="no" showoutput="yes">
             <batchtest fork="no" todir="${test_results_dir}/xml">
                 <fileset dir="${test_class_dir}">
+                    <exclude name="org/codehaus/stax/test/vstream/*.class"/>
                     <include name="org/codehaus/stax/test/**/Test*.class"/>
                 </fileset>
             </batchtest>
             <formatter type="xml" />
-            <classpath>
-                <pathelement location="${test_class_dir}" />
-                <!-- This is enough to get both API and RI classes: -->
-                <pathelement location="${class_dir}" />
-        	<path refid="junit_libraries"/>
-	    </classpath>     
-        </junit>
-
-        <junitreport todir="${test_results_dir}">
+            <classpath refid="test_classpath" />
+     </junit>
+     <junitreport todir="${test_results_dir}">
             <fileset dir="${test_results_dir}/xml">
                 <include name="TEST-*.xml" />
             </fileset>
             <report todir="${test_results_dir}" />
-        </junitreport>
-    </target>
+     </junitreport>
+  </target>
+
+  <target name="test_validation" depends="compile, test_compile">
+    <junit fork="no" printsummary="yes" haltonfailure="no" showoutput="yes">
+            <batchtest fork="no" todir="${test_results_dir}/xml">
+                <fileset dir="${test_class_dir}">
+                    <include name="org/codehaus/stax/test/vstream/Test*.class"/>
+                </fileset>
+            </batchtest>
+            <formatter type="xml" />
+            <classpath refid="test_classpath" />
+     </junit>
+     <junitreport todir="${test_results_dir}">
+            <fileset dir="${test_results_dir}/xml">
+                <include name="TEST-*.xml" />
+            </fileset>
+            <report todir="${test_results_dir}" />
+     </junitreport>
+  </target>
 
 </project>
