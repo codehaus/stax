@@ -81,17 +81,16 @@ public class ConfigurationContextBase
   }
 
   public void setProperty(String name, Object feature) {
-    check(name);
-    if (name.equals(XMLInputFactory.IS_VALIDATING) &&
-            Boolean.TRUE.equals(feature)){
-        throw new IllegalArgumentException("This implementation does not " +
-                "support validation");
-    } else if (name.equals(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES) &&
-            Boolean.TRUE.equals(feature)) {
-        throw new IllegalArgumentException("This implementation does not " +
-                "resolve external entities ");
+    if (name.equals(XMLInputFactory.IS_VALIDATING)) {
+        setValidating(((Boolean) feature).booleanValue());
+    } else if (name.equals(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES)) {
+        setSupportExternalEntities(((Boolean) feature).booleanValue());
+    } else if (name.equals(XMLInputFactory.IS_NAMESPACE_AWARE)) {
+        setNamespaceAware(((Boolean) feature).booleanValue());
+    } else {
+        check(name);
+        features.put(name,feature);
     }
-    features.put(name,feature);
   }
 
   public void check(String name) {
@@ -128,7 +127,7 @@ public class ConfigurationContextBase
 
   public void setBool(String name, boolean val) {
     check(name);
-    features.put(name,new Boolean(val));
+    features.put(name, val ? Boolean.TRUE : Boolean.FALSE);
   }
   public void setCoalescing(boolean val) {
     setBool(XMLInputFactory.IS_COALESCING,val);
@@ -139,7 +138,12 @@ public class ConfigurationContextBase
 
 
   public void setValidating(boolean val) {
-    setBool(XMLInputFactory.IS_VALIDATING,val);
+      if (val) {
+        throw new IllegalArgumentException("This implementation does not " +
+                "support validation");
+      }
+      // No need to re-set to the same value...
+      //setBool(XMLInputFactory.IS_VALIDATING,val);
   }
 
   public boolean isValidating() {
@@ -156,7 +160,12 @@ public class ConfigurationContextBase
 
 
   public void setSupportExternalEntities(boolean val) {
-    setBool(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES,val);
+      if (val) {
+        throw new IllegalArgumentException("This implementation does not " +
+                "resolve external entities ");
+      }
+      // Already false...
+      //setBool(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES,val);
   }
 
   public boolean isSupportingExternalEntities() {
@@ -172,7 +181,14 @@ public class ConfigurationContextBase
   }
 
   public void setNamespaceAware(boolean val) {
-    setBool(XMLInputFactory.IS_NAMESPACE_AWARE,val);
+      /* 07-Sep-2005, TSa: since implementation does not really support
+       *   non-ns-aware mode, let's throw an exception:
+       */
+      if (!val) {
+          throw new IllegalArgumentException("This implementation does not allow disabling namespace processing");
+      }
+      // Already true
+      //setBool(XMLInputFactory.IS_NAMESPACE_AWARE,val);
   }
 
   public boolean isNamespaceAware() {

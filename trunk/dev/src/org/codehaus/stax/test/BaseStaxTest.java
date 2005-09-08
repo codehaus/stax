@@ -61,6 +61,7 @@ public class BaseStaxTest
 
     XMLInputFactory mInputFactory;
     XMLOutputFactory mOutputFactory;
+    XMLEventFactory mEventFactory;
 
     protected BaseStaxTest(String name) {
         super(name);
@@ -98,6 +99,14 @@ public class BaseStaxTest
     protected static XMLOutputFactory getNewOutputFactory()
     {
         return XMLOutputFactory.newInstance();
+    }
+
+    protected XMLEventFactory getEventFactory()
+    {
+        if (mEventFactory == null) {
+            mEventFactory = XMLEventFactory.newInstance();
+        }
+        return mEventFactory;
     }
 
     protected static XMLStreamReader constructStreamReader(XMLInputFactory f, String content)
@@ -182,10 +191,15 @@ public class BaseStaxTest
         throws XMLStreamException
     {
         try {
-            f.setProperty(XMLInputFactory.IS_NAMESPACE_AWARE, Boolean.valueOf(state));
-            assertEquals(state, isNamespaceAware(f));
-            return true;
-        } catch (Exception e) {
+            f.setProperty(XMLInputFactory.IS_NAMESPACE_AWARE,
+                          state ? Boolean.TRUE : Boolean.FALSE);
+
+            /* 07-Sep-2005, TSa: Let's not assert, but instead let's see if
+             *    it sticks. Some implementations might choose to silently
+             *    ignore setting, at least for 'false'? 
+             */
+            return (isNamespaceAware(f) == state);
+        } catch (IllegalArgumentException e) {
             /* Let's assume, then, that the property (or specific value for it)
              * is NOT supported...
              */
