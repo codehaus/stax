@@ -6,7 +6,7 @@ import javax.xml.stream.*;
 import javax.xml.stream.events.*;
 
 /**
- * Class that contains simple tests for making sure that event objets
+ * Class that contains simple tests for making sure that event objects
  * created by the {@link XMLEventFactory} have expected properties.
  */
 public class TestEventReader

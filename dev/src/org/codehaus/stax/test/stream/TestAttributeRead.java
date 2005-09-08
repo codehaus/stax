@@ -97,6 +97,12 @@ public class TestAttributeRead
         throws XMLStreamException
     {
         XMLStreamReader sr = getReader(VALID_XML1, false);
+
+        // Does the impl support non-ns mode?
+        if (sr == null) { // nope!
+            return;
+        }
+
         assertEquals(START_ELEMENT, sr.next());
         assertEquals(0, sr.getNamespaceCount());
         assertEquals(3, sr.getAttributeCount());
@@ -113,6 +119,12 @@ public class TestAttributeRead
     {
         // = "<root a:b=\"&quot;\" xmlns:a='url' />";
         XMLStreamReader sr = getReader(VALID_XML2, false);
+
+        // Does the impl support non-ns mode?
+        if (sr == null) { // nope!
+            return;
+        }
+
         assertEquals(START_ELEMENT, sr.next());
         assertEquals(0, sr.getNamespaceCount());
         assertEquals(2, sr.getAttributeCount());
@@ -194,15 +206,15 @@ public class TestAttributeRead
     {
         for (int i = 0; i < 2; ++i) {
             boolean ns = (i > 0);
-	    // Invalid, '<' not allowed in attribute value
-	    String XML = "<root a='<' />";
-	    streamThroughFailing(getReader(XML, ns),
-				 "unquoted '<' in attribute value");
-
-	    XML = "<root a />";
-	    streamThroughFailing(getReader(XML, ns),
-				 "missing value for attribute");
-	}
+            // Invalid, '<' not allowed in attribute value
+            String XML = "<root a='<' />";
+            streamThroughFailing(getReader(XML, ns),
+                                 "unquoted '<' in attribute value");
+            
+            XML = "<root a />";
+            streamThroughFailing(getReader(XML, ns),
+                                 "missing value for attribute");
+        }
     }
 
     /**
@@ -213,13 +225,13 @@ public class TestAttributeRead
     {
         for (int i = 0; i < 2; ++i) {
             boolean ns = (i > 0);
-	    String XML = "<root a='b'b='a' />";
-	    streamThroughFailing(getReader(XML, ns),
-				 "missing space between attributes");
-	    XML = "<root a=\"b\"b=\"a\" />";
-	    streamThroughFailing(getReader(XML, ns),
-				 "missing space between attributes");
-	}
+            String XML = "<root a='b'b='a' />";
+            streamThroughFailing(getReader(XML, ns),
+                                 "missing space between attributes");
+            XML = "<root a=\"b\"b=\"a\" />";
+            streamThroughFailing(getReader(XML, ns),
+                                 "missing space between attributes");
+        }
     }
 
     public void testInvalidNsAttrDup()
@@ -227,12 +239,12 @@ public class TestAttributeRead
     {
         // Invalid; straight duplicate attrs:
         String XML = "<root xmlns:a='xxx' a:attr='1' a:attr='2' />";
-	streamThroughFailing(getReader(XML, true),
-			     "duplicate attributes");
+        streamThroughFailing(getReader(XML, true),
+                             "duplicate attributes");
         // Invalid; sneakier duplicate attrs:
         XML = "<root xmlns:a='xxx' xmlns:b='xxx' a:attr='1' b:attr='2' />";
-	streamThroughFailing(getReader(XML, true),
-			     "duplicate attributes (same URI, different prefix)");
+        streamThroughFailing(getReader(XML, true),
+                             "duplicate attributes (same URI, different prefix)");
     }
     
     public void testInvalidNonNsAttrDup()
@@ -240,13 +252,19 @@ public class TestAttributeRead
     {
         // Invalid; duplicate attrs even without namespaces
         String XML = "<root xmlns:a='xxx' a:attr='1' a:attr='2' />";
-	streamThroughFailing(getReader(XML, false),
-			     "duplicate attributes");
+        streamThroughFailing(getReader(XML, false),
+                             "duplicate attributes");
         
         // Valid when namespaces not enabled:
         XML = "<root xmlns:a='xxx' xmlns:b='xxx' a:attr='1' b:attr='2' />";
         try {
-            streamThrough(getReader(XML, false));
+            XMLStreamReader sr = getReader(XML, false);
+
+            // Does the impl support non-ns mode?
+            if (sr == null) { // nope! shouldn't test...
+                return;
+            }
+            streamThrough(sr);
         } catch (Exception e) {
             fail("Didn't expect an exception when namespace support not enabled: "+e);
         }
@@ -259,12 +277,20 @@ public class TestAttributeRead
     ////////////////////////////////////////
      */
 
+    /**
+     * @return Stream reader constructed if initialization succeeded (all
+     *   setting supported by the impl); null if some settings (namespace
+     *   awareness) not supported.
+     */
     private XMLStreamReader getReader(String contents, boolean nsAware)
         throws XMLStreamException
     {
         XMLInputFactory f = getInputFactory();
+        if (!setNamespaceAware(f, nsAware)) {
+            return null;
+        }
+
         setCoalescing(f, true); // shouldn't matter
-        setNamespaceAware(f, nsAware);
         setValidating(f, false);
         return constructStreamReader(f, contents);
     }
