@@ -33,7 +33,7 @@ public class BaseEventTest
     ///////////////////////////////////////////////////
      */
 
-    protected static XMLEventFactory getEventFactory()
+    protected XMLEventFactory getEventFactory()
         throws FactoryConfigurationError
     {
             return XMLEventFactory.newInstance();
