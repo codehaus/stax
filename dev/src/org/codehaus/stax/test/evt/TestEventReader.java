@@ -157,6 +157,44 @@ public class TestEventReader
             assertFalse(er.hasNext());
         }
     }
+    
+    /**
+     * This test was inspired by an actual bug in one of implementations:
+     * initial state was not properly set if nextTag() was called (instead
+     * of nextEvent()), and subsequent peek() failed.
+     */
+    public void testPeek()
+        throws XMLStreamException
+    {
+        String XML = "<root>text</root>";
+
+        for (int i = 0; i < 4; ++i) {
+            boolean ns = (i & 1) != 0;
+            boolean coal = (i & 2) != 0;
+            XMLEventReader er = getReader(XML, ns, coal);
+
+            XMLEvent tag = er.nextTag();
+            assertTokenType(START_ELEMENT, tag.getEventType());
+
+	    // Now, peek() should produce text..
+            XMLEvent text = er.peek();
+            assertTokenType(CHARACTERS, text.getEventType());
+	    Characters chars = text.asCharacters();
+	    assertNotNull(chars);
+	    assertEquals("text", chars.getData());
+	    
+	    // and need nextEvent() to get rid of it, too:
+	    text = er.nextEvent();
+	    // Let's verify it again:
+            assertTokenType(CHARACTERS, text.getEventType());
+	    chars = text.asCharacters();
+	    assertNotNull(chars);
+	    assertEquals("text", chars.getData());
+
+            assertTokenType(END_ELEMENT, er.nextTag().getEventType());
+            assertTokenType(END_DOCUMENT, er.nextEvent().getEventType());
+        }
+    }
 
     /*
     /////////////////////////////////////////////////
