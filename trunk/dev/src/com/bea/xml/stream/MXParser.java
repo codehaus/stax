@@ -671,7 +671,7 @@ public class MXParser
     /** Unknown properties are <string>always</strong> returned as false */
     public boolean getFeature(String name)
     {
-        if(name == null) throw new IllegalArgumentException("feature name should not be nulll");
+        if(name == null) throw new IllegalArgumentException("feature name should not be null");
         if(FEATURE_PROCESS_NAMESPACES.equals(name)) {
             return processNamespaces;
             //        } else if(FEATURE_REPORT_NAMESPACE_ATTRIBUTES.equals(name)) {
@@ -1446,7 +1446,7 @@ public class MXParser
     {
         checkTextEvent();
         
-        if (getTextStart()+sourceStart >= getTextLength())
+        if (getTextStart()+sourceStart > getTextLength())
             throw new ArrayIndexOutOfBoundsException();
         int numCopy;
         if (getTextStart()+sourceStart+length < getTextLength())
