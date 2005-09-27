@@ -3276,27 +3276,17 @@ public class MXParser
         int curLine = lineNumber;
         int curColumn = columnNumber;
         try {
-            boolean seenBracket = false;
-            boolean seenBracketBracket = false;
+            int bracketCount = 0;
             while(true) {
                 // scan until it hits -->
                 ch = more();
                 if(ch == ']') {
-                    if(!seenBracket) {
-                        seenBracket = true;
-                    } else {
-                        seenBracketBracket = true;
-                        seenBracket = false;
-                    }
-                } else if(ch == '>') {
-                    if(seenBracketBracket) {
-                        break;  // found end sequence!!!!
-                    } else {
-                        seenBracketBracket = false;
-                    }
-                    seenBracketBracket = false;
+                    ++bracketCount;
                 } else {
-                    seenBracketBracket = false;
+                    if(ch == '>' && bracketCount >= 2) {
+                        break;  // found end sequence!!!!
+                    }
+                    bracketCount = 0;
                 }
             }
         } catch(EOFException ex) {
