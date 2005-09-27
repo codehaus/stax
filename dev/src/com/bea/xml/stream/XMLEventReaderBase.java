@@ -126,16 +126,11 @@ public class XMLEventReaderBase
   public XMLEvent nextEvent()
     throws XMLStreamException
   {
-    if (!open) 
-      throw new XMLStreamException("Attempt to read from a stream "+
-                                   "that is not open");
-
     // FIXME cfry throw error if parseSome fails
-    if (needsMore()) 
-      if (!parseSome())
-        throw new java.util.NoSuchElementException("Attempt to call nextEvent()"+
-                                                   " on a stream with no"+
-                                                   " more elements");
+    if (needsMore()) {
+        if (!parseSome())
+            throw new java.util.NoSuchElementException("Attempt to call nextEvent() on a stream with no more elements");
+    }
     return get();
   }
 
@@ -198,11 +193,18 @@ public class XMLEventReaderBase
   protected boolean parseSome() 
     throws XMLStreamException
   {
+    /* 26-Sep-2005, TSa: Should check if we have hit EOF, and if so,
+     *   fail to get any more stuff...
+     */
+    if (reachedEOF) {
+        return false;
+    }
+
     //    System.out.println("Allocator->"+allocator);
     allocator.allocate(reader,this);
     if (reader.hasNext())
       reader.next();
-    if (!reachedEOF && reader.getEventType() == XMLEvent.END_DOCUMENT) {
+    if (reader.getEventType() == XMLEvent.END_DOCUMENT) {
       allocator.allocate(reader,this);
       reachedEOF = true;
     }

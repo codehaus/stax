@@ -89,7 +89,12 @@ public class AttributeBase implements javax.xml.stream.events.Attribute, Locatio
   public String getDTDType() { return "CDATA"; }
   public String getNamespaceURI() { return name.getNamespaceURI();}
   public void setNamespaceURI(String uri) { name = new QName(uri,name.getLocalPart()); }
-  public boolean isSpecified() { return false;}
+
+  /**
+   * By default, all attributes are created as specified since RI doesn't
+   * handle attribute defaulting.
+   */
+  public boolean isSpecified() { return true;}
   public boolean isStartElement() { return false; }
   public boolean isEndElement() { return false; }
   public boolean isEntityReference() { return false; }
