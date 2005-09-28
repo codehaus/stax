@@ -576,9 +576,22 @@ public class MXParser
     
     // transient variable set during each call to next/Token()
     protected boolean tokenize;
+
+    /**
+     * Lazily-constructed String that contains what getText() returns;
+     * cleared by tokenizer before parsing new events
+     */
     protected String text;
     protected String entityRefName;
-    
+
+    /**
+     * Replacement value for the current entity, when automatic entity
+     * expansion is disabled. Will always refer to some other array;
+     * either globally shared ones (for general entities), or the temp
+     * buffer for char entities. As such, does not need to be cleared
+     * by tokenizer: will get properly overwritten as needed
+     */
+    protected char[] entityValue = null;
     
     private void reset() {
         //System.out.println("reset() called");
@@ -966,31 +979,6 @@ public class MXParser
         } else {
             return false;
         }
-    }
-    
-    public String getText()
-    {
-        checkTextEvent();
-        
-        /*
-         if(eventType == XMLStreamConstants.START_DOCUMENT || eventType == XMLStreamConstants.END_DOCUMENT) {
-         //throw new XMLStreamException("no content available to read");
-         //      if(roundtripSupported) {
-         //          text = new String(buf, posStart, posEnd - posStart);
-         //      } else {
-         return null;
-         //      }
-         } else
-         */
-        if(eventType == XMLStreamConstants.ENTITY_REFERENCE) {
-            return text;
-        }
-        if(usePC) {
-            text = new String(pc, pcStart, pcEnd - pcStart);
-        } else {
-            text = new String(buf, posStart, posEnd - posStart);
-        }
-        return text;
     }
     
     public String getNamespaceURI()
@@ -1441,6 +1429,35 @@ public class MXParser
         }
     }
     
+    public String getText()
+    {
+        checkTextEvent();
+        
+        /*
+         if(eventType == XMLStreamConstants.START_DOCUMENT || eventType == XMLStreamConstants.END_DOCUMENT) {
+         //throw new XMLStreamException("no content available to read");
+         //      if(roundtripSupported) {
+         //          text = new String(buf, posStart, posEnd - posStart);
+         //      } else {
+         return null;
+         //      }
+         } else
+         */
+        if(eventType == XMLStreamConstants.ENTITY_REFERENCE) {
+	    // Do we have the value constructed?
+	    if (text == null && entityValue != null) {
+		text = new String(entityValue);
+	    }
+            return text;
+        }
+        if(usePC) {
+            text = new String(pc, pcStart, pcEnd - pcStart);
+        } else {
+            text = new String(buf, posStart, posEnd - posStart);
+        }
+        return text;
+    }
+
     public int getTextCharacters(int sourceStart, char[] target, int targetStart, int length)
         throws XMLStreamException
     {
@@ -1466,13 +1483,20 @@ public class MXParser
             } else {
                 return buf;
             }
-        }
+        } else if( eventType == XMLStreamConstants.ENTITY_REFERENCE ) {
+	    return entityValue;
+	}
         return buf;
     }
     
     
     public int getTextStart() {
         checkTextEvent();
+
+        if( eventType == XMLStreamConstants.ENTITY_REFERENCE) {
+	    return 0;
+	}
+
         if(usePC) {
             return pcStart;
         } else {
@@ -1482,6 +1506,9 @@ public class MXParser
     
     public int getTextLength() {
         checkTextEvent();
+        if( eventType == XMLStreamConstants.ENTITY_REFERENCE) {
+	    return entityValue.length;
+	}
         if(usePC) {
             return pcEnd - pcStart;
         } else {
@@ -2598,7 +2625,11 @@ public class MXParser
     }
     
     protected char[] charRefOneCharBuf = new char[1];
-    
+
+    /**
+     * @return Character array that contains value the reference expands
+     *    to.
+     */
     protected char[] parseEntityRef()
         throws XMLStreamException
     {
@@ -2648,10 +2679,7 @@ public class MXParser
                 }
                 posEnd = pos - 1;
                 charRefOneCharBuf[0] = charRef;
-                if(!replace) {
-                    text = newString(charRefOneCharBuf, 0, 1);
-                }
-                return charRefOneCharBuf;
+		return (entityValue = charRefOneCharBuf);
             } else {
                 // name reference
                 
@@ -2665,7 +2693,7 @@ public class MXParser
                         text = "<";
                     charRefOneCharBuf[0] = '<';
                     
-                    return charRefOneCharBuf;
+		    return (entityValue = charRefOneCharBuf);
                     //if(paramPC || isParserTokenizing) {
                     //    if(pcEnd >= pc.length) ensurePC();
                     //   pc[pcEnd++] = '<';
@@ -2676,13 +2704,13 @@ public class MXParser
                         text = "&";
                     charRefOneCharBuf[0] = '&';
                     
-                    return charRefOneCharBuf;
+		    return (entityValue = charRefOneCharBuf);
                 } else if(len == 2 && buf[posStart] == 'g' && buf[posStart+1] == 't') {
                     if(!replace)
                         text = ">";
                     charRefOneCharBuf[0] = '>';
                     
-                    return charRefOneCharBuf;
+		    return (entityValue = charRefOneCharBuf);
                 } else if(len == 4 && buf[posStart] == 'a' && buf[posStart+1] == 'p'
                               && buf[posStart+2] == 'o' && buf[posStart+3] == 's')
                 {
@@ -2690,7 +2718,7 @@ public class MXParser
                         text = "'";
                     charRefOneCharBuf[0] = '\'';
                     
-                    return charRefOneCharBuf;
+		    return (entityValue = charRefOneCharBuf);
                 } else if(len == 4 && buf[posStart] == 'q' && buf[posStart+1] == 'u'
                               && buf[posStart+2] == 'o' && buf[posStart+3] == 't')
                 {
@@ -2698,15 +2726,11 @@ public class MXParser
                         text = "\"";
                     charRefOneCharBuf[0] = '"';
                     
-                    return charRefOneCharBuf;
-                } else {
-                    char[] result = lookupEntityReplacement(len);
-                    if(result != null) {
-                        return result;
-                    }
+		    return (entityValue = charRefOneCharBuf);
                 }
-                if(!replace) text = null;
-                return null;
+
+		// No, should be a general entity:
+		return (entityValue = lookupEntityReplacement(len));
             }
             
         } catch (EOFException eofe) {
@@ -2729,7 +2753,9 @@ public class MXParser
                     {
                         if(buf[posStart + j] != entityBuf[j]) continue LOOP;
                     }
-                    if(tokenize) text = entityReplacement[ i ];
+                    if(tokenize) {
+			text = entityReplacement[ i ];
+		    }
                     return entityReplacementBuf[ i ];
                 }
             }
@@ -2737,9 +2763,11 @@ public class MXParser
             entityRefName = newString(buf, posStart, posEnd - posStart);
             for (int i = entityEnd - 1; i >= 0; --i)
             {
-                // take advantage that interning for newStirng is enforced
+                // take advantage that interning for newString is enforced
                 if(entityRefName == entityName[ i ]) {
-                    if(tokenize) text = entityReplacement[ i ];
+                    if(tokenize) {
+			text = entityReplacement[ i ];
+		    }
                     return entityReplacementBuf[ i ];
                 }
             }

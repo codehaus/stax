@@ -174,10 +174,20 @@ public class TestNamespaces
         assertTokenType(END_DOCUMENT, sr.next());
     }
 
+    /**
+     * Test proper handling of valid xml content in non-namespace aware mode.
+     * Since not all implementations (like the ref. impl.) support non-ns
+     * aware mode, this unit test is skipped if not applicable.
+     */
     public void testValidNonNs()
         throws XMLStreamException
     {
         XMLStreamReader sr = getNsReader(VALID_NS_XML, false);
+	if (sr == null) {
+	    reportNADueToNS("testValidNonNs");
+	    return;
+	}
+
         assertEquals(START_ELEMENT, sr.next());
         assertEquals(0, sr.getNamespaceCount());
         assertEquals(3, sr.getAttributeCount());
@@ -248,14 +258,14 @@ public class TestNamespaces
     public void testInvalidNs()
         throws XMLStreamException
     {
-        testPotentiallyInvalid(true);
+        testPotentiallyInvalid(true, "testInvalidNs");
     }
 
     public void testInvalidNonNs()
         throws XMLStreamException
     {
         // Some things are ok, some not, when namespace support is not enabled:
-        testPotentiallyInvalid(false);
+        testPotentiallyInvalid(false, "testInvalidNonNs");
     }
 
     public void testDefaultNs()
@@ -330,12 +340,17 @@ public class TestNamespaces
     ////////////////////////////////////////
      */
 
-    private void testPotentiallyInvalid(boolean nsAware)
+    private void testPotentiallyInvalid(boolean nsAware, String method)
         throws XMLStreamException
     {
         // First, check that undeclared namespace prefixes are not kosher
         try {
             XMLStreamReader sr = getNsReader("<ns1:elem />", nsAware);
+	    if (sr == null) {
+		reportNADueToNS(method);
+		return;
+	    }
+
             streamThrough(sr);
             if (nsAware) {
                 fail("Was expecting an exception for content that uses undeclared namespace prefix.");
@@ -403,12 +418,19 @@ public class TestNamespaces
     ////////////////////////////////////////
      */
 
+    /**
+     * @return Stream reader constructed if initialization succeeded (all
+     *   setting supported by the impl); null if some settings (namespace
+     *   awareness) not supported.
+     */
     private XMLStreamReader getNsReader(String contents, boolean nsAware)
         throws XMLStreamException
     {
         XMLInputFactory f = getInputFactory();
+	if (!setNamespaceAware(f, nsAware)) {
+	    return null;
+	}
         setCoalescing(f, true);
-        setNamespaceAware(f, nsAware);
         setValidating(f, false);
         return constructStreamReader(f, contents);
     }

@@ -180,7 +180,8 @@ public class TestEntityRead
         assertEquals("root", sr.getLocalName());
 
         // First, entity that expands to element
-        assertTokenType(START_ELEMENT, sr.next());
+	type = sr.next();
+        assertTokenType(START_ELEMENT, type);
         assertEquals("tag", sr.getLocalName());
         assertTokenType(CHARACTERS, sr.next());
         assertEquals("text", sr.getText());
@@ -415,7 +416,8 @@ public class TestEntityRead
         assertNull(sr.getPIData());
 
 
-        // // Ok, and the second entity:
+        // // Ok, and the second entity; an external one
+
         assertTokenType(ENTITY_REFERENCE, sr.next());
 
         assertEquals("ent2", sr.getLocalName());
@@ -424,9 +426,14 @@ public class TestEntityRead
          * return true, by default, but getText() (etc) should return
          * null?
          */
-        assertNull(sr.getText());
-        assertNull(sr.getTextCharacters());
+	String text = sr.getText();
+
+	if (text != null && text.length() > 0) {
+	    fail("Expected getText() for external entity 'ent2' to return null or empty String; instead got '"+text+"'");
+	}
         assertEquals(0, sr.getTextLength());
+	char[] ch = sr.getTextCharacters();
+        assertTrue((ch == null) || ch.length == 0);
 
         // // ok, should be good:
         assertTokenType(END_ELEMENT, sr.next());
