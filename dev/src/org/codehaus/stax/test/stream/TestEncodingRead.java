@@ -1,6 +1,6 @@
 package org.codehaus.stax.test.stream;
 
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 
 import javax.xml.stream.*;
 
@@ -42,6 +42,35 @@ public class TestEncodingRead
 	doTestEncoding("UTF-8", false, null);
 	doTestEncoding("UTF-8", true, UTF8_BOM);
 	doTestEncoding("UTF-8", false, UTF8_BOM);
+    }
+
+    /**
+     * This unit test checks specifically whether the implementation can
+     * use a BOM-tagged Reader; JDK seems to (sometimes?) leave BOM in
+     * the Reader's stream...
+     */
+    public void testUTF8ViaReader()
+        throws XMLStreamException, IOException
+    {
+        String XML = "...<?xml version='1.0' encoding='UTF-8'?><root></root>";
+        byte[] b = XML.getBytes("UTF-8");
+	b[0] = (byte) 0xEF;
+	b[1] = (byte) 0xBB;
+	b[2] = (byte) 0xBF;
+
+	InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(b), "UTF-8");
+
+	try {
+	    XMLInputFactory f = getInputFactory();
+	    setValidating(f, false);
+	    XMLStreamReader sr = f.createXMLStreamReader(reader);
+	    assertTokenType(START_DOCUMENT, sr.getEventType());
+	    assertTokenType(START_ELEMENT, sr.next());
+	    assertEquals("root", sr.getLocalName());
+	    sr.close();
+	} finally {
+	    reader.close();
+	}
     }
 
     public void testUTF16()
