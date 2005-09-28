@@ -257,7 +257,7 @@ public class BaseStaxTest
         char[] textChars = sr.getTextCharacters();
         int start = sr.getTextStart();
         String text2 = new String(textChars, start, expLen);
-        assertEquals(text, text2);
+        assertEquals("Expected getText() and getTextCharacters() to return same value for event of type ("+tokenTypeDesc(sr.getEventType())+")", text, text2);
         return text;
     }
 
@@ -454,5 +454,20 @@ public class BaseStaxTest
             return "[0]''";
         }
         return "[len: "+str.length()+"] '"+printable(str)+"'";
+    }
+
+    protected void reportNADueToProperty(String method, String prop)
+    {
+	String clsName = getClass().getName();
+	/* 27-Sep-2005, TSa: Should probably use some other mechanism for
+	 *   reporting this. Does JUnit have something applicable?
+	 */
+	System.err.println("Skipping "+clsName+"#"+method+": property '"
+			   +prop+"' (or one of its values) not supported.");
+    }
+
+    protected void reportNADueToNS(String method)
+    {
+	reportNADueToProperty(method, "IS_NAMESPACE_AWARE");
     }
 }
