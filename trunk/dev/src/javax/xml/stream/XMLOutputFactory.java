@@ -89,7 +89,10 @@ public abstract class XMLOutputFactory {
   protected XMLOutputFactory(){}
 
   /**
-   * Create a new instance of the factory.
+   * Create a new instance of the factory using the default factory location
+   * mechanism (check env. variable, jaxp.properties, jar services manifest,
+   * in this order)
+   * 
    * @throws FactoryConfigurationError if an instance of this factory cannot be loaded
    */
   public static XMLOutputFactory newInstance() 
@@ -102,19 +105,19 @@ public abstract class XMLOutputFactory {
   /**
    * Create a new instance of the factory 
    *
-   * @param factoryId             Name of the factory to find, same as
-   *                              a property name
-   * @param classLoader           classLoader to use
+   * @param factoryId Name of the factory to find; not the class name but the
+   *    property name to use
+   * @param classLoader classLoader to use
    * @return the factory implementation
    * @throws FactoryConfigurationError if an instance of this factory cannot be loaded
    */
-  public static XMLInputFactory newInstance(String factoryId,
-                                            ClassLoader classLoader)
+  public static XMLOutputFactory newInstance(String factoryId,
+					     ClassLoader classLoader)
     throws FactoryConfigurationError
   {
-    return (XMLInputFactory) FactoryFinder.find(
+    return (XMLOutputFactory) FactoryFinder.find(
       factoryId,
-      "com.bea.xml.stream.XMLInputFactoryBase",
+      "com.bea.xml.stream.XMLOutputFactoryBase",
       classLoader);
   }
 
