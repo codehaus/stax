@@ -132,9 +132,11 @@ class FactoryFinder {
                 Properties props=new Properties();
                 props.load( new FileInputStream(f));
                 String factoryClassName = props.getProperty(factoryId);
-                debugPrintln("found java.home property " + factoryClassName);
-                return newInstance(factoryClassName, classLoader);
-            }
+		if (factoryClassName != null && factoryClassName.length() > 0) {
+		    debugPrintln("found java.home property " + factoryClassName);
+		    return newInstance(factoryClassName, classLoader);
+		}
+           }
         } catch(Exception ex ) {
             if( debug ) ex.printStackTrace();
         }
