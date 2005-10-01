@@ -66,7 +66,7 @@ public class TestEnumAttrRead
             +"<!ELEMENT root EMPTY>\n"
             +"<!ATTLIST root attr (  enum) #IMPLIED\n"
             +" attr2 (enum | enum2  ) #IMPLIED>\n"
-            +"]>\n<root attr2='enum2' />";
+            +"]><root attr2='enum2' />";
 
         XMLStreamReader sr = getValidatingReader(XML, true);
         assertTokenType(DTD, sr.next());
