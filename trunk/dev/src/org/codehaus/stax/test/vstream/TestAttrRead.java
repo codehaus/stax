@@ -62,7 +62,7 @@ public class TestAttrRead
             +"<!ATTLIST root id ID #IMPLIED>\n"
             +"<!ATTLIST root nmtoken NMTOKEN #IMPLIED>\n"
             +"<!ATTLIST root nmtokens NMTOKENS #IMPLIED>\n"
-            +"]>\n"
+            +"]>"
             +"<root"
             +" cdata='content'"
             +" id='node1'"
@@ -97,7 +97,7 @@ public class TestAttrRead
         String XML = "<!DOCTYPE root [\n"
             +"<!ELEMENT root EMPTY>\n"
             +"<!ATTLIST root attr CDATA #REQUIRED>\n"
-            +"]>\n<root attr='value' />";
+            +"]><root attr='value' />";
         XMLStreamReader sr = getValidatingReader(XML, true);
         assertTokenType(DTD, sr.next());
         assertTokenType(START_ELEMENT, sr.next());
@@ -164,7 +164,7 @@ public class TestAttrRead
         String XML = "<!DOCTYPE root [\n"
             +"<!ELEMENT root EMPTY>\n"
             +"<!ATTLIST root attr CDATA 'default'>\n"
-            +"]>\n<root/>";
+            +"]><root/>";
         XMLStreamReader sr = getValidatingReader(XML, true);
         assertTokenType(DTD, sr.next());
         assertTokenType(START_ELEMENT, sr.next());

@@ -38,7 +38,7 @@ public class TestAttrTypes
             +"attrName NMTOKEN #IMPLIED\n"
             +"attrNames NMTOKENS #IMPLIED\n"
             +">\n"
-            +"]>\n"
+            +"]>"
             +"<root "
             +"attrCData='1' "
             +"attrId='id' "
