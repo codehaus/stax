@@ -168,6 +168,64 @@ public class TestIdAttrRead
                              "empty IDREFS value");
     }
 
+    /**
+     * Unit test that verifies that values of attributes of type ID 
+     * will get properly normalized.
+     */
+    public void testIdAttrNormalization()
+        throws XMLStreamException
+    {
+        String XML = "<!DOCTYPE elem [\n"
+            +"<!ELEMENT elem (elem*)>\n"
+            +"<!ATTLIST elem id ID #IMPLIED>\n"
+            +"<!ATTLIST elem refs IDREFS #IMPLIED>\n"
+            +"]>"
+            +"<elem id='someId  '>"
+            +"<elem id='   otherId' />"
+            +"</elem>";
+            ;
+        XMLStreamReader sr = getValidatingReader(XML);
+        assertTokenType(DTD, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals(1, sr.getAttributeCount());
+        assertEquals("someId", sr.getAttributeValue(0));
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals(1, sr.getAttributeCount());
+        assertEquals("otherId", sr.getAttributeValue(0));
+        assertTokenType(END_ELEMENT, sr.next());
+        assertTokenType(END_ELEMENT, sr.next());
+    }
+
+    public void testIdRefAttrNormalization()
+        throws XMLStreamException
+    {
+        String XML = "<!DOCTYPE elem [\n"
+            +"<!ELEMENT elem (elem*)>\n"
+            +"<!ATTLIST elem id ID #IMPLIED>\n"
+            +"<!ATTLIST elem ref IDREF #IMPLIED>\n"
+            +"<!ATTLIST elem refs IDREFS #IMPLIED>\n"
+            +"]>"
+            +"<elem id='someId'>"
+            +"<elem id='id2  ' ref='  someId  ' />"
+            +"<elem refs='  id2\tsomeId' />"
+            +"</elem>";
+            ;
+
+        XMLStreamReader sr = getValidatingReader(XML);
+        assertTokenType(DTD, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals(2, sr.getAttributeCount());
+        assertEquals("id2", sr.getAttributeValue(0));
+        assertEquals("someId", sr.getAttributeValue(1));
+        assertTokenType(END_ELEMENT, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals(1, sr.getAttributeCount());
+        assertEquals("id2 someId", sr.getAttributeValue(0));
+        assertTokenType(END_ELEMENT, sr.next());
+        assertTokenType(END_ELEMENT, sr.next());
+    }
+
     /*
     ////////////////////////////////////////
     // Private methods
