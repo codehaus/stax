@@ -77,9 +77,7 @@ public class TestEventWriter
         throws XMLStreamException
     {
         XMLInputFactory f = getInputFactory();
-        if (!setNamespaceAware(f, nsAware)) { // mode not supported
-            return null;
-        }
+        setNamespaceAware(f, nsAware);
         return constructStreamReader(f, contents);
     }
 }

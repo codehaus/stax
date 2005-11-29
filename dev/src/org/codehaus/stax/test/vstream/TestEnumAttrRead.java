@@ -77,6 +77,38 @@ public class TestEnumAttrRead
         assertEquals("enum2", sr.getAttributeValue(0));
     }
 
+    /**
+     * Unit test that verifies that values of attributes of type ID 
+     * will get properly normalized.
+     */
+    public void testEnumAttrNormalization()
+        throws XMLStreamException
+    {
+        String XML = "<!DOCTYPE elem [\n"
+            +"<!ELEMENT elem (elem*)>\n"
+            +"<!ATTLIST elem enumAttr (enum | enum2|last  ) #IMPLIED>\n"
+            +"]>"
+            +"<elem enumAttr='enum2  '>"
+            +"<elem enumAttr='   enum' />"
+            +"<elem enumAttr='\tlast' />"
+            +"</elem>";
+            ;
+        XMLStreamReader sr = getValidatingReader(XML);
+        assertTokenType(DTD, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals(1, sr.getAttributeCount());
+        assertEquals("enum2", sr.getAttributeValue(0));
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals(1, sr.getAttributeCount());
+        assertEquals("enum", sr.getAttributeValue(0));
+        assertTokenType(END_ELEMENT, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals(1, sr.getAttributeCount());
+        assertEquals("last", sr.getAttributeValue(0));
+        assertTokenType(END_ELEMENT, sr.next());
+        assertTokenType(END_ELEMENT, sr.next());
+    }
+
     /*
     ////////////////////////////////////////
     // Private methods
