@@ -334,6 +334,28 @@ public class TestNamespaces
         }
     }
 
+    /**
+     * Unit test that verifies that the namespace with prefix 'xml' is
+     * always predefined without further work.
+     */
+    public void testPredefinedXmlNs()
+        throws XMLStreamException
+    {
+        final String XML = "<root xml:lang='fi'><xml:a /></root>";
+
+        XMLStreamReader sr = getNsReader(XML, true);
+        assertEquals(START_ELEMENT, sr.next());
+        assertEquals("xml", sr.getAttributePrefix(0));
+        assertEquals("lang", sr.getAttributeLocalName(0));
+        assertEquals(XMLConstants.XML_NS_URI, sr.getAttributeNamespace(0));
+        assertEquals(START_ELEMENT, sr.next());
+        assertEquals("xml", sr.getPrefix());
+        assertEquals("a", sr.getLocalName());
+        assertEquals(XMLConstants.XML_NS_URI, sr.getNamespaceURI());
+        assertEquals(END_ELEMENT, sr.next());
+        assertEquals(END_ELEMENT, sr.next());
+    }
+
     /*
     ////////////////////////////////////////
     // Private methods, shared test code
