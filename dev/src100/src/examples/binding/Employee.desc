@@ -1,0 +1,13 @@
+Package: test
+Namespace: myNamespace
+
+Job {
+  String title;
+  Integer yearsEmployed;
+}
+
+Employee {
+   String name;
+   Job job;
+}
+

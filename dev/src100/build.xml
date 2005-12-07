@@ -1,0 +1,50 @@
+<project name="jsr-173" default="all">
+   <property name="version" value="1.0"/>
+   <property name="topdirs_interf" value="javax/xml/*.java,
+                                          javax/xml/stream/*.java,
+                                          javax/xml/stream/util/*.java,
+                                          javax/xml/stream/events/*.java,
+	                              				  javax/xml/namespace/*.java"/>
+   <property name="topdirs_impl" value="com/bea/xml/stream/*.java,
+                                        com/wutka/dtd/*.java,
+                                        com/bea/xml/stream/samples/*.java,
+                                        com/bea/xml/stream/util/*.java,
+                                        com/bea/xml/stream/filters/*.java,
+                                        com/bea/xml/stream/reader/*.java,
+                                        com/bea/xml/stream/events/*.java"/>
+   
+   <target name="all" depends="clean,build,run" />
+
+   <target name="clean">
+     <delete dir="classes"/>
+     <delete dir="javadoc"/>
+   </target>
+
+   <target name="build">
+     <mkdir dir="classes"/>
+      <javac srcdir="src;classes"
+       includes="${topdirs_interf}"
+	     destdir="classes"
+	     debug="true">
+	    </javac>
+      <javac srcdir="src;classes"
+       includes="${topdirs_impl}"
+	     destdir="classes"
+	     debug="true">
+	     <classpath>
+	        <pathelement path="${java.class.path}"/>
+		      <pathelement path="classes"/>
+	     </classpath>
+      </javac>
+    </target>
+
+   <target name="run">
+      <java classname="com.bea.xml.stream.samples.EventParse" fork="true">
+      <arg line="test/test.xml"/>
+      <classpath>
+         <pathelement path="classes"/>
+         <pathelement path="${java.class.path}"/>
+      </classpath>
+      </java>
+   </target>
+ </project>

@@ -1,0 +1,55 @@
+<project name="example1" default="all">
+   <property environment='env'/>
+   <property name='tmp'           value='${env.TMP}/stax' />   
+   <property name="classDir" value="${tmp}/classes"/>
+   <property name="buildDir" value="${tmp}/build"/>
+   <property name="rootDir" value="../../.."/>
+   <property name="jsr173" value="${rootDir}/jsr173_1.0_api.jar/"/>
+   <property name="jsr173_ri" value="${rootDir}/jsr173_1.0_ri.jar/"/>
+  
+   <target name="all" depends="clean,build,run"/>
+   <target name="clean">
+       <delete dir="${classDir}"/>
+       <delete dir="${buildDir}"/>
+   </target>
+   <target name="build">
+      <mkdir dir="${classDir}"/>
+      <mkdir dir="${buildDir}"/>
+      <javac srcdir="."
+             includes="*.java"
+	     excludes="Bind.java"
+	     destdir="${classDir}"/>
+   </target>
+   <target name="run">
+      <!-- Generate the files from the description -->
+      <java classname="examples.binding.BeanGen"
+            fork="true">
+        <arg line="Employee.desc"/>
+        <arg line="${buildDir}"/>
+	<classpath>
+	   <pathelement path="${classDir}"/>
+        </classpath>
+      </java>
+      <!-- Compile the files -->
+      <copy file="Bind.java" todir="${buildDir}"/>
+      <javac srcdir="${buildDir}"
+             includes="*.java"
+	     destdir="${classDir}">
+	<classpath>
+	   <pathelement path="${classDir}"/>
+	   <pathelement path="${jsr173}"/>
+	   <pathelement path="${jsr173_ri}"/>
+        </classpath>
+      </javac>
+      <!-- Run the test program -->
+      <java classname="test.Bind"
+            fork="true">
+	<classpath>
+	   <pathelement path="${classDir}"/>
+	   <pathelement path="${jsr173}"/>
+	   <pathelement path="${jsr173_ri}"/>
+        </classpath>
+      </java>
+
+   </target>
+</project>
