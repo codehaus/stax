@@ -10,7 +10,7 @@
   <property name="build_dir" value="build"/>
   <property name="class_dir" value="${build_dir}/classes"/>
   <property name="javadoc_dir" value="${build_dir}/javadoc"/>
-  <property name="jar_ri" value="${build_dir}/stax-${version}-dev.zip"/>
+  <property name="jar_ri" value="${build_dir}/stax-${version}-dev.jar"/>
   <property name="jar_src" value="${build_dir}/stax-src-${version}-dev.zip"/>  
   <property name="src" value="src"/>
   <property name="topdirs" value="com/bea/xml/stream/*.java,
