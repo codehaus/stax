@@ -12,6 +12,7 @@ import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.Namespace;
 import javax.xml.stream.events.XMLEvent;
 
+//http://jira.codehaus.org/browse/STAX-15        StringIndexOutOfBoundsException when parsing PI's
 /**
  * Requires StAX 1.0 (JSR 173) parser such as http://stax.codehaus.org/Download
  *

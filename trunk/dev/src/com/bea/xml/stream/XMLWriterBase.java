@@ -268,11 +268,13 @@ public class XMLWriterBase
         write("<");
     }
     
-    private void needToWrite(String uri) {
+    private boolean needToWrite(String uri) {
         if (needToWrite == null) {
             needToWrite = new HashSet();
         }
+        boolean needs = needToWrite.contains(uri);
         needToWrite.add(uri);
+        return needs;
     }
     
     private void prepareNamespace(String uri)
@@ -628,8 +630,10 @@ public class XMLWriterBase
     public void setPrefix(String prefix, String uri)
         throws XMLStreamException
     {
+        //if() {
         needToWrite(uri);
         context.bindNamespace(prefix,uri);
+        //}
     }
     
     public void setDefaultNamespace(String uri)
