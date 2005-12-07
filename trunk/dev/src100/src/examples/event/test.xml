@@ -1,0 +1,10 @@
+<root xmlns="defaultNamespace">
+  <one:a xmlns:one="uri:one">
+    <one:test one:attribute="onetwo"></one:test>
+      <doc xmlns:two="uri:two">
+        <two:test>This is some text</two:test>
+        <two:test/>
+      </doc>
+    <one:test>mixed <![CDATA[ <xml><is><easy>]]> text</one:test>
+  </one:a>
+</root>
