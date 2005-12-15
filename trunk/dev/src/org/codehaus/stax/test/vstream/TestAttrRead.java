@@ -132,7 +132,7 @@ public class TestAttrRead
         assertTokenType(DTD, sr.next());
         assertTokenType(START_ELEMENT, sr.next());
         assertEquals("Should have 1 attribute; 'elem' had #FIXED default value", 1, sr.getAttributeCount());
-        assertEquals("elem", sr.getAttributeLocalName(0));
+        assertEquals("attr", sr.getAttributeLocalName(0));
         assertEquals("fixed", sr.getAttributeValue(0));
         assertTokenType(END_ELEMENT, sr.next());
         sr.close();
@@ -146,7 +146,7 @@ public class TestAttrRead
         assertTokenType(DTD, sr.next());
         assertTokenType(START_ELEMENT, sr.next());
         assertEquals(1, sr.getAttributeCount());
-        assertEquals("elem", sr.getAttributeLocalName(0));
+        assertEquals("attr", sr.getAttributeLocalName(0));
         assertEquals("fixed", sr.getAttributeValue(0));
         assertTokenType(END_ELEMENT, sr.next());
     }
