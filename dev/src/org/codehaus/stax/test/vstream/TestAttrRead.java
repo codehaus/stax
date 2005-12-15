@@ -119,32 +119,50 @@ public class TestAttrRead
                              "Missing required attribute value");
     }
 
-    public void testFixedAttr()
+    public void testOkFixedAttr()
         throws XMLStreamException
     {
         // Ok to omit altogether
-        String XML = "<!DOCTYPE root [\n"
-            +"<!ELEMENT root EMPTY>\n"
-            +"<!ATTLIST root attr CDATA #FIXED 'fixed'>\n"
-            +"]>\n<root/>";
-        streamThrough(getValidatingReader(XML, true));
+        String XML = "<!DOCTYPE elem [\n"
+            +"<!ELEMENT elem EMPTY>\n"
+            +"<!ATTLIST elem attr CDATA #FIXED 'fixed'>\n"
+            +"]><elem/>";
+        // But if so, should get the default value
+        XMLStreamReader sr = getValidatingReader(XML, true);
+        assertTokenType(DTD, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals("Should have 1 attribute; 'elem' had #FIXED default value", 1, sr.getAttributeCount());
+        assertEquals("elem", sr.getAttributeLocalName(0));
+        assertEquals("fixed", sr.getAttributeValue(0));
+        assertTokenType(END_ELEMENT, sr.next());
+        sr.close();
 
         // Or to use fixed value
-        XML = "<!DOCTYPE root [\n"
-            +"<!ELEMENT root EMPTY>\n"
-            +"<!ATTLIST root attr CDATA #FIXED 'fixed'>\n"
-            +"]>\n<root attr='fixed'/>";
-        streamThrough(getValidatingReader(XML, true));
+        XML = "<!DOCTYPE elem [\n"
+            +"<!ELEMENT elem EMPTY>\n"
+            +"<!ATTLIST elem attr CDATA #FIXED 'fixed'>\n"
+            +"]><elem attr='fixed'/>";
+        sr = getValidatingReader(XML, true);
+        assertTokenType(DTD, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals(1, sr.getAttributeCount());
+        assertEquals("elem", sr.getAttributeLocalName(0));
+        assertEquals("fixed", sr.getAttributeValue(0));
+        assertTokenType(END_ELEMENT, sr.next());
+    }
 
-        // But not any other value; either completely different
-        XML = "<!DOCTYPE root [\n"
+    public void testInvalidFixedAttr()
+        throws XMLStreamException
+    {
+        // Not ok to have any other value, either completely different
+        String XML = "<!DOCTYPE root [\n"
             +"<!ELEMENT root EMPTY>\n"
             +"<!ATTLIST root attr CDATA #FIXED 'fixed'>\n"
             +"]>\n<root attr='wrong'/>";
         streamThroughFailing(getValidatingReader(XML),
                              "fixed attribute value not matching declaration");
 
-        // Or one with extra white space (CDATA won't get normalized)
+        // Or one with extra white space (CDATA won't get fully normalized)
         XML = "<!DOCTYPE root [\n"
             +"<!ELEMENT root EMPTY>\n"
             +"<!ATTLIST root attr CDATA #FIXED 'fixed'>\n"
