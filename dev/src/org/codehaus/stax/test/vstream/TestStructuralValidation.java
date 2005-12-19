@@ -115,7 +115,7 @@ public class TestStructuralValidation
 
     /**
      * Unit test that checks that it's illegal to add any content (including
-     * comment or processing instructions) within an element that has
+     * comment, processing instructions or white space) within an element that has
      * content declaration of EMPTY.
      */
     public void testInvalidEmpty()
@@ -134,6 +134,12 @@ public class TestStructuralValidation
                 +"]><root><?proc instr?></root>";
             streamThroughFailing(getReader(XML, nsAware),
                                  "processing instruction within element that has EMPTY content type declaration");
+
+            XML = "<!DOCTYPE root [\n"
+                +"<!ELEMENT root EMPTY>\n"
+                +"]><root>     </root>";
+            streamThroughFailing(getReader(XML, nsAware),
+                                 "white space within element that has EMPTY content type declaration");
         }
     }
 

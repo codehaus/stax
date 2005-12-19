@@ -192,6 +192,43 @@ public class TestAttrRead
         assertEquals("default", sr.getAttributeValue(0));
     }
 
+    /**
+     * Test for proper handling for multiple attribute declarations for
+     * a single attribute. This is legal, although discouraged (ie. parser
+     * can issue a non-fatal warning): but if used, the first definition
+     * should stick. Let's test for both default values and types.
+     */
+    public void testMultipleDeclForSingleAttr()
+        throws XMLStreamException
+    {
+        // Let's verify we get the right default value
+        String XML = "<!DOCTYPE root [\n"
+            +"<!ELEMENT root EMPTY>\n"
+            +"<!ATTLIST root attr CDATA 'val1'>\n"
+            +"<!ATTLIST root attr CDATA 'val2'>\n"
+            +"]><root/>";
+        XMLStreamReader sr = getValidatingReader(XML, true);
+        assertTokenType(DTD, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals(1, sr.getAttributeCount());
+        assertEquals("attr", sr.getAttributeLocalName(0));
+        assertEquals("val1", sr.getAttributeValue(0));
+
+        // And then let's test that the type is correct as well
+        XML = "<!DOCTYPE root [\n"
+            +"<!ELEMENT root EMPTY>\n"
+            +"<!ATTLIST root attr NMTOKEN #IMPLIED>\n"
+            +"<!ATTLIST root attr CDATA #IMPLIED>\n"
+            +"]><root attr='valX'/>";
+        sr = getValidatingReader(XML, true);
+        assertTokenType(DTD, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals(1, sr.getAttributeCount());
+        assertEquals("attr", sr.getAttributeLocalName(0));
+        assertEquals("valX", sr.getAttributeValue(0));
+        assertEquals("NMTOKEN", sr.getAttributeType(0));
+    }
+
     /*
     ////////////////////////////////////////
     // Private methods
