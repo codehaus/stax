@@ -49,7 +49,15 @@ public class TestStructuralValidation
             String XML = "<!DOCTYPE root [\n"
                 +"<!ELEMENT root (leaf)*>\n"
                 +"<!ELEMENT leaf (#PCDATA)>\n"
-                +"]><root>Text <leaf /></root>";
+                +"]><root>Text <leaf></leaf></root>";
+            streamThroughFailing(getReader(XML, nsAware),
+                                 "invalid mixed content");
+
+            // same, but after a child elem...
+            XML = "<!DOCTYPE root [\n"
+                +"<!ELEMENT root (leaf)*>\n"
+                +"<!ELEMENT leaf (#PCDATA)>\n"
+                +"]><root>   <leaf></leaf>   x </root>";
             streamThroughFailing(getReader(XML, nsAware),
                                  "invalid mixed content");
         }
@@ -140,6 +148,40 @@ public class TestStructuralValidation
                 +"]><root>     </root>";
             streamThroughFailing(getReader(XML, nsAware),
                                  "white space within element that has EMPTY content type declaration");
+
+            XML = "<!DOCTYPE root [\n"
+                +"<!ELEMENT root EMPTY>\n"
+                +"<!ELEMENT leaf EMPTY>\n"
+                +"]><root><branch /></root>";
+            streamThroughFailing(getReader(XML, nsAware),
+                                 "element within element that has EMPTY content type declaration");
+        }
+    }
+
+    public void testValidAny()
+        throws XMLStreamException
+    {
+        for (int i = 0; i < 2; ++i) {
+            boolean nsAware = (i > 0);
+            String XML = "<!DOCTYPE root [\n"
+                +"<!ELEMENT root ANY>\n"
+                +"<!ELEMENT branch EMPTY>\n"
+                +"<!ELEMENT leaf EMPTY>\n"
+                +"]><root>  <leaf />  <branch></branch></root>";
+            streamThrough(getReader(XML, nsAware));
+        }
+    }
+
+    public void testInvalidAny()
+        throws XMLStreamException
+    {
+        for (int i = 0; i < 2; ++i) {
+            boolean nsAware = (i > 0);
+            String XML = "<!DOCTYPE root [\n"
+                +"<!ELEMENT root ANY>\n"
+                +"]><root><unknown /></root>";
+            streamThroughFailing(getReader(XML, nsAware),
+                                 "undeclared element in element with ANY content type");
         }
     }
 
