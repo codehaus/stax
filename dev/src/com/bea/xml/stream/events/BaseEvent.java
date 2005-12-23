@@ -110,7 +110,9 @@ public class BaseEvent implements XMLEvent, Location {
   public void writeAsEncodedUnicode(Writer writer) 
     throws XMLStreamException
   {
-
+      /* 22-Dec-2005, Tatu: This method should be left abstract, and
+       *   implemented by sub-classes...
+       */
   }
 
 }

@@ -28,6 +28,33 @@ public class TestStructuralValidation
         }
     }
 
+    public void testValidStructure2()
+        throws XMLStreamException
+    {
+        for (int i = 0; i < 2; ++i) {
+            boolean nsAware = (i > 0);
+            String XML = "<!DOCTYPE root [\n"
+                +"<!ELEMENT root (branch+)>\n"
+                +"<!ELEMENT branch (branch | leaf)*>\n"
+                +"<!ELEMENT leaf (#PCDATA)>\n"
+                +"]>\n<root><branch /> <branch> <leaf>text</leaf></branch></root>";
+            streamThrough(getReader(XML, nsAware));
+
+            // Ok, as leaf is optional...
+            XML = "<!DOCTYPE root [\n"
+                +"<!ELEMENT root (leaf?)>\n"
+                +"<!ELEMENT leaf (#PCDATA)>\n"
+                +"]>\n<root></root>";
+            streamThrough(getReader(XML, nsAware));
+
+            XML = "<!DOCTYPE root [\n"
+                +"<!ELEMENT root (leaf?)>\n"
+                +"<!ELEMENT leaf (#PCDATA)>\n"
+                +"]>\n<root>   <leaf>text &amp; and more</leaf></root>";
+            streamThrough(getReader(XML, nsAware));
+        }
+    }
+
     public void testValidMixed()
         throws XMLStreamException
     {
@@ -118,6 +145,23 @@ public class TestStructuralValidation
                 +"]>\n  <root><branch>xyz</branch></root>";
             streamThroughFailing(getReader(XML, nsAware),
                                  "wrong element content (missing 'end' element) for root");
+
+            XML = "<!DOCTYPE root [\n"
+                +"<!ELEMENT root (branch | child)+>\n"
+                +"<!ELEMENT branch (#PCDATA)>\n"
+                +"<!ELEMENT child EMPTY>\n"
+                +"]>\n  <root></root>";
+            streamThroughFailing(getReader(XML, nsAware),
+                                 "missing children for root");
+
+            XML = "<!DOCTYPE root [\n"
+                +"<!ELEMENT root (branch | child)+>\n"
+                +"<!ELEMENT branch (child?)>\n"
+                +"<!ELEMENT child EMPTY>\n"
+                +"<!ELEMENT other EMPTY>\n"
+                +"]>\n  <root><child /><branch> <other /> </branch></root>";
+            streamThroughFailing(getReader(XML, nsAware),
+                                 "wrong child element for branch");
         }
     }
 
