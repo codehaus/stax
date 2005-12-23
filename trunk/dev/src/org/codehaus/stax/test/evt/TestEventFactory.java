@@ -1,5 +1,7 @@
 package org.codehaus.stax.test.evt;
 
+import java.io.StringWriter;
+
 import javax.xml.namespace.QName;
 import javax.xml.stream.*;
 import javax.xml.stream.events.*;
@@ -11,10 +13,6 @@ import javax.xml.stream.events.*;
 public class TestEventFactory
     extends BaseEventTest
 {
-    public TestEventFactory(String name) {
-        super(name);
-    }
-
     public void testAttribute()
         throws XMLStreamException
     {
@@ -23,6 +21,10 @@ public class TestEventFactory
 
         QName attrName = new QName(URI, "attr", "ns");
         Attribute attr = f.createAttribute(attrName, "value");
+
+        checkIsMethods(ATTRIBUTE, attr);
+        testWritability(attr);
+
         Attribute attr2 = f.createAttribute("ns", URI, "attr", "value'2'");
         Attribute attr3 = f.createAttribute("attr", "this&more");
 
@@ -63,6 +65,9 @@ public class TestEventFactory
         final String contents = "test <some> text & more! [[]] --";
         XMLEventFactory f = getEventFactory();
         Characters c = f.createCData(contents);
+        checkIsMethods(CHARACTERS, c);
+        testWritability(c);
+
         assertEquals(contents, c.getData());
         assertTrue(c.isCData());
         assertFalse(c.isIgnorableWhiteSpace());
@@ -75,6 +80,10 @@ public class TestEventFactory
         final String contents = "test <some> text & more! [[]] --";
         XMLEventFactory f = getEventFactory();
         Characters c = f.createCharacters(contents);
+
+        checkIsMethods(CHARACTERS, c);
+        testWritability(c);
+
         assertEquals(contents, c.getData());
         assertFalse(c.isCData());
         assertFalse(c.isIgnorableWhiteSpace());
@@ -88,6 +97,10 @@ public class TestEventFactory
 
         XMLEventFactory f = getEventFactory();
         Comment c = f.createComment(content);
+
+        checkIsMethods(COMMENT, c);
+        testWritability(c);
+
         assertEquals(content, c.getText());
     }
 
@@ -95,6 +108,10 @@ public class TestEventFactory
         throws XMLStreamException
     {
         XMLEventFactory f = getEventFactory();
+        DTD d = f.createDTD("<!DOCTYPE root SYSTEM 'http://foo' [ ]>");
+
+        checkIsMethods(DTD, d);
+        testWritability(d);
 
         // !!! TBI
     }
@@ -106,20 +123,37 @@ public class TestEventFactory
         EndDocument ed = f.createEndDocument();
 
         // No properties -- as long as we got instance of right type, it's ok
+        checkIsMethods(END_DOCUMENT, ed);
+        testWritability(ed);
     }
 
     public void testEndElement()
         throws XMLStreamException
     {
         XMLEventFactory f = getEventFactory();
-        // !!! TBI
+        final String LOCALNAME = "elem";
+
+        // prefix, uri, localName
+        EndElement ee = f.createEndElement("", "", LOCALNAME);
+        checkIsMethods(END_ELEMENT, ee);
+        testWritability(ee);
+
+        QName n = ee.getName();
+        assertNotNull(n);
+        assertEquals(LOCALNAME, n.getLocalPart());
     }
 
     public void testEntityReference()
         throws XMLStreamException
     {
         XMLEventFactory f = getEventFactory();
-        // !!! TBI
+
+        /* 22-Dec-2005, TSa: ... but how can we create the entity declaration
+         *   that is needed? Should null be ok? For now, can't really test...
+         */
+        //EntityReference ref = f.createEntityReference("ref", decl);
+        //checkIsMethods(ENTITY_REFERENCE, ref);
+        //testWritability(ref);
     }
 
     public void testIgnorableSpace()
@@ -128,6 +162,10 @@ public class TestEventFactory
         final String contents = "  \t  \n  ";
         XMLEventFactory f = getEventFactory();
         Characters c = f.createIgnorableSpace(contents);
+
+        checkIsMethods(CHARACTERS, c);
+        testWritability(c);
+
         assertEquals(contents, c.getData());
         assertFalse(c.isCData());
         assertTrue(c.isIgnorableWhiteSpace());
@@ -138,14 +176,42 @@ public class TestEventFactory
         throws XMLStreamException
     {
         XMLEventFactory f = getEventFactory();
-        // !!! TBI
+        final String PREFIX = "prefix";
+        final String URI = "http://foo";
+
+        // First default:
+        Namespace ns = f.createNamespace(URI);
+
+        checkIsMethods(NAMESPACE, ns);
+        testWritability(ns);
+
+        String prefix = ns.getPrefix();
+        // Both null and empty are ok?
+        if (prefix != null && prefix.length() > 0) {
+            fail("Expected prefix to be null or empty for default namespace event object");
+        }
+        assertEquals(URI, ns.getNamespaceURI());
+        assertTrue(ns.isDefaultNamespaceDeclaration());
+
+        // Then non-default:
+        ns = f.createNamespace(PREFIX, URI);
+        checkIsMethods(NAMESPACE, ns);
+        assertEquals(PREFIX, ns.getPrefix());
+        assertEquals(URI, ns.getNamespaceURI());
+        assertFalse(ns.isDefaultNamespaceDeclaration());
     }
 
     public void testProcInstr()
         throws XMLStreamException
     {
         XMLEventFactory f = getEventFactory();
-        // !!! TBI
+        ProcessingInstruction pi = f.createProcessingInstruction("target", "data");
+        checkIsMethods(PROCESSING_INSTRUCTION, pi);
+        testWritability(pi);
+
+        assertEquals("target", pi.getTarget());
+        assertEquals("data", pi.getData());
+
     }
 
     public void testSpace()
@@ -155,6 +221,10 @@ public class TestEventFactory
         XMLEventFactory f = getEventFactory();
         Characters c = f.createSpace(contents);
         assertEquals(contents, c.getData());
+
+        checkIsMethods(CHARACTERS, c);
+        testWritability(c);
+
         assertFalse(c.isCData());
         assertFalse(c.isIgnorableWhiteSpace());
         assertTrue(c.isWhiteSpace());
@@ -164,14 +234,47 @@ public class TestEventFactory
         throws XMLStreamException
     {
         XMLEventFactory f = getEventFactory();
-        // !!! TBI
+        StartDocument sd = f.createStartDocument();
+        checkIsMethods(START_DOCUMENT, sd);
+        testWritability(sd);
+
+        assertFalse(sd.encodingSet());
+        assertFalse(sd.standaloneSet());
+
+        final String ENCODING = "ISO-8859-1";
+        final String VERSION = "1.0";
+        sd = f.createStartDocument(ENCODING, VERSION, true);
+        checkIsMethods(START_DOCUMENT, sd);
+        assertTrue(sd.encodingSet());
+        assertTrue(sd.standaloneSet());
+        assertEquals(ENCODING, sd.getCharacterEncodingScheme());
+        assertEquals(VERSION, sd.getVersion());
     }
 
     public void testStartElement()
         throws XMLStreamException
     {
+        final String LOCALNAME = "root";
+        final String PREFIX = "ns";
+        final String URI = "urn:whatever";
+
         XMLEventFactory f = getEventFactory();
-        // !!! TBI
+        // prefix, uri, localname
+        StartElement se = f.createStartElement("", "", LOCALNAME);
+        testWritability(se);
+
+        checkIsMethods(START_ELEMENT, se);
+        QName n = se.getName();
+        assertNotNull(n);
+        assertEquals(LOCALNAME, n.getLocalPart());
+
+        se = f.createStartElement(PREFIX, URI, LOCALNAME);
+        checkIsMethods(START_ELEMENT, se);
+        n = se.getName();
+        assertNotNull(n);
+        assertEquals(LOCALNAME, n.getLocalPart());
+        assertEquals(PREFIX, n.getPrefix());
+        assertEquals(URI, n.getNamespaceURI());
     }
 
     /*
@@ -179,5 +282,63 @@ public class TestEventFactory
     // Private methods, tests
     ////////////////////////////////////////
      */
+
+    private void checkIsMethods(int type, XMLEvent evt)
+    {
+        int actualType = evt.getEventType();
+        if (actualType != type) {
+            /* Minor deviation; should Characters objects that are constructed
+             * for CDATA and SPACE return true type or CHARACTERS?
+             */
+            if (type == CHARACTERS &&
+                (actualType == SPACE || actualType == CDATA)) {
+                // for now let's let this pass...
+            } else {
+                assertTokenType(type, actualType); // this'll fail and output descs for types
+            }
+        }
+
+        /* Hmmh. Whether Namespace object should return true or false
+         * is an open question. So let's accept both
+         */
+        if (type == NAMESPACE) {
+            /* for now let's just ask for it (to make sure it won't throw
+             * exceptions), but not verify the value
+             */
+            boolean isAttr = evt.isAttribute();
+        } else {
+            assertEquals((type == ATTRIBUTE), evt.isAttribute());
+        }
+
+        assertEquals((type == CHARACTERS), evt.isCharacters());
+        assertEquals((type == START_DOCUMENT), evt.isStartDocument());
+        assertEquals((type == END_DOCUMENT), evt.isEndDocument());
+        assertEquals((type == START_ELEMENT), evt.isStartElement());
+        assertEquals((type == END_ELEMENT), evt.isEndElement());
+        assertEquals((type == ENTITY_REFERENCE), evt.isEntityReference());
+        assertEquals((type == NAMESPACE), evt.isNamespace());
+        assertEquals((type == PROCESSING_INSTRUCTION), evt.isProcessingInstruction());
+    }
+
+    /**
+     * Simple test utility method that just calls output method, to verify
+     * it does not throw anything nasty, and does output something.
+     * Not enough to verify actual working, but should exercise code path
+     * to check for fatal problems.
+     */
+    private void testWritability(XMLEvent evt)
+        throws XMLStreamException
+    {
+        StringWriter sw = new StringWriter();
+        evt.writeAsEncodedUnicode(sw);
+
+        // Some events do not (have to) output anything:
+        switch (evt.getEventType()) {
+        case END_DOCUMENT: // nothing to output, usually
+            return;
+        }
+
+        assertTrue(sw.toString().length() > 0);
+    }
 }
 
