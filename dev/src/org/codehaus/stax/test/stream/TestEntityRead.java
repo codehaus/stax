@@ -152,6 +152,37 @@ public class TestEntityRead
         streamThrough(sr);
     }
 
+    public void testUnexpandedEntities2()
+        throws XMLStreamException
+    {
+        /* Note: as per XML 1.0 specs, non-char entities (including pre-defined
+         * entities like 'amp' and 'lt'!) are not to be expanded before entity
+         * that contains them is expanded... so they are returned unexpanded.
+         * Char entities, however, are to be expanded.
+         */
+        String ENTITY_VALUE = "Something slightly longer &amp; challenging\nwhich may or may not work";
+        String XML = "<!DOCTYPE root [\n"
+            +" <!ENTITY myent '"+ENTITY_VALUE+"'>]>"
+            +"<root>&myent;</root>";
+
+        XMLStreamReader sr = getReader(XML, false, true, false);
+
+        assertTokenType(DTD, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertTokenType(ENTITY_REFERENCE, sr.next());
+        assertEquals("myent", sr.getLocalName());
+
+        // Ok, let's try the other access method:
+        int len = sr.getTextLength();
+        assertEquals(ENTITY_VALUE.length(), len);
+        int start = sr.getTextStart();
+        char[] ch = new char[len];
+        sr.getTextCharacters(0, ch, 0, len);
+        assertEquals(ENTITY_VALUE, new String(ch));
+        assertTokenType(END_ELEMENT, sr.next());
+        assertTokenType(END_DOCUMENT, sr.next());
+    }
+
     /**
      * Test that checks that entities that expand to elements, comments
      * and processing instructions are properly handled.
@@ -463,5 +494,19 @@ public class TestEntityRead
         setReplaceEntities(f, replEntities);
         setValidating(f, false);
         return constructStreamReader(f, contents);
+    }
+
+    final static class MyResolver
+        implements XMLResolver
+    {
+        final byte[] mInput;
+
+        public MyResolver(String val) {
+            mValue = mInput.toBytes("UTF-8");
+        }
+
+        public Object resolve(String uri) {
+            return new InputStream(mValue, "UTF-8");
+        }
     }
 }

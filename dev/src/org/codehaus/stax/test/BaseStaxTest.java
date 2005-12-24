@@ -31,6 +31,9 @@ public class BaseStaxTest
         mTokenTypes.put(new Integer(DTD), "DTD");
         mTokenTypes.put(new Integer(SPACE), "SPACE");
         mTokenTypes.put(new Integer(ENTITY_REFERENCE), "ENTITY_REFERENCE");
+        mTokenTypes.put(new Integer(NAMESPACE), "NAMESPACE_DECLARATION");
+        mTokenTypes.put(new Integer(NOTATION_DECLARATION), "NOTATION_DECLARATION");
+        mTokenTypes.put(new Integer(ENTITY_DECLARATION), "ENTITY_DECLARATION");
     }
 
     /*
@@ -258,6 +261,7 @@ public class BaseStaxTest
         int start = sr.getTextStart();
         String text2 = new String(textChars, start, expLen);
         assertEquals("Expected getText() and getTextCharacters() to return same value for event of type ("+tokenTypeDesc(sr.getEventType())+")", text, text2);
+
         return text;
     }
 
