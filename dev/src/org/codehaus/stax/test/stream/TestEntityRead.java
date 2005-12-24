@@ -2,6 +2,8 @@ package org.codehaus.stax.test.stream;
 
 import javax.xml.stream.*;
 
+import org.codehaus.stax.test.SimpleResolver;
+
 /**
  * Unit test suite that tests handling of various kinds of entities.
  */
@@ -357,6 +359,61 @@ public class TestEntityRead
         } catch (Exception e) { }
     }
 
+    /**
+     * This unit test checks that external entities can be resolved; and
+     * to do that without requiring external files, will use a simple
+     * helper resolver
+     */
+    public void testExternalEntityWithResolver()
+        throws XMLStreamException
+    {
+        String ENTITY_VALUE1 = "some text from the external entity";
+        String ACTUAL_VALUE1 = "ent='"+ENTITY_VALUE1+"'";
+        String XML =
+            "<!DOCTYPE root [\n"
+            +"<!ENTITY extEnt SYSTEM 'myurl'>\n"
+            +"]><root>ent='&extEnt;'</root>";
+
+        // ns-aware, coalescing (to simplify verifying), entity expanding
+        XMLInputFactory f = doGetFactory(true, true, true);
+        setSupportExternalEntities(f, true);
+        setResolver(f, new SimpleResolver(ENTITY_VALUE1));
+
+        // First, simple content without further expansion etc
+        XMLStreamReader sr = constructStreamReader(f, XML);
+        assertTokenType(DTD, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertTokenType(CHARACTERS, sr.next());
+        assertEquals(ACTUAL_VALUE1, getAndVerifyText(sr));
+        assertTokenType(END_ELEMENT, sr.next());
+        sr.close();
+
+        // Then bit more complicated one:
+
+        String ENTITY_VALUE2 = "external entity: <leaf /> this &amp; that &intEnt;";
+        String ACTUAL_VALUE2a = "ent='external entity: ";
+        String ACTUAL_VALUE2b = " this & that & more!'";
+        String XML2 =
+            "<!DOCTYPE root [\n"
+            +"<!ENTITY extEnt SYSTEM 'myurl'>\n"
+            +"<!ENTITY intEnt '&amp; more!'>\n"
+            +"]><root>ent='&extEnt;'</root>";
+        setResolver(f, new SimpleResolver(ENTITY_VALUE2));
+
+        sr = constructStreamReader(f, XML2);
+        assertTokenType(DTD, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertTokenType(CHARACTERS, sr.next());
+        assertEquals(ACTUAL_VALUE2a, getAndVerifyText(sr));
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals("leaf", sr.getLocalName());
+        assertTokenType(END_ELEMENT, sr.next());
+        assertTokenType(CHARACTERS, sr.next());
+        assertEquals(ACTUAL_VALUE2b, getAndVerifyText(sr));
+        assertTokenType(END_ELEMENT, sr.next());
+        sr.close();
+    }
+
     /*
     ////////////////////////////////////////
     // Private methods, shared test code
@@ -457,13 +514,13 @@ public class TestEntityRead
          * return true, by default, but getText() (etc) should return
          * null?
          */
-	String text = sr.getText();
+        String text = sr.getText();
 
-	if (text != null && text.length() > 0) {
-	    fail("Expected getText() for external entity 'ent2' to return null or empty String; instead got '"+text+"'");
-	}
+        if (text != null && text.length() > 0) {
+            fail("Expected getText() for external entity 'ent2' to return null or empty String; instead got '"+text+"'");
+        }
         assertEquals(0, sr.getTextLength());
-	char[] ch = sr.getTextCharacters();
+        char[] ch = sr.getTextCharacters();
         assertTrue((ch == null) || ch.length == 0);
 
         // // ok, should be good:
@@ -487,26 +544,20 @@ public class TestEntityRead
                                       boolean coalescing, boolean replEntities)
         throws XMLStreamException
     {
+        XMLInputFactory f = doGetFactory(nsAware, coalescing, replEntities);
+        return constructStreamReader(f, contents);
+    }
+
+    private XMLInputFactory doGetFactory(boolean nsAware,
+                                         boolean coalescing, boolean replEntities)
+        throws XMLStreamException
+    {
         XMLInputFactory f = getInputFactory();
         setNamespaceAware(f, nsAware);
         setSupportDTD(f, true);
         setCoalescing(f, coalescing);
         setReplaceEntities(f, replEntities);
         setValidating(f, false);
-        return constructStreamReader(f, contents);
-    }
-
-    final static class MyResolver
-        implements XMLResolver
-    {
-        final byte[] mInput;
-
-        public MyResolver(String val) {
-            mValue = mInput.toBytes("UTF-8");
-        }
-
-        public Object resolve(String uri) {
-            return new InputStream(mValue, "UTF-8");
-        }
+        return f;
     }
 }

@@ -179,18 +179,17 @@ public class TestEventReader
 	    // Now, peek() should produce text..
             XMLEvent text = er.peek();
             assertTokenType(CHARACTERS, text.getEventType());
-	    Characters chars = text.asCharacters();
-	    assertNotNull(chars);
-	    assertEquals("text", chars.getData());
-	    
-	    // and need nextEvent() to get rid of it, too:
-	    text = er.nextEvent();
-	    // Let's verify it again:
+            Characters chars = text.asCharacters();
+            assertNotNull(chars);
+            assertEquals("text", chars.getData());
+            
+            // and need nextEvent() to get rid of it, too:
+            text = er.nextEvent();
+            // Let's verify it again:
             assertTokenType(CHARACTERS, text.getEventType());
-	    chars = text.asCharacters();
-	    assertNotNull(chars);
-	    assertEquals("text", chars.getData());
-
+            chars = text.asCharacters();
+            assertNotNull(chars);
+            assertEquals("text", chars.getData());
             assertTokenType(END_ELEMENT, er.nextTag().getEventType());
             assertTokenType(END_DOCUMENT, er.nextEvent().getEventType());
         }

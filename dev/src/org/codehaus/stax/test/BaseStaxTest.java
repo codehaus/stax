@@ -226,6 +226,20 @@ public class BaseStaxTest
         assertEquals(b, f.getProperty(XMLInputFactory.SUPPORT_DTD));
     }
 
+    protected static void setSupportExternalEntities(XMLInputFactory f, boolean state)
+        throws XMLStreamException
+    {
+        Boolean b = Boolean.valueOf(state);
+        f.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, b);
+        assertEquals(b, f.getProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES));
+    }
+
+    protected static void setResolver(XMLInputFactory f, XMLResolver resolver)
+        throws XMLStreamException
+    {
+        f.setProperty(XMLInputFactory.RESOLVER, resolver);
+    }
+
     /*
     //////////////////////////////////////////////////
     // Stream reader accessors

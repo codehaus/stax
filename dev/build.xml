@@ -256,6 +256,8 @@
     <junit fork="no" printsummary="yes" haltonfailure="no" showoutput="yes">
             <batchtest fork="no" todir="${test_results_dir}/xml">
                 <fileset dir="${test_class_dir}">
+                    <!-- Need to exclude inner classes... -->
+                    <exclude name="**/*$*.class"/>
                     <exclude name="org/codehaus/stax/test/vstream/*.class"/>
                     <include name="org/codehaus/stax/test/**/Test*.class"/>
                 </fileset>
