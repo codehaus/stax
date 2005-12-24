@@ -15,6 +15,8 @@ import org.codehaus.stax.test.stream.BaseStreamTest;
 public class BaseVStreamTest
     extends BaseStreamTest
 {
+    protected BaseVStreamTest() { super(); }
+
     protected BaseVStreamTest(String name) {
         super(name);
     }

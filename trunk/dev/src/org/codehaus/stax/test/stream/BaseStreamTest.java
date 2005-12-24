@@ -32,6 +32,8 @@ public class BaseStreamTest
 
     protected boolean PRINT_EXP_EXCEPTION = DEF_PRINT_EXP_EXCEPTION;
 
+    protected BaseStreamTest() { }
+
     protected BaseStreamTest(String name) {
         super(name);
     }
