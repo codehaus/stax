@@ -44,6 +44,75 @@ public class TestEventReader
     }
 
     /**
+     * Test that checks that entity objects are properly returned in
+     * non-expanding mode
+     */
+    public void testNonExpandingEntities()
+        throws XMLStreamException
+    {
+        /* Let's test all entity types
+         */
+        String XML = "<?xml version='1.0' ?>"
+            +"<!DOCTYPE root [\n"
+            +"<!ENTITY intEnt 'internal'>\n"
+            +"<!ENTITY extParsedEnt SYSTEM 'url:dummy'>\n"
+            +"<!NOTATION notation PUBLIC 'notation-public-id'>\n"
+            // Hmmh: can't test this, but let's declare it anyway
+            +"<!ENTITY extUnparsedEnt SYSTEM 'url:dummy2' NDATA notation>\n"
+            +"]>"
+            //+"<root>&intEnt;&extParsedEnt;&extUnparsedEnt;</root>"
+            +"<root>&intEnt;&extParsedEnt;</root>"
+            ;
+
+        for (int i = 0; i < 4; ++i) {
+            boolean ns = (i & 1) != 0;
+            boolean coal = (i & 2) != 0;
+            // false -> do not expand entities
+            XMLEventReader er = getReader(XML, ns, coal, false);
+            
+            assertTokenType(START_DOCUMENT, er.nextEvent().getEventType());
+            assertTokenType(DTD, er.nextEvent().getEventType());
+            XMLEvent evt = er.nextEvent();
+            assertTrue(evt.isStartElement());
+
+            evt = er.nextEvent();
+            assertTokenType(ENTITY_REFERENCE, evt.getEventType());
+            EntityReference ref = (EntityReference) evt;
+            assertNotNull(ref);
+            assertTrue(ref.isEntityReference());
+            assertEquals("intEnt", ref.getName());
+            EntityDeclaration ed = ref.getDeclaration();
+            assertNotNull(ed);
+
+            evt = er.nextEvent();
+            assertTokenType(ENTITY_REFERENCE, evt.getEventType());
+            ref = (EntityReference) evt;
+            assertNotNull(ref);
+            assertTrue(ref.isEntityReference());
+            assertEquals("extParsedEnt", ref.getName());
+            ed = ref.getDeclaration();
+            assertNotNull(ed);
+
+            /*
+            evt = er.nextEvent();
+            assertTokenType(ENTITY_REFERENCE, evt.getEventType());
+            ref = (EntityReference) evt;
+            assertEquals("extUnparsedEnt", ref.getName());
+            assertNotNull(ref);
+            assertTrue(ref.isEntityReference());
+            ed = ref.getDeclaration();
+            assertNotNull(ed);
+            assertEquals("notation", ed.getNotationName());
+            */
+
+            evt = er.nextEvent();
+            assertTrue(evt.isEndElement());
+            assertTokenType(END_DOCUMENT, er.nextEvent().getEventType());
+            assertFalse(er.hasNext());
+        }
+    }
+
+    /**
      * The main purpose of this test is to ensure that an exception
      * is thrown at the end.
      */
@@ -205,11 +274,19 @@ public class TestEventReader
                                      boolean coalesce)
         throws XMLStreamException
     {
+        return getReader(contents, nsAware, coalesce, true);
+    }
+
+    private XMLEventReader getReader(String contents, boolean nsAware,
+                                     boolean coalesce, boolean expandEnt)
+        throws XMLStreamException
+    {
         XMLInputFactory f = getInputFactory();
         setNamespaceAware(f, nsAware);
         setCoalescing(f, coalesce);
         setSupportDTD(f, true);
         setValidating(f, false);
+        setReplaceEntities(f, expandEnt);
         return constructEventReader(f, contents);
     }
 }
