@@ -5,6 +5,8 @@ import java.util.NoSuchElementException;
 import javax.xml.stream.*;
 import javax.xml.stream.events.*;
 
+import java.util.*;
+
 /**
  * Class that contains simple tests for making sure that event objects
  * created by the {@link XMLEventFactory} have expected properties.
@@ -109,6 +111,54 @@ public class TestEventReader
             assertTrue(evt.isEndElement());
             assertTokenType(END_DOCUMENT, er.nextEvent().getEventType());
             assertFalse(er.hasNext());
+        }
+    }
+
+    /**
+     * This unit test checks that a DTD event that results from parsing
+     * a valid document, to the degree it is done without having to
+     * validate anything
+     */
+    public void testValidDtdEvent()
+        throws XMLStreamException
+    {
+        String XML = "<?xml version='1.0' ?>"
+            +"<!DOCTYPE root [\n"
+            +"<!ENTITY intEnt 'internal'>\n"
+            +"<!ENTITY extParsedEnt SYSTEM 'url:dummy'>\n"
+            +"<!NOTATION notation PUBLIC 'notation-public-id'>\n"
+            +"<!NOTATION notation2 SYSTEM 'url:dummy'>\n"
+            +"<!ENTITY extUnparsedEnt SYSTEM 'url:dummy2' NDATA notation>\n"
+            +"]>"
+            +"<root />"
+            ;
+        for (int i = 0; i < 4; ++i) {
+            boolean ns = (i & 1) != 0;
+            boolean coal = (i & 2) != 0;
+            XMLEventReader er = getReader(XML, ns, coal);
+            
+            assertTokenType(START_DOCUMENT, er.nextEvent().getEventType());
+            XMLEvent evt = er.nextEvent();
+            assertTokenType(DTD, evt.getEventType());
+            DTD dtd = (DTD) evt;
+            /* isXxx() methods and writability are tested by a different
+             * unit test (in TestEventTypes()); here let's just check for
+             * entities and notations
+             */
+            List entities = dtd.getEntities();
+            assertNotNull(entities);
+            assertEquals(3, entities.size());
+
+            // Let's also verify they are all of right type...
+            testListElems(entities, EntityDeclaration.class);
+
+            List notations = dtd.getNotations();
+
+            // Let's also verify they are all of right type...
+            testListElems(notations, NotationDeclaration.class);
+
+            assertNotNull(notations);
+            assertEquals(2, notations.size());
         }
     }
 
@@ -288,5 +338,15 @@ public class TestEventReader
         setValidating(f, false);
         setReplaceEntities(f, expandEnt);
         return constructEventReader(f, contents);
+    }
+
+    private void testListElems(List l, Class expType)
+    {
+        Iterator it = l.iterator();
+        while (it.hasNext()) {
+            Object o = it.next();
+            assertNotNull(o);
+            assertTrue(expType.isAssignableFrom(o.getClass()));
+        }
     }
 }

@@ -96,4 +96,62 @@ public class BaseEventTest
         }
         return count;
     }
+
+    public static void checkEventIsMethods(int type, XMLEvent evt)
+    {
+        int actualType = evt.getEventType();
+        if (actualType != type) {
+            /* Minor deviation; should Characters objects that are constructed
+             * for CDATA and SPACE return true type or CHARACTERS?
+             */
+            if (type == CHARACTERS &&
+                (actualType == SPACE || actualType == CDATA)) {
+                // for now let's let this pass...
+            } else {
+                assertTokenType(type, actualType); // this'll fail and output descs for types
+            }
+        }
+
+        /* Hmmh. Whether Namespace object should return true or false
+         * is an open question. So let's accept both
+         */
+        if (type == NAMESPACE) {
+            /* for now let's just ask for it (to make sure it won't throw
+             * exceptions), but not verify the value
+             */
+            boolean isAttr = evt.isAttribute();
+        } else {
+            assertEquals((type == ATTRIBUTE), evt.isAttribute());
+        }
+
+        assertEquals((type == CHARACTERS), evt.isCharacters());
+        assertEquals((type == START_DOCUMENT), evt.isStartDocument());
+        assertEquals((type == END_DOCUMENT), evt.isEndDocument());
+        assertEquals((type == START_ELEMENT), evt.isStartElement());
+        assertEquals((type == END_ELEMENT), evt.isEndElement());
+        assertEquals((type == ENTITY_REFERENCE), evt.isEntityReference());
+        assertEquals((type == NAMESPACE), evt.isNamespace());
+        assertEquals((type == PROCESSING_INSTRUCTION), evt.isProcessingInstruction());
+    }
+
+    /**
+     * Simple test utility method that just calls output method, to verify
+     * it does not throw anything nasty, and does output something.
+     * Not enough to verify actual working, but should exercise code path
+     * to check for fatal problems.
+     */
+    public void testEventWritability(XMLEvent evt)
+        throws XMLStreamException
+    {
+        StringWriter sw = new StringWriter();
+        evt.writeAsEncodedUnicode(sw);
+
+        // Some events do not (have to) output anything:
+        switch (evt.getEventType()) {
+        case END_DOCUMENT: // nothing to output, usually
+            return;
+        }
+
+        assertTrue(sw.toString().length() > 0);
+    }
 }

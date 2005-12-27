@@ -87,8 +87,9 @@ public class TestEventTypes
         assertEquals(DTD, evt.getEventType());
         {
             DTD dtd = (DTD) evt;
-
-            // ... can we test anything else, though?
+            checkEventIsMethods(DTD, dtd);
+            testEventWritability(dtd);
+            assertNotNull(dtd.getDocumentTypeDeclaration());
         }
 
         // Then START_ELEMENT
