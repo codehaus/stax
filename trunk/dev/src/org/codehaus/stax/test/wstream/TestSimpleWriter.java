@@ -18,13 +18,71 @@ public class TestSimpleWriter
     public void testCData()
         throws IOException, XMLStreamException
     {
-        // !!! TBI
+        StringWriter strw = new StringWriter();
+        XMLStreamWriter w = getNonRepairingWriter(strw);
+
+        final String CDATA_TEXT = "Let's test it with some ] ]> data; <tag>s and && chars and all!";
+
+        w.writeStartDocument();
+        w.writeStartElement("test");
+        w.writeCData(CDATA_TEXT);
+        w.writeEndElement();
+        w.writeEndDocument();
+        w.close();
+        
+        // And then let's parse and verify it all:
+
+        XMLStreamReader sr = constructNsStreamReader(strw.toString(), true);
+        assertTokenType(START_DOCUMENT, sr.getEventType());
+        assertTokenType(START_ELEMENT, sr.next());
+
+        // Now, parsers are allowed to report CHARACTERS or CDATA
+        int tt = sr.next();
+        if (tt != CHARACTERS && tt != CDATA) {
+            assertTokenType(CDATA, tt); // to cause failure
+        }
+        assertFalse(sr.isWhiteSpace());
+        assertEquals(CDATA_TEXT, getAndVerifyText(sr));
+        assertTokenType(END_ELEMENT, sr.next());
+        assertTokenType(END_DOCUMENT, sr.next());
     }
 
     public void testCharacters()
         throws IOException, XMLStreamException
     {
-        // !!! TBI
+        StringWriter strw = new StringWriter();
+        XMLStreamWriter w = getNonRepairingWriter(strw);
+
+        final String TEXT = "Ok; some content\nwith linefeeds and stuff (let's leave encoding as is though, no entities)\n";
+
+        w.writeStartDocument();
+        w.writeStartElement("test");
+        w.writeCharacters(TEXT);
+        w.writeStartElement("leaf");
+        // Let's also test the other method...
+        char[] tmp = new char[TEXT.length() + 4];
+        TEXT.getChars(0, TEXT.length(), tmp, 2);
+        w.writeCharacters(tmp, 2, TEXT.length());
+        w.writeEndElement();
+        w.writeEndElement();
+        w.writeEndDocument();
+        w.close();
+        
+        // And then let's parse and verify it all:
+
+        XMLStreamReader sr = constructNsStreamReader(strw.toString(), true);
+        assertTokenType(START_DOCUMENT, sr.getEventType());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertTokenType(CHARACTERS, sr.next());
+        assertFalse(sr.isWhiteSpace());
+        assertEquals(TEXT, getAndVerifyText(sr));
+        assertTokenType(START_ELEMENT, sr.next());
+        assertTokenType(CHARACTERS, sr.next());
+        assertFalse(sr.isWhiteSpace());
+        assertEquals(TEXT, getAndVerifyText(sr));
+        assertTokenType(END_ELEMENT, sr.next());
+        assertTokenType(END_ELEMENT, sr.next());
+        assertTokenType(END_DOCUMENT, sr.next());
     }
 
     public void testComment()

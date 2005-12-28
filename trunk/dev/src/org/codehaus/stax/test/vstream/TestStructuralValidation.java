@@ -165,6 +165,59 @@ public class TestStructuralValidation
         }
     }
 
+    final static String COMPLEX_DTD =
+        "<!ELEMENT root (first?, second+, (third | fourth))>\n"
+        +"<!ELEMENT first EMPTY>\n"
+        +"<!ELEMENT second EMPTY>\n"
+        +"<!ELEMENT third (a, b, (c | d)?, e*)>\n"
+        +"<!ELEMENT a (#PCDATA)>\n"
+        +"<!ELEMENT b (#PCDATA)>\n"
+        +"<!ELEMENT c (#PCDATA)>\n"
+        +"<!ELEMENT d (#PCDATA)>\n"
+        +"<!ELEMENT e (#PCDATA)>\n"
+        +"<!ELEMENT fourth (#PCDATA)>\n"
+        ;
+
+    public void testValidStructureComplex()
+        throws XMLStreamException
+    {
+        for (int i = 0; i < 2; ++i) {
+            boolean nsAware = (i > 0);
+
+            // And then just wrong ordering of child elements
+            String XML = "<!DOCTYPE root [ "+COMPLEX_DTD+" ]>"
+                +"<root>"
+                +" <second />"
+                +" <third>"
+                +" <a /><b /><d /><e/><e></e>"
+                +" </third>"
+                +"</root>"
+                ;
+            streamThrough(getReader(XML, nsAware));
+        }
+    }
+
+    public void testInvalidStructureComplex()
+        throws XMLStreamException
+    {
+        for (int i = 0; i < 2; ++i) {
+            boolean nsAware = (i > 0);
+
+            // And then just wrong ordering of child elements
+            String XML = "<!DOCTYPE root [ "+COMPLEX_DTD+" ]>"
+                +"<root>"
+                +" <second />"
+                +" <third>"
+                // b is missing:
+                +" <a /><d /><e/><e></e>"
+                +" </third>"
+                +"</root>"
+                ;
+            streamThroughFailing(getReader(XML, nsAware),
+                                 "wrong element structure; missing element <b>");
+        }
+    }
+
     /**
      * Unit test that checks that it's illegal to add any content (including
      * comment, processing instructions or white space) within an element that has

@@ -142,6 +142,14 @@ public class BaseStaxTest
         return f.createXMLStreamReader(new StringReader(content));
     }
 
+    protected XMLStreamReader constructNsStreamReader(String content, boolean coal)
+        throws XMLStreamException
+    {
+        XMLInputFactory f = getInputFactory();
+        setNamespaceAware(f, true);
+        setCoalescing(f, coal);
+        return f.createXMLStreamReader(new StringReader(content));
+    }
     /*
     //////////////////////////////////////////////////
     // Configuring input factory
