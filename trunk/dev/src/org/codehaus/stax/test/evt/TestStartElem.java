@@ -73,7 +73,8 @@ public class TestStartElem
         throws XMLStreamException
     {
         String XML = "<root><leaf xmlns='x' />"
-            +"<branch xmlns:a='b'><leaf xmlns:a='c' /></branch>"
+            +"<branch xmlns:a='b' xmlns:x='url'>"
+            +"<leaf xmlns:a='c' x:attr='value'/></branch>"
             +"</root>";
 
         XMLEventReader er = getReader(XML, true, false);
@@ -107,10 +108,12 @@ public class TestStartElem
         assertTrue(evt.isStartElement());
         se = evt.asStartElement();
         assertEquals("branch", se.getName().getLocalPart());
-        assertEquals(1, countElements(se.getNamespaces()));
+        assertEquals(2, countElements(se.getNamespaces()));
         nsCtxt = se.getNamespaceContext();
         assertEquals("a", nsCtxt.getPrefix("b"));
         assertEquals("b", nsCtxt.getNamespaceURI("a"));
+        assertEquals("x", nsCtxt.getPrefix("url"));
+        assertEquals("url", nsCtxt.getNamespaceURI("x"));
 
         // second leaf
         evt = er.nextEvent();
@@ -118,16 +121,62 @@ public class TestStartElem
         se = evt.asStartElement();
         nsCtxt = se.getNamespaceContext();
         assertEquals("leaf", se.getName().getLocalPart());
+        // only one declared in this particular element
         assertEquals(1, countElements(se.getNamespaces()));
+        // but should still show the other bound ns from parent
         nsCtxt = se.getNamespaceContext();
         assertEquals("a", nsCtxt.getPrefix("c"));
         assertEquals("c", nsCtxt.getNamespaceURI("a"));
+        assertEquals("x", nsCtxt.getPrefix("url"));
+        assertEquals("url", nsCtxt.getNamespaceURI("x"));
         // ok, but how about masking:
         assertNull(nsCtxt.getPrefix("b"));
 
         // Ok, fine... others we don't care about:
         assertTrue(er.nextEvent().isEndElement());
     }
+
+    /**
+     * Another unit test, one that checks a special case of namespace
+     * enclosures and namespace context objects.
+     */
+    public void testNestedStartElemNs2()
+        throws XMLStreamException
+    {
+        String XML = "<root><branch xmlns:a='url'><leaf /></branch></root>";
+
+        XMLEventReader er = getReader(XML, true, false);
+        assertTokenType(START_DOCUMENT, er.nextEvent().getEventType());
+
+        XMLEvent evt = er.nextEvent(); // root
+        assertTokenType(START_ELEMENT, evt.getEventType());
+        StartElement se = evt.asStartElement();
+        assertEquals("root", se.getName().getLocalPart());
+        assertEquals(0, countElements(se.getNamespaces()));
+
+        evt = er.nextEvent(); // branch
+        assertTokenType(START_ELEMENT, evt.getEventType());
+        se = evt.asStartElement();
+        assertEquals("branch", se.getName().getLocalPart());
+        assertEquals(1, countElements(se.getNamespaces()));
+        NamespaceContext nsCtxt = se.getNamespaceContext();
+        assertEquals("url", nsCtxt.getNamespaceURI("a"));
+        assertEquals("a", nsCtxt.getPrefix("url"));
+
+        evt = er.nextEvent(); // leaf
+        assertTokenType(START_ELEMENT, evt.getEventType());
+        se = evt.asStartElement();
+        assertEquals("leaf", se.getName().getLocalPart());
+        assertEquals(0, countElements(se.getNamespaces()));
+        nsCtxt = se.getNamespaceContext();
+        assertEquals("url", nsCtxt.getNamespaceURI("a"));
+        assertEquals("a", nsCtxt.getPrefix("url"));
+
+        assertTrue(er.nextEvent().isEndElement()); // /leaf
+        assertTrue(er.nextEvent().isEndElement()); // /branch
+        assertTrue(er.nextEvent().isEndElement()); // /root
+    }
+
 
     /**
      * Test to check that attributes can be accessed normally via
