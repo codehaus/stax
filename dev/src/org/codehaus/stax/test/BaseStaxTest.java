@@ -150,6 +150,7 @@ public class BaseStaxTest
         setCoalescing(f, coal);
         return f.createXMLStreamReader(new StringReader(content));
     }
+
     /*
     //////////////////////////////////////////////////
     // Configuring input factory
