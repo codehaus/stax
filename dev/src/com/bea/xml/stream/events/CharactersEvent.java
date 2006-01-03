@@ -14,6 +14,9 @@
  */
 package com.bea.xml.stream.events;
 
+import java.io.IOException;
+import java.io.Writer;
+
 import javax.xml.stream.events.XMLEvent;
 import javax.xml.stream.events.Characters;
 
@@ -60,10 +63,56 @@ public class CharactersEvent
   public char[] getDataAsArray() {
     return data.toCharArray();
   }
-  public String toString() { 
-    if (isCData) {
-      return("<![CDATA["+getData()+"]]>");
-    }
-    return data; 
+
+  protected void doWriteAsEncodedUnicode(Writer writer) 
+      throws IOException
+  {
+      if (isCData) {
+          writer.write("<![CDATA[");
+          writer.write(getData());
+          writer.write("]]>");
+      } else {
+          String data = getData();
+          int len = data.length();
+
+          if (len > 0) {
+              int i = 0;
+              
+              // Let's see how much we can output without encoding:
+              loop:
+              for (; i < len; ++i) {
+                  switch (data.charAt(i)) {
+                  case '&':
+                  case '<':
+                  case '>': // only mandatory as part of ']]>' but let's play it safe
+                      break loop;
+                  }
+              }
+              // got it all?
+              if (i == len) {
+                  writer.write(data);
+              } else { // nope...
+                  if (i > 0) {
+                      writer.write(data, 0, i);
+                  }
+                  for (; i < len; ++i) {
+                      final char c = data.charAt(i);
+                      switch (c) {
+                      case '&':
+                          writer.write("&amp;");
+                          break;
+                      case '<':
+                          writer.write("&lt;");
+                          break;
+                      case '>':
+                          writer.write("&gt;");
+                          break;
+                      default:
+                          writer.write(c);
+                      }
+                  }
+              }
+          }
+      }
   }
 }

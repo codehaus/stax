@@ -57,6 +57,19 @@ public class EntityReferenceEvent
     return ed;
   }
   protected void init() {setEventType(XMLEvent.ENTITY_REFERENCE); }
+
+  protected void doWriteAsEncodedUnicode(java.io.Writer writer) 
+      throws java.io.IOException
+  {
+      writer.write('&');
+      writer.write(getName());
+      writer.write(';');
+  }
+
+  /**
+   * toString() overridden to output more information than what the
+   * default implementation from base event class outputs.
+   */
   public String toString() {
     String replacement = getReplacementText();
     if (replacement == null) replacement="";

@@ -196,6 +196,14 @@ public class TestDoctypeDecl
         final String INVALID3 = "<!DOCTYPE root SYSTEM  ><root />";
         streamThroughFailing(getReader(INVALID3, nsAware),
                              "invalid DOCTYPE declaration (missing SYSTEM identifier for DTD)");
+
+        final String INVALID4 = "<!DOCTYPE root PUBLIC  ><root />";
+        streamThroughFailing(getReader(INVALID4, nsAware),
+                             "invalid DOCTYPE declaration (missing PUBLIC identifier for DTD)");
+
+        final String INVALID5 = "<!DOCTYPE & ><root />";
+        streamThroughFailing(getReader(INVALID5, nsAware),
+                             "invalid DOCTYPE declaration (unexpected ampersand character)");
     }
 
     /*

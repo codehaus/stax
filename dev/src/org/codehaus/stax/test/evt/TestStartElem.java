@@ -160,6 +160,7 @@ public class TestStartElem
         assertEquals("branch", se.getName().getLocalPart());
         assertEquals(1, countElements(se.getNamespaces()));
         NamespaceContext nsCtxt = se.getNamespaceContext();
+        assertNotNull("StartElement.getNamespaceContext() should never return null", nsCtxt);
         assertEquals("url", nsCtxt.getNamespaceURI("a"));
         assertEquals("a", nsCtxt.getPrefix("url"));
 

@@ -29,10 +29,16 @@ public class CommentEvent
   public String getText() { 
     return getData();
   }
-  public String toString() {
-    if (getText().length() ==0) return "<!---->";
-    else 
-      return ("<!--"+getText()+"-->");
+
+  protected void doWriteAsEncodedUnicode(java.io.Writer writer) 
+      throws java.io.IOException
+  {
+      writer.write("<!--");
+      String text = getText();
+      if (text.length() > 0) {
+          writer.write(text);
+      }
+      writer.write("-->");
   }
 
 }

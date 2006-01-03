@@ -67,11 +67,11 @@ public class TestElements
         streamThroughFailing(getElemReader(EMPTY_XML, true),
                              "empty document (not valid, missing root element)");
 
-	XMLStreamReader sr = getElemReader(EMPTY_XML, false);
-	if (sr != null) { // only if non-ns-aware mode supported
-	    streamThroughFailing(sr, 
-				 "empty document (not valid, missing root element)");
-	}
+        XMLStreamReader sr = getElemReader(EMPTY_XML, false);
+        if (sr != null) { // only if non-ns-aware mode supported
+            streamThroughFailing(sr, 
+                                 "empty document (not valid, missing root element)");
+        }
     }
 
     public void testNoRootDocument()
@@ -98,10 +98,10 @@ public class TestElements
 
         streamThroughFailing(getElemReader(XML, true), MSG);
 
-	XMLStreamReader sr = getElemReader(XML, false);
-	if (sr != null) { // only if non-ns-aware mode supported
-	    streamThroughFailing(sr, MSG);
-	}
+        XMLStreamReader sr = getElemReader(XML, false);
+        if (sr != null) { // only if non-ns-aware mode supported
+            streamThroughFailing(sr, MSG);
+        }
     }
 
     /*
@@ -221,13 +221,13 @@ public class TestElements
         /* First of all, let's check that it can be completely
          * parsed:
          */
-	XMLStreamReader sr = getElemReader(VALID_CONTENT, nsAware);
-	if (sr == null) {
-	    reportNADueToNS(method);
-	    return;
-	}
-
-	streamThrough(sr);
+        XMLStreamReader sr = getElemReader(VALID_CONTENT, nsAware);
+        if (sr == null) {
+            reportNADueToNS(method);
+            return;
+        }
+        
+        streamThrough(sr);
 
         // And then let's do it step by step
         sr = getElemReader(VALID_CONTENT, nsAware);
@@ -339,13 +339,20 @@ public class TestElements
         // Wrong end element:
         String XML = "<root>  text </notroot>";
 
-	XMLStreamReader sr = getElemReader(XML, nsAware);
-	if (sr == null) {
-	    reportNADueToNS(method);
-	    return;
-	}
-
+        XMLStreamReader sr = getElemReader(XML, nsAware);
+        if (sr == null) {
+            reportNADueToNS(method);
+            return;
+        }
+        
         streamThroughFailing(sr, "incorrect nesting (wrong end element name)");
+
+        // For namespace mode, has to be same prefix (not just same URI)
+        if (nsAware) {
+            XML = "<a:root xmlns:a='myurl' xmlns:b='myurl'>  text </b:root>";
+            sr = getElemReader(XML, nsAware);
+            streamThroughFailing(sr, "incorrect nesting (namespace prefix in close element not the same as in start element)");
+        }
 
         // Missing end element:
         XML = "<root><branch>  text </branch>";

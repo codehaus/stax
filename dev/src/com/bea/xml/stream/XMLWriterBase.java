@@ -550,9 +550,12 @@ public class XMLWriterBase
     {
         closeStartElement();
         write("<?");
-        if (target != null)
+        if (target != null) { // isn't passing null an error, actually?
             write(target);
+        }
         if (text != null) {
+            // Need a separating white space
+            write(' ');
             write(text);
         }
         write("?>");

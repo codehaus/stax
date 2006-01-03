@@ -14,6 +14,8 @@
  */
 package com.bea.xml.stream.events;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.io.Writer;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.namespace.QName;
@@ -29,7 +31,7 @@ import com.bea.xml.stream.util.ElementTypeNames;
  */
 
 
-public class BaseEvent implements XMLEvent, Location {
+public abstract class BaseEvent implements XMLEvent, Location {
   private int eventType = -1;
   private int line = -1;
   private int column = -1;
@@ -107,13 +109,33 @@ public class BaseEvent implements XMLEvent, Location {
   }
   public QName getSchemaType() { return null; }
 
-  public void writeAsEncodedUnicode(Writer writer) 
-    throws XMLStreamException
+  public final void writeAsEncodedUnicode(Writer writer) 
+      throws XMLStreamException
   {
-      /* 22-Dec-2005, Tatu: This method should be left abstract, and
-       *   implemented by sub-classes...
-       */
+      try {
+          doWriteAsEncodedUnicode(writer);
+      } catch (IOException e) {
+          throw new XMLStreamException(e);
+      }
   }
 
+  /**
+   * Template method to be implemented by sub-classes. 
+   */
+  protected abstract void doWriteAsEncodedUnicode(Writer writer) 
+      throws IOException, XMLStreamException;
+
+  public String toString()
+  {
+      StringWriter sw = new StringWriter(64);
+      try {
+          writeAsEncodedUnicode(sw);
+      } catch (XMLStreamException e) {
+          sw.write("[ERROR: ");
+          sw.write(e.toString());
+          sw.write("]");
+      }
+      return sw.toString();
+  }
 }
 

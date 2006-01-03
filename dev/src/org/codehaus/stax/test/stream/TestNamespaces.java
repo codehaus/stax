@@ -335,6 +335,55 @@ public class TestNamespaces
     }
 
     /**
+     * Unit test that verifies that the default namespace masking works
+     * as expected.
+     */
+    public void testMaskingDefaultNs()
+        throws XMLStreamException
+    {
+        final String XML =
+            "<root xmlns='someurl'>"
+            +"<branch xmlns=''><leaf /><leaf xmlns='anotherurl' />"
+            +"</branch></root>"
+            ;
+
+        XMLStreamReader sr = getNsReader(XML, true);
+        assertEquals(START_ELEMENT, sr.next());
+        assertEquals("root", sr.getLocalName());
+        assertNoPrefix(sr);
+        assertEquals("someurl", sr.getNamespaceURI());
+        assertEquals(1, sr.getNamespaceCount());
+
+        assertEquals(START_ELEMENT, sr.next());
+        assertEquals("branch", sr.getLocalName());
+        assertNoPrefix(sr);
+        assertNoNsURI(sr);
+        assertEquals(1, sr.getNamespaceCount());
+
+        assertEquals(START_ELEMENT, sr.next());
+        assertEquals("leaf", sr.getLocalName());
+        assertNoPrefix(sr);
+        assertNoNsURI(sr);
+        assertEquals(0, sr.getNamespaceCount());
+        assertEquals(END_ELEMENT, sr.next()); // leaf
+        assertEquals(0, sr.getNamespaceCount());
+
+        assertEquals(START_ELEMENT, sr.next());
+        assertEquals("leaf", sr.getLocalName());
+        assertNoPrefix(sr);
+        assertEquals("anotherurl", sr.getNamespaceURI());
+        assertEquals(1, sr.getNamespaceCount());
+        assertEquals(END_ELEMENT, sr.next()); // leaf
+        assertEquals(1, sr.getNamespaceCount());
+
+        assertEquals(END_ELEMENT, sr.next()); // branch
+        assertEquals(1, sr.getNamespaceCount());
+
+        assertEquals(END_ELEMENT, sr.next()); // root
+        assertEquals(1, sr.getNamespaceCount());
+    }
+
+    /**
      * Unit test that verifies that the namespace with prefix 'xml' is
      * always predefined without further work.
      */
@@ -449,9 +498,9 @@ public class TestNamespaces
         throws XMLStreamException
     {
         XMLInputFactory f = getInputFactory();
-	if (!setNamespaceAware(f, nsAware)) {
-	    return null;
-	}
+        if (!setNamespaceAware(f, nsAware)) {
+            return null;
+        }
         setCoalescing(f, true);
         setValidating(f, false);
         return constructStreamReader(f, contents);

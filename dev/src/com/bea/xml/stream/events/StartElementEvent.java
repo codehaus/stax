@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.Namespace;
 import javax.xml.stream.events.XMLEvent;
@@ -119,5 +120,37 @@ public class StartElementEvent
 
     value = value + ">";
     return value;
+  }
+
+  protected void doWriteAsEncodedUnicode(java.io.Writer writer) 
+      throws java.io.IOException, XMLStreamException
+  {
+      writer.write('<');
+      QName name = getName();
+      String prefix = name.getPrefix();
+      if (prefix != null && prefix.length() > 0) {
+          writer.write(prefix);
+          writer.write(':');
+      }
+      writer.write(name.getLocalPart());
+
+      // Any namespace declarations?
+      Iterator ni = getNamespaces();
+      while (ni.hasNext()) {
+          writer.write(' ');
+          // Ouch: neither ns nor attr are based on BaseEvent... doh!
+          XMLEvent evt = (XMLEvent) ni.next();
+          evt.writeAsEncodedUnicode(writer);
+      }
+
+      // Any attributes?
+      Iterator ai = getAttributes();
+      while (ai.hasNext()) {
+          writer.write(' ');
+          XMLEvent evt = (XMLEvent) ai.next();
+          evt.writeAsEncodedUnicode(writer);
+      }
+
+      writer.write('>');
   }
 }

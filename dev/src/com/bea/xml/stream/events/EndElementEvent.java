@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Iterator;
 
 import javax.xml.namespace.QName;
+import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.Namespace;
 import javax.xml.stream.events.XMLEvent;
@@ -37,13 +38,13 @@ public class EndElementEvent
     super();
     init();
   }
-  protected void init() { 
-    setEventType(XMLEvent.END_ELEMENT); 
-  } 
   public EndElementEvent(QName name) { 
     super(name);
     init();
   }
+  protected void init() { 
+    setEventType(XMLEvent.END_ELEMENT); 
+  } 
   public Iterator getNamespaces() {
     if (outOfScopeNamespaces==null)
       return EmptyIterator.emptyIterator;
@@ -66,6 +67,20 @@ public class EndElementEvent
       value = value +" "+ ni.next().toString();
     value = value+">";
     return value;
+  }
+
+  protected void doWriteAsEncodedUnicode(java.io.Writer writer) 
+      throws java.io.IOException
+  {
+      writer.write("</");
+      QName name = getName();
+      String prefix = name.getPrefix();
+      if (prefix != null && prefix.length() > 0) {
+          writer.write(prefix);
+          writer.write(':');
+      }
+      writer.write(name.getLocalPart());
+      writer.write('>');
   }
 }
 

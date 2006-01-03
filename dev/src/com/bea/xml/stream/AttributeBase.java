@@ -16,8 +16,9 @@
 package com.bea.xml.stream;
 
 import java.io.Writer;
-import javax.xml.stream.events.XMLEvent;
 import javax.xml.stream.Location;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.XMLEvent;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.Characters;
 import javax.xml.stream.events.EndElement;
@@ -117,9 +118,85 @@ public class AttributeBase implements javax.xml.stream.events.Attribute, Locatio
   public boolean isDefault() { return true; }
   public String getSourceName() { return null ; }
   public QName getSchemaType() { return null; }
-  public void writeAsEncodedUnicode(Writer writer) 
-    throws javax.xml.stream.XMLStreamException {}
 
+  public void writeAsEncodedUnicode(Writer writer)
+    throws javax.xml.stream.XMLStreamException
+  {
+      try {
+          String prefix = name.getPrefix();
+          if (prefix != null && prefix.length() > 0) {
+              writer.write(prefix);
+              writer.write(':');
+          }
+          writer.write(name.getLocalPart());
+          
+          writer.write("=\"");
+          final String data = this.value;
+          int len = data.length();
+
+          if (len > 0) {
+              int i = 0;
+              
+              // Let's see how much we can output without encoding:
+              loop:
+              for (; i < len; ++i) {
+                  final char c = data.charAt(i);
+                  switch (c) {
+                  case '&':
+                  case '<':
+                  case '"':
+                      break loop;
+                  default:
+                      if (c < 32) {
+                          break loop;
+                      }
+                  }
+              }
+
+              // got it all?
+              if (i == len) {
+                  writer.write(data);
+              } else { // nope...
+                  if (i > 0) {
+                      writer.write(data, 0, i);
+                  }
+                  for (; i < len; ++i) {
+                      final char c = data.charAt(i);
+                      switch (c) {
+                      case '&':
+                          writer.write("&amp;");
+                          break;
+                      case '<':
+                          writer.write("&lt;");
+                          break;
+                      case '"':
+                          writer.write("&quot;");
+                          break;
+                      default:
+                          if (c < 32) {
+                              writeEncodedChar(writer, c);
+                          } else {
+                              writer.write(c);
+                          }
+                      }
+                  }
+              }
+          }
+          
+          writer.write('"');
+      } catch (java.io.IOException e) {
+          throw new XMLStreamException(e);
+      }
+  }
+
+  public static void writeEncodedChar(java.io.Writer writer, char c)
+      throws java.io.IOException
+  {
+      // This is slow, but gets work done:
+      writer.write("&#");
+      writer.write(Integer.toString(c));
+      writer.write(';');
+  }
 }
 
 
