@@ -43,13 +43,16 @@ public class DTDEvent
   public String getDocumentTypeDeclaration() {
     return dtd;
   }
-  public String toString() {
-    return dtd;
-  }
   public List getEntities() {
     return entities;
   }
   public List getNotations() {
     return notations;
+  }
+
+  protected void doWriteAsEncodedUnicode(java.io.Writer writer) 
+      throws java.io.IOException
+  {
+      writer.write(dtd);
   }
 }

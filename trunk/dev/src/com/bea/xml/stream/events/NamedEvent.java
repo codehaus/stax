@@ -16,9 +16,11 @@
 package com.bea.xml.stream.events;
 
 import javax.xml.namespace.QName;
+import javax.xml.stream.XMLStreamException;
 
-public class NamedEvent extends BaseEvent {
+public abstract class NamedEvent extends BaseEvent {
   private QName name;
+
   public NamedEvent() {}
 
   public NamedEvent(QName name) { 
@@ -50,5 +52,8 @@ public class NamedEvent extends BaseEvent {
     else 
       return "['"+name.getNamespaceURI()+"']:"+name.getLocalPart();
   }
+
+  protected abstract void doWriteAsEncodedUnicode(java.io.Writer writer) 
+      throws java.io.IOException, XMLStreamException;
 }
 

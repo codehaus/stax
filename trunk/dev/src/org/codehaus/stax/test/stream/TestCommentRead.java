@@ -45,6 +45,8 @@ public class TestCommentRead
         throws XMLStreamException
     {
         String XML = "<!-- Can not have '--' in here! -->  <root />";
+        String XML2 = "<root><!  -- no spaces either--></root>";
+        String XML3 = "<root><!- - no spaces either--></root>";
 
         for (int i = 0; i < 3; ++i) {
             boolean ns = (i & 1) != 0;
@@ -52,6 +54,10 @@ public class TestCommentRead
 
             streamThroughFailing(getReader(XML, ns, dtd),
                                  "invalid comment content (embedded \"--\")");
+            streamThroughFailing(getReader(XML2, ns, dtd),
+                                 "malformed comment (extra space)");
+            streamThroughFailing(getReader(XML3, ns, dtd),
+                                 "malformed comment (extra space)");
         }
     }
 

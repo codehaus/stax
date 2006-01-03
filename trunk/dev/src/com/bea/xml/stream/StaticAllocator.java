@@ -46,7 +46,6 @@ import com.bea.xml.stream.events.CommentEvent;
 import com.bea.xml.stream.events.EndDocumentEvent;
 import com.bea.xml.stream.events.EndElementEvent;
 import com.bea.xml.stream.events.EntityReferenceEvent;
-import com.bea.xml.stream.events.NamedEvent;
 import com.bea.xml.stream.events.ProcessingInstructionEvent;
 import com.bea.xml.stream.events.StartDocumentEvent;
 import com.bea.xml.stream.events.StartElementEvent;

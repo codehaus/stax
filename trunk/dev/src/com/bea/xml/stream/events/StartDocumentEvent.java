@@ -62,17 +62,20 @@ public class StartDocumentEvent
     encodingSchemeSet = false;
     standaloneSet=false;
   }
-  public String toString() {
-    String val = "<?xml version=\""+version+"\"";
-    val = val + " encoding='"+encodingScheme+"'";
-    if (standaloneSet) {
-      if (standalone) val = val+  " standalone='yes'?>";
-      else
-        val = val + " standalone='no'?>";
-    } else {
-      val = val +"?>";
-    }
-    return val;
+
+  protected void doWriteAsEncodedUnicode(java.io.Writer writer) 
+      throws java.io.IOException
+  {
+      writer.write("<?xml version=\"");
+      writer.write(version);
+      writer.write("\" encoding='");
+      writer.write(encodingScheme);
+      writer.write('\'');
+      if (standaloneSet) {
+          writer.write(" standalone='");
+          writer.write(standalone ? "yes'" : "no'");
+      }
+      writer.write("?>");
   }
 }
 

@@ -23,6 +23,13 @@ public class EndDocumentEvent
 {
   public EndDocumentEvent(){super();init();}
   protected void init() {setEventType(XMLEvent.END_DOCUMENT); }
+
+  protected void doWriteAsEncodedUnicode(java.io.Writer writer) 
+  {
+      // nothing to output
+  }
+
+  // Separate toString() since writeAsEncodedUnicode doesn't write anything
   public String toString() {
     return "<? EndDocument ?>";
   }

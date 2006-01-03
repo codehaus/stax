@@ -42,14 +42,18 @@ public class ProcessingInstructionEvent
   public String getData() {
     return content;
   }
-  public String toString() {
-    if (content != null &&
-        name != null)
-      return("<?"+name+content+"?>");
-    else if (name != null)
-      return("<?"+name+"?>");
-    else if (content != null)
-      return("<?"+content+"?>");
-    return("<??>");
+
+  protected void doWriteAsEncodedUnicode(java.io.Writer writer) 
+      throws java.io.IOException
+  {
+      writer.write("<?");
+      if (name != null) {
+          writer.write(name);
+      }
+      if (content != null) {
+          writer.write(' ');
+          writer.write(content);
+      }
+      writer.write("?>");
   }
 }
