@@ -45,7 +45,7 @@ public class TestAttributeRead
         // Shoulnd't allow using prefix instead of URI
         String val = sr.getAttributeValue("a", "b");
         assertNull("Should get null, not '"+val+"'", val);
-        val = sr.getAttributeValue(null, "b");
+        val = sr.getAttributeValue("", "b");
         assertNull("Should get null, not '"+val+"'", val);
 
         assertEquals(END_ELEMENT, sr.next());

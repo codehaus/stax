@@ -1108,24 +1108,24 @@ public class MXParser
         // TODO make check if namespace is interned!!! etc. for names!!!
         if(namespace != null) {
             for(int i = 0; i < attributeCount; ++i) {
-                if(namespace.equals(attributeUri[i])
-                       && name.equals(attributeName[i]))
+                /* Let's first check local name, then URI; slightly faster
+                 * that way (local names more likely to differ than URIs)
+                 */
+                if (name.equals(attributeName[i])
+                    && namespace.equals(attributeUri[i]))
                 {
                     return attributeValue[i];
                 }
             }
         } else {
             for(int i = 0; i < attributeCount; ++i) {
-                if(name.equals(attributeName[i]))
-                {
+                if(name.equals(attributeName[i])) {
                     return attributeValue[i];
                 }
             }
         }
         return null;
     }
-    
-    
     
     public int getEventType() {
         return eventType;

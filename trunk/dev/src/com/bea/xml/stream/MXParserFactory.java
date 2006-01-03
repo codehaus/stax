@@ -39,7 +39,7 @@ public class MXParserFactory extends XMLInputFactory {
   }
 
   public XMLStreamReader createXMLStreamReader(Source source) throws XMLStreamException {
-    return null;
+      throw new UnsupportedOperationException("XMLInputFactory.createXMLStreamRader(Source) not yet implemented");
   }
 
   /**
