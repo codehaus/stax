@@ -84,7 +84,7 @@ public class TestEventReader
             assertTrue(ref.isEntityReference());
             assertEquals("intEnt", ref.getName());
             EntityDeclaration ed = ref.getDeclaration();
-            assertNotNull(ed);
+            assertNotNull("Declaration of internal entity 'intEnt' should not be null", ed);
 
             evt = er.nextEvent();
             assertTokenType(ENTITY_REFERENCE, evt.getEventType());
@@ -93,6 +93,7 @@ public class TestEventReader
             assertTrue(ref.isEntityReference());
             assertEquals("extParsedEnt", ref.getName());
             ed = ref.getDeclaration();
+            assertNotNull("Declaration of external entity 'extParsedEnt' should not be null", ed);
             assertNotNull(ed);
 
             /*
@@ -146,7 +147,7 @@ public class TestEventReader
              * entities and notations
              */
             List entities = dtd.getEntities();
-            assertNotNull(entities);
+            assertNotNull("Entity list for a DTD declaration with entities should not be null", entities);
             assertEquals(3, entities.size());
 
             // Let's also verify they are all of right type...
@@ -157,6 +158,7 @@ public class TestEventReader
             // Let's also verify they are all of right type...
             testListElems(notations, NotationDeclaration.class);
 
+            assertNotNull("Notation list for a DTD declaration with notations should not be null", entities);
             assertNotNull(notations);
             assertEquals(2, notations.size());
         }
