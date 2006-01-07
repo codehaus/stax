@@ -14,6 +14,7 @@
  */
 
 package com.bea.xml.stream.events;
+
 import javax.xml.stream.events.XMLEvent;
 import javax.xml.stream.events.EntityReference;
 import javax.xml.stream.events.EntityDeclaration;

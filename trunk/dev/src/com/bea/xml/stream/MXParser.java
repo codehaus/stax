@@ -53,7 +53,12 @@ public class MXParser
     public static final String FEATURE_PROCESS_DOCDECL =
         "http://xmlpull.org/v1/doc/features.html#process-docdecl";
     //"http://java.sun.com/xml/stream/properties/report-cdata-event"
-    
+
+    /**
+     * Since EOF exception has no descriptive message, let's use something
+     * slightly more meaningful...
+     */
+    final static String EOF_MSG = "Unexpected end of stream";
     
     private boolean reportCdataEvent = false;
     
@@ -1747,7 +1752,7 @@ public class MXParser
                         // do content comapctation if it makes sense!!!!
                         
                     } else if(ch == '&') {
-                        // work on ENTITTY
+                        // work on ENTITY
                         //posEnd = pos - 1;
                         
                         if(tokenize && hadCharData) {
@@ -1868,9 +1873,8 @@ public class MXParser
             }
             
         } catch(EOFException eofe) {
-            throw new XMLStreamException(eofe);
+            throw new XMLStreamException(EOF_MSG, getLocation(), eofe);
         }
-        
     }
     
     
@@ -1969,7 +1973,7 @@ public class MXParser
             }
             
         } catch(EOFException eofe) {
-            throw new XMLStreamException(eofe);
+            throw new XMLStreamException(EOF_MSG, getLocation(), eofe);
         }
     }
     
@@ -2128,7 +2132,7 @@ public class MXParser
             pastEndTag = true;
             
         } catch(EOFException eofe) {
-            throw new XMLStreamException(eofe);
+            throw new XMLStreamException(EOF_MSG, getLocation(), eofe);
         }
         
         return XMLStreamConstants.END_ELEMENT;
@@ -2329,7 +2333,7 @@ public class MXParser
                 else
                     addDefaultAttributes(name);
         } catch (EOFException eofe) {
-            throw new XMLStreamException(eofe);
+            throw new XMLStreamException(EOF_MSG, getLocation(), eofe);
         }
         
         return XMLStreamConstants.START_ELEMENT;
@@ -2620,7 +2624,7 @@ public class MXParser
             return ch;
             
         } catch (EOFException eofe) {
-            throw new XMLStreamException(eofe);
+            throw new XMLStreamException(EOF_MSG, getLocation(), eofe);
         }
     }
     
@@ -2734,7 +2738,7 @@ public class MXParser
             }
             
         } catch (EOFException eofe) {
-            throw new XMLStreamException(eofe);
+            throw new XMLStreamException(EOF_MSG, getLocation(), eofe);
         }
     }
     
@@ -2829,7 +2833,7 @@ public class MXParser
             if(tokenize) posEnd = pos - 3;
             
         } catch (EOFException eofe) {
-            throw new XMLStreamException(eofe);
+            throw new XMLStreamException(EOF_MSG, getLocation(), eofe);
         }
     }
     
@@ -2971,7 +2975,7 @@ public class MXParser
             try {
                 ch = more();
             } catch (EOFException eofe) {
-                throw new XMLStreamException(eofe);
+                throw new XMLStreamException(EOF_MSG, getLocation(), eofe);
             }
         }
         return ch;
@@ -2985,7 +2989,7 @@ public class MXParser
         try {
             ch = more();
         } catch (EOFException eofe) {
-            throw new XMLStreamException(eofe);
+            throw new XMLStreamException(EOF_MSG, getLocation(), eofe);
         }
         if(!isS(ch)) {
             throw new XMLStreamException(
@@ -3001,7 +3005,7 @@ public class MXParser
             while(isS(ch)) { ch = more(); } // skip additional spaces
             return ch;
         } catch (EOFException eofe) {
-            throw new XMLStreamException(eofe);
+            throw new XMLStreamException(EOF_MSG, getLocation(), eofe);
         }
     }
     
@@ -3050,7 +3054,7 @@ public class MXParser
             parseXmlDeclWithVersion(versionStart, versionEnd);
             
         } catch (EOFException eofe) {
-            throw new XMLStreamException(eofe);
+            throw new XMLStreamException(EOF_MSG, getLocation(), eofe);
         }
     }
     //protected String xmlDeclVersion;
@@ -3179,7 +3183,7 @@ public class MXParser
             }
             
         } catch (EOFException eofe) {
-            throw new XMLStreamException(eofe);
+            throw new XMLStreamException(EOF_MSG, getLocation(), eofe);
         }
     }
     
@@ -3217,7 +3221,7 @@ public class MXParser
             posEnd = pos ;
             processDTD();
         } catch (EOFException eofe) {
-            throw new XMLStreamException(eofe);
+            throw new XMLStreamException(EOF_MSG, getLocation(), eofe);
         }
     }
     
@@ -3294,7 +3298,7 @@ public class MXParser
                 throw new XMLStreamException("expected <[CDATA[ for CDATA start", getLocation());
             }
         } catch (EOFException eofe) {
-            throw new XMLStreamException(eofe);
+            throw new XMLStreamException("Unexpected EOF in directive", getLocation(), eofe);
         }
         
         char ch;

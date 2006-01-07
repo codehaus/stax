@@ -58,14 +58,15 @@ public class TestTextCoalescing
          * so let's play it safe:
          */
         sr.next();
-        checkText(sr, CHARACTERS, "Text ");
-        int count = checkText(sr, CDATA, "cdata\nin two lines!");
-        if (count < 2) {
+        // still, it shouldn't coalesce them:
+        assertEquals("Text ", getAndVerifyText(sr));
+        sr.next();
+        // Hmmmh. Worse; stream readers can return CHARACTERS or CDATA...
+        int count = checkText(sr, "cdata\nin two lines!/that's all!");
+        if (count < 3) {
             // Can't easily check boundaries... well, could but...
-            fail("Expected at least two CDATA events; parser coalesced them");
+            fail("Expected at least four CDATA/CHARACTERS events; parser coalesced them (only got "+(count-1)+")");
         }
-        checkText(sr, CHARACTERS, "/that's all!");
-
         assertTokenType(END_ELEMENT, sr.getEventType());
         assertTokenType(END_DOCUMENT, sr.next());
     }
@@ -80,22 +81,16 @@ public class TestTextCoalescing
 
         // Now, we may get more than one CHARACTERS
         int type = sr.next();
-        while (type == CHARACTERS) {
+        /* 06-Jan-2006, TSa: Ugh. Due to CDATA -> CHARACTERS remapping
+         *   some readers too, can't check too many things...
+         */
+        int count = 1;
+        while (type == CHARACTERS || type == CDATA) {
             type = sr.next();
+            ++count;
         }
-
-        // Same for CDATA
-        assertTokenType(CDATA, type);
-        type = sr.next();
-        while (type == CDATA) {
-            type = sr.next();
-        }
-
-        // And then last CHARACTERS event:
-        assertTokenType(CHARACTERS, type);
-        type = sr.next();
-        while (type == CHARACTERS) {
-            type = sr.next();
+        if (count < 4) {
+            fail("Expected 4 or more separate CHARACTERS/CDATA events in non-coalescing mode, got "+count);
         }
 
         assertTokenType(END_ELEMENT, type);
@@ -130,13 +125,22 @@ public class TestTextCoalescing
         return constructStreamReader(f, contents);
     }
 
-    private int checkText(XMLStreamReader sr, int expType, String exp)
+    private int checkText(XMLStreamReader sr, String exp)
         throws XMLStreamException
     {
-        assertTokenType(expType, sr.getEventType());
+        int currType = sr.getEventType();
+        if (currType == CDATA || currType == CHARACTERS) {
+            ;
+        } else {
+            assertTokenType(CDATA, currType);
+        }
         StringBuffer sb = new StringBuffer(getAndVerifyText(sr));
         int count = 1;
-        while ((sr.next()) == expType) {
+        while (true) {
+            currType = sr.next();
+            if (currType != CDATA && currType != CHARACTERS) {
+                break;
+            }
             ++count;
             sb.append(getAndVerifyText(sr));
         }
