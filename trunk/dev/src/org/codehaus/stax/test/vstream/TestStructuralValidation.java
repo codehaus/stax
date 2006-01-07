@@ -55,6 +55,143 @@ public class TestStructuralValidation
         }
     }
 
+    public void testValidSimpleSeqStructure()
+        throws XMLStreamException
+    {
+        for (int i = 0; i < 2; ++i) {
+            boolean nsAware = (i > 0);
+            String XML = "<!DOCTYPE root [\n"
+                +"<!ELEMENT root (a1, a2, a3, a4)>\n"
+                +"<!ELEMENT a1 EMPTY>\n"
+                +"<!ELEMENT a2 (#PCDATA)>\n"
+                +"<!ELEMENT a3 EMPTY>\n"
+                +"<!ELEMENT a4 (#PCDATA)>\n"
+                +"]>\n"
+                +"<root>\n"
+                +"<a1 /><a2></a2><a3 /><a4></a4>"
+                +"</root>";
+            streamThrough(getReader(XML, nsAware));
+        }
+    }
+
+    public void testInvalidSimpleSeqStructure()
+        throws XMLStreamException
+    {
+        for (int i = 0; i < 2; ++i) {
+            boolean nsAware = (i > 0);
+            String XML = "<!DOCTYPE root [\n"
+                +"<!ELEMENT root (a1, a2, a3, a4)>\n"
+                +"<!ELEMENT a1 EMPTY>\n"
+                +"<!ELEMENT a2 (#PCDATA)>\n"
+                +"<!ELEMENT a3 EMPTY>\n"
+                +"<!ELEMENT a4 (#PCDATA)>\n"
+                +"]>\n"
+                +"<root>\n"
+                +"<a1 /><a2></a2><a4></a4>"
+                +"</root>";
+            streamThroughFailing(getReader(XML, nsAware),
+                                 "invalid simple content sequence: missing 'a3' element");
+
+            XML = "<!DOCTYPE root [\n"
+                +"<!ELEMENT root (a1, a2, a3, a4)>\n"
+                +"<!ELEMENT a1 EMPTY>\n"
+                +"<!ELEMENT a2 (#PCDATA)>\n"
+                +"<!ELEMENT a3 EMPTY>\n"
+                +"<!ELEMENT a4 (#PCDATA)>\n"
+                +"]>\n"
+                +"<root>\n"
+                +"<a1 /><a2></a2><a3 />"
+                +"</root>";
+            streamThroughFailing(getReader(XML, nsAware),
+                                 "invalid simple content sequence: missing 'a4' element");
+        }
+    }
+
+    public void testValidSimpleChoiceStructure()
+        throws XMLStreamException
+    {
+        for (int i = 0; i < 2; ++i) {
+            boolean nsAware = (i > 0);
+            String XML = "<!DOCTYPE root [\n"
+                +"<!ELEMENT root (a1 | a2 | a3 | a4 | a5 | b1 | b2 | b3 | b4)*>\n"
+                +"<!ELEMENT a1 EMPTY>\n"
+                +"<!ELEMENT a2 (#PCDATA)>\n"
+                +"<!ELEMENT a3 EMPTY>\n"
+                +"<!ELEMENT a4 (#PCDATA)>\n"
+                +"<!ELEMENT a5 (#PCDATA)>\n"
+                +"<!ELEMENT b1 EMPTY>\n"
+                +"<!ELEMENT b2 EMPTY>\n"
+                +"<!ELEMENT b3 EMPTY>\n"
+                +"<!ELEMENT b4 EMPTY>\n"
+                +"]>\n"
+                +"<root>\n"
+                +"<a1 /><a2></a2><a3 /><b1 /><a4></a4>"
+                +"</root>";
+            streamThrough(getReader(XML, nsAware));
+        }
+    }
+
+    public void testInvalidSimpleChoiceStructure()
+        throws XMLStreamException
+    {
+        for (int i = 0; i < 2; ++i) {
+            boolean nsAware = (i > 0);
+            String XML = "<!DOCTYPE root [\n"
+                +"<!ELEMENT root (a1 | a2 | a3 | a4)+>\n"
+                +"<!ELEMENT a1 EMPTY>\n"
+                +"<!ELEMENT a2 (#PCDATA)>\n"
+                +"<!ELEMENT a3 EMPTY>\n"
+                +"<!ELEMENT a4 (#PCDATA)>\n"
+                +"]>\n"
+                +"<root>\n"
+                +"</root>";
+            streamThroughFailing(getReader(XML, nsAware),
+                                 "invalid choice content sequence: no children for root");
+
+            XML = "<!DOCTYPE root [\n"
+                +"<!ELEMENT root (a1 | a2 | a3 | a4)?>\n"
+                +"<!ELEMENT a1 EMPTY>\n"
+                +"<!ELEMENT a2 (#PCDATA)>\n"
+                +"<!ELEMENT a3 EMPTY>\n"
+                +"<!ELEMENT a4 (#PCDATA)>\n"
+                +"]>\n"
+                +"<root><a1 /><a3 />"
+                +"</root>";
+            streamThroughFailing(getReader(XML, nsAware),
+                                 "invalid choice content sequence: more than one child");
+
+            XML = "<!DOCTYPE root [\n"
+                +"<!ELEMENT root (a1|a2|a3|a4|a5|b1|b2|b3|b4|b5)?>\n"
+                +"<!ELEMENT a1 EMPTY><!ELEMENT a2 EMPTY><!ELEMENT a3 EMPTY><!ELEMENT a4 EMPTY><!ELEMENT a5 EMPTY>\n"
+                +"<!ELEMENT b1 EMPTY><!ELEMENT b2 EMPTY><!ELEMENT b3 EMPTY><!ELEMENT b4 EMPTY><!ELEMENT b5 EMPTY>\n"
+                +"<!ELEMENT c1 EMPTY>\n"
+                +"]>\n"
+                +"<root><a1 /><c1 />"
+                +"</root>";
+            streamThroughFailing(getReader(XML, nsAware),
+                                 "invalid choice content sequence: c1 not one of legal children for root");
+        }
+    }
+
+    public void testValidFullChoiceStructure()
+        throws XMLStreamException
+    {
+        for (int i = 0; i < 2; ++i) {
+            boolean nsAware = (i > 0);
+            String XML = "<!DOCTYPE root [\n"
+                +"<!ELEMENT root ((a1 | a2)+ | (a3 | a4))>\n"
+                +"<!ELEMENT a1 EMPTY>\n"
+                +"<!ELEMENT a2 (#PCDATA)>\n"
+                +"<!ELEMENT a3 EMPTY>\n"
+                +"<!ELEMENT a4 (#PCDATA)>\n"
+                +"]>\n"
+                +"<root>\n"
+                +"<a1 />"
+                +"</root>";
+            streamThrough(getReader(XML, nsAware));
+        }
+    }
+
     public void testValidMixed()
         throws XMLStreamException
     {
