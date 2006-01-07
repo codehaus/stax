@@ -16,6 +16,7 @@
 package com.bea.xml.stream;
 
 import com.bea.xml.stream.util.ElementTypeNames;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import javax.xml.namespace.QName;
@@ -26,22 +27,10 @@ import javax.xml.stream.util.XMLEventAllocator;
 import javax.xml.stream.util.XMLEventConsumer;
 import javax.xml.stream.XMLStreamException;
 
-import javax.xml.stream.events.XMLEvent;
-import javax.xml.stream.events.StartElement;
-import javax.xml.stream.events.ProcessingInstruction;
-import javax.xml.stream.events.Comment;
-import javax.xml.stream.events.EndElement;
-import javax.xml.stream.events.Namespace;
-import javax.xml.stream.events.Characters;
-import javax.xml.stream.events.StartDocument;
-import javax.xml.stream.events.EndDocument;
-import javax.xml.stream.events.Namespace;
-import javax.xml.stream.events.Attribute;
-import javax.xml.stream.events.EntityReference;
-import javax.xml.stream.events.DTD;
+import javax.xml.stream.events.*;
 
 import com.bea.xml.stream.util.EmptyIterator;
-import java.util.ArrayList;
+import com.bea.xml.stream.events.EntityDeclarationEvent;
 
 /**
  * <p> An allocator that creates an event per method call. </p>
@@ -147,8 +136,10 @@ public class XMLEventAllocatorBase
   public EntityReference allocateEntityReference(XMLStreamReader reader) 
     throws XMLStreamException
   {
-    return factory.createEntityReference(reader.getLocalName(),
-                                         null);
+      // no factory method for entity declarations... weird.
+      String name = reader.getLocalName();
+      EntityDeclarationEvent ed = new EntityDeclarationEvent(name, reader.getText());
+      return factory.createEntityReference(name, ed);
   }
 
   public ProcessingInstruction allocatePI(XMLStreamReader reader) 

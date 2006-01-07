@@ -53,11 +53,9 @@ public class XMLEventReaderBase
     throws XMLStreamException
   {
     if (reader==null) 
-      throw new IllegalArgumentException("XMLStreamReader"+
-                                         " may not be null");
+      throw new IllegalArgumentException("XMLStreamReader may not be null");
     if (alloc==null) 
-      throw new IllegalArgumentException("XMLEvent Allocator"+
-                                         " may not be null");
+      throw new IllegalArgumentException("XMLEvent Allocator may not be null");
 
     this.reader = reader;
     open = true;
@@ -77,8 +75,7 @@ public class XMLEventReaderBase
 
   public void setAllocator(XMLEventAllocator allocator) {
     if (allocator == null)
-      throw new IllegalArgumentException("XMLEvent Allocator"+
-                                         " may not be null");
+      throw new IllegalArgumentException("XMLEvent Allocator may not be null");
 
     this.allocator = allocator;
   }
@@ -87,8 +84,7 @@ public class XMLEventReaderBase
     StringBuffer buf = new StringBuffer();
     XMLEvent e = nextEvent();
     if (!e.isStartElement())
-      throw new XMLStreamException(
-                                   "Precondition for readText is"+
+      throw new XMLStreamException("Precondition for readText is"+
                                    " nextEvent().getTypeEventType() == START_ELEMENT");
     while(hasNext()) {
       e = peek();
