@@ -217,6 +217,13 @@ public class TestEventReader
 
             assertTokenType(START_ELEMENT, er.nextTag().getEventType());
             assertTokenType(START_ELEMENT, er.nextTag().getEventType());
+            /* Ok, let's mix in bit of peeking to ensure reader won't
+             * be confused too badly...
+             */
+            // This should be space between <branch> and <leaf>...
+            assertTokenType(CHARACTERS, er.peek().getEventType());
+
+            // And then the leaf
             assertTokenType(START_ELEMENT, er.nextTag().getEventType());
 
             assertTokenType(END_ELEMENT, er.nextTag().getEventType());
@@ -297,7 +304,7 @@ public class TestEventReader
             XMLEvent tag = er.nextTag();
             assertTokenType(START_ELEMENT, tag.getEventType());
 
-	    // Now, peek() should produce text..
+            // Now, peek() should produce text..
             XMLEvent text = er.peek();
             assertTokenType(CHARACTERS, text.getEventType());
             Characters chars = text.asCharacters();
@@ -313,6 +320,36 @@ public class TestEventReader
             assertEquals("text", chars.getData());
             assertTokenType(END_ELEMENT, er.nextTag().getEventType());
             assertTokenType(END_DOCUMENT, er.nextEvent().getEventType());
+        }
+    }
+
+    public void testElementText()
+        throws XMLStreamException
+    {
+        String TEXT1 = "some\ntest";
+        String TEXT2 = "inside CDATA too!";
+
+        String XML = "<root>"+TEXT1+"<![CDATA["+TEXT2+"]]></root>";
+
+        for (int i = 0; i < 4; ++i) {
+            boolean ns = (i & 1) != 0;
+            boolean coal = (i & 2) != 0;
+            XMLEventReader er = getReader(XML, ns, coal);
+            assertTokenType(START_DOCUMENT, er.nextEvent().getEventType());
+            XMLEvent elem = er.nextEvent();
+            assertTokenType(START_ELEMENT, elem.getEventType());
+
+            assertEquals(TEXT1+TEXT2, er.getElementText());
+
+            /* 06-Jan-2006, TSa: I'm really not sure whether to expect
+             *   END_ELEMENT, or END_DOCUMENT here... maybe the latter
+             *   makes more sense? For now let's accept both, however.
+             */
+            elem = er.nextEvent();
+            if (elem.getEventType() != END_DOCUMENT
+                && elem.getEventType() != END_ELEMENT) {
+                fail("Expected END_DOCUMENT or END_ELEMENT, got "+tokenTypeDesc(elem.getEventType()));
+            }
         }
     }
 

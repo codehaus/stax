@@ -123,19 +123,50 @@ public class TestEntityAttrRead
                              "undeclared entity for ENTITIES default value");
     }
 
-    /*
     public void testValidEntityAttrUse()
         throws XMLStreamException
     {
-    }
-    */
+        // Following should be ok; notations have been declared ok
+        String XML = "<!DOCTYPE root [\n"
+            +"<!ELEMENT root EMPTY>\n"
+            +"<!NOTATION not1 PUBLIC 'public-notation-id'>\n"
+            +"<!NOTATION not2 PUBLIC 'public-notation-id2'>\n"
+            +"<!ENTITY unpEnt SYSTEM 'system-ent-id' NDATA not1>\n"
+            +"<!ENTITY unpEnt2 SYSTEM 'system-ent-id' NDATA not2>\n"
+            +"<!ATTLIST root ent ENTITY #REQUIRED>\n"
+            +"]><root ent='  unpEnt2  '/>";
 
-    /*
+        XMLStreamReader sr = getValidatingReader(XML);
+        // Let's ensure white space normalization too:
+        assertTokenType(DTD, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals(1, sr.getAttributeCount());
+        assertEquals("unpEnt2", sr.getAttributeValue(0));
+    }
+
     public void testValidEntitiesAttrUse()
         throws XMLStreamException
     {
+        // Following should be ok; notations have been declared ok
+        String XML = "<!DOCTYPE root [\n"
+            +"<!ELEMENT root EMPTY>\n"
+            +"<!NOTATION not1 PUBLIC 'public-notation-id'>\n"
+            +"<!NOTATION not2 PUBLIC 'public-notation-id2'>\n"
+            +"<!NOTATION not3 PUBLIC 'public-notation-id3'>\n"
+            +"<!ENTITY unpEnt1 SYSTEM 'system-ent-id' NDATA not1>\n"
+            +"<!ENTITY unpEnt2 SYSTEM 'system-ent-id' NDATA not2>\n"
+            +"<!ENTITY unpEnt3 SYSTEM 'system-ent-id' NDATA not3>\n"
+            +"<!ATTLIST root ent ENTITIES #REQUIRED>\n"
+            +"]><root ent='unpEnt2\tunpEnt3   \r \nunpEnt1 '/>";
+        streamThrough(getValidatingReader(XML));
+
+        XMLStreamReader sr = getValidatingReader(XML);
+        // Let's ensure white space normalization too:
+        assertTokenType(DTD, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals(1, sr.getAttributeCount());
+        assertEquals("unpEnt2 unpEnt3 unpEnt1", sr.getAttributeValue(0));
     }
-    */
 
     /*
     public void testInvalidEntityAttrUse()

@@ -30,12 +30,19 @@ public class BaseVStreamTest
     protected XMLStreamReader getValidatingReader(String contents, boolean nsAware)
         throws XMLStreamException
     {
+        XMLInputFactory f = getValidatingFactory(nsAware);
+        return constructStreamReader(f, contents);
+    }
+
+    protected XMLInputFactory getValidatingFactory(boolean nsAware)
+        throws XMLStreamException
+    {
         XMLInputFactory f = getInputFactory();
         setCoalescing(f, false); // shouldn't really matter
         setNamespaceAware(f, nsAware);
         setSupportDTD(f, true);
         // Let's make sure DTD is really parsed?
         setValidating(f, true);
-        return constructStreamReader(f, contents);
+        return f;
     }
 }
