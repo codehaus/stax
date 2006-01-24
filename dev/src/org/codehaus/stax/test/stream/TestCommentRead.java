@@ -168,9 +168,6 @@ public class TestCommentRead
                      +method+"() for COMMENT");
             } catch (IllegalStateException iae) {
                 ; // good
-            } catch (IllegalArgumentException iae) {
-                fail("Expected IllegalStateException, when calling "
-                     +method+"() for DTD, got "+iae);
             }
         }
 

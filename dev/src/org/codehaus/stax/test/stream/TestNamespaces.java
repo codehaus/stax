@@ -136,7 +136,7 @@ public class TestNamespaces
         // Let's thoroughly check the root elem
         assertEquals(2, sr.getNamespaceCount());
         assertEquals(0, sr.getAttributeCount());
-        assertNull("No prefix for element 'root', got '"+sr.getPrefix()+"'", sr.getPrefix());
+        assertNull(sr.getPrefix());
         assertEquals("root", sr.getLocalName());
         assertEquals("http://foo", sr.getNamespaceURI());
         assertEquals("myurl", sr.getNamespaceURI("a"));

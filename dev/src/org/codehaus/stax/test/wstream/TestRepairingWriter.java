@@ -52,8 +52,7 @@ public class TestRepairingWriter
         w.writeEndDocument();
         w.close();
 
-        /* And then let's parse and verify it all:
-         */
+        // And then let's parse and verify it all:
 //System.err.println("Doc -> '"+strw.toString()+"'");
         XMLStreamReader sr = constructNsStreamReader(strw.toString());
         assertTokenType(START_DOCUMENT, sr.getEventType(), sr);
@@ -131,8 +130,9 @@ public class TestRepairingWriter
         w.writeEndDocument();
         w.close();
 
-        /* And then let's parse and verify it all:
-         */
+//System.err.println("testAttributeSimple: doc = '"+strw+"'");
+
+        // And then let's parse and verify it all:
         XMLStreamReader sr = constructNsStreamReader(strw.toString());
         assertTokenType(START_DOCUMENT, sr.getEventType(), sr);
 
@@ -190,9 +190,8 @@ public class TestRepairingWriter
         w.writeEndDocument();
         w.close();
 
-        /* And then let's parse and verify it all:
-         */
-//System.err.println("DEBUG: doc = '"+strw.toString()+"'");
+        // And then let's parse and verify it all:
+//System.err.println("testAttributes: doc = '"+strw+"'");
 
         XMLStreamReader sr = constructNsStreamReader(strw.toString());
         assertTokenType(START_DOCUMENT, sr.getEventType(), sr);

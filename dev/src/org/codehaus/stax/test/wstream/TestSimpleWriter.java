@@ -21,7 +21,7 @@ public class TestSimpleWriter
         StringWriter strw = new StringWriter();
         XMLStreamWriter w = getNonRepairingWriter(strw);
 
-        final String CDATA_TEXT = "Let's test it with some ] ]> data; <tag>s and && chars and all!";
+        final String CDATA_TEXT = "Let's test it with some ]] ]> data; <tag>s and && chars and all!";
 
         w.writeStartDocument();
         w.writeStartElement("test");
@@ -549,7 +549,7 @@ public class TestSimpleWriter
         // correct version?
         if (i == 3) {
             // Shouldn't have output anything:
-            String ver =sr.getVersion();
+            String ver = sr.getVersion();
             if (ver != null && ver.length() > 0) {
                 fail("Non-null/empty version ('"+ver+"') when no START_DOCUMENT written explicitly");
             }
@@ -564,7 +564,13 @@ public class TestSimpleWriter
             /* Not sure why the encoding has to default to utf-8... would
              * make sense to rather leave it out
              */
-            assertEquals("utf-8", enc);
+            /* quick note: the proper usage (as per xml specs) would be to
+             * use UTF-8; Stax 1.0 mentions "utf-8", so let's accept
+             * both for now (but let's not accept mixed cases)
+             */
+            if (!"utf-8".equals(enc) && !"UTF-8".equals(enc)) {
+                fail("Expected either 'UTF-8' (xml specs) or 'utf-8' (stax specs) as the encoding output with no-arg 'writeStartDocument()' call");
+            }
             break;
         case 1:
             /* Interestingly enough, API comments do not indicate an encoding
