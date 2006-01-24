@@ -105,13 +105,10 @@ public class TestDoctypeDecl
                     result = new Integer(sr.getAttributeCount());
                     break;
                 }
-                fail("Expected IllegalStateException, when calling "
-                     +method+"() for DTD");
-            } catch (IllegalStateException ise) {
+                fail("Expected IllegalArgumentException, when calling "
+                     +method+"() for COMMENT");
+            } catch (IllegalStateException iae) {
                 ; // good
-            } catch (IllegalArgumentException iae) {
-                fail("Expected IllegalStateException, when calling "
-                     +method+"() for DTD, got "+iae);
             }
         }
 

@@ -49,7 +49,6 @@ public class TestNmTokenAttrRead
     public void testValidNmTokenAttrUse()
         throws XMLStreamException
     {
-        // Following should be ok; all ids are defined
         String XML = "<!DOCTYPE elem [\n"
             +"<!ELEMENT elem (elem*)>\n"
             +"<!ATTLIST elem name NMTOKEN #IMPLIED>\n"
@@ -86,18 +85,24 @@ public class TestNmTokenAttrRead
         throws XMLStreamException
     {
         String XML = "<!DOCTYPE elem [\n"
-            +"<!ELEMENT elem (elem*)>\n"
+            +"<!ELEMENT elem (elem*, elem2?, elem3?)>\n"
             +"<!ATTLIST elem name NMTOKEN #IMPLIED>\n"
             +"<!ATTLIST elem names NMTOKENS #IMPLIED>\n"
+            +"<!ELEMENT elem2 EMPTY>\n"
+            +"<!ATTLIST elem2 name NMTOKEN 'somename  '>\n"
+            +"<!ELEMENT elem3 EMPTY>\n"
+            +"<!ATTLIST elem3 names NMTOKENS 'name1\tname2   name3  '>\n"
             +"]>"
             +"<elem name='nmToken  '>"
             +"<elem name='  name' />"
             +"<elem names='first_name  \tsecond last' />"
+            +"<elem2 /><elem3 />"
             +"</elem>";
             ;
         XMLStreamReader sr = getValidatingReader(XML);
         assertTokenType(DTD, sr.next());
         assertTokenType(START_ELEMENT, sr.next());
+        assertEquals("elem", sr.getLocalName());
         assertEquals(1, sr.getAttributeCount());
         assertEquals("nmToken", sr.getAttributeValue(0));
         assertTokenType(START_ELEMENT, sr.next());
@@ -108,6 +113,22 @@ public class TestNmTokenAttrRead
         assertEquals(1, sr.getAttributeCount());
         assertEquals("first_name second last", sr.getAttributeValue(0));
         assertTokenType(END_ELEMENT, sr.next());
+
+        // then the defaults
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals("elem2", sr.getLocalName());
+        assertEquals(1, sr.getAttributeCount());
+        assertEquals("name", sr.getAttributeLocalName(0));
+        assertEquals("somename", sr.getAttributeValue(0));
+        assertTokenType(END_ELEMENT, sr.next());
+
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals("elem3", sr.getLocalName());
+        assertEquals(1, sr.getAttributeCount());
+        assertEquals("names", sr.getAttributeLocalName(0));
+        assertEquals("name1 name2 name3", sr.getAttributeValue(0));
+        assertTokenType(END_ELEMENT, sr.next());
+
         assertTokenType(END_ELEMENT, sr.next());
     }
 

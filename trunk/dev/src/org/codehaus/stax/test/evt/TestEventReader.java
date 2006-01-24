@@ -14,10 +14,6 @@ import java.util.*;
 public class TestEventReader
     extends BaseEventTest
 {
-    public TestEventReader(String name) {
-        super(name);
-    }
-
     public void testSimpleValid()
         throws XMLStreamException
     {
@@ -38,10 +34,40 @@ public class TestEventReader
             assertTokenType(DTD, er.nextEvent().getEventType());
             assertTokenType(START_ELEMENT, er.nextEvent().getEventType());
             assertTokenType(COMMENT, er.nextEvent().getEventType());
-            assertTokenType(CHARACTERS, er.nextEvent().getEventType());
+            // for fun, let's just use next() instead of nextEvent()
+            XMLEvent evt = (XMLEvent) er.next();
+            assertTokenType(CHARACTERS, evt.getEventType());
             assertTokenType(END_ELEMENT, er.nextEvent().getEventType());
             assertTokenType(END_DOCUMENT, er.nextEvent().getEventType());
             assertFalse(er.hasNext());
+            er.close();
+        }
+    }
+
+    public void testInvalidUsage()
+        throws XMLStreamException
+    {
+        String XML = "<?xml version='1.0' ?><root />";
+        for (int i = 0; i < 4; ++i) {
+            boolean ns = (i & 1) != 0;
+            boolean coal = (i & 2) != 0;
+            XMLEventReader er = getReader(XML, ns, coal);
+
+            XMLEvent evt = er.nextEvent();
+
+            // Let's try removal:
+            String msg = null;
+            try {
+                er.remove();
+                msg = "Was expecting UnsupportedOperationException for XMLEventReader.remove()";
+            } catch (UnsupportedOperationException e) {
+                ; // good
+            } catch (Throwable t) {
+                msg = "Was expecting UnsupportedOperationException for XMLEventReader.remove(); instead got: "+t;
+            }
+            if (msg != null) {
+                fail(msg);
+            }
         }
     }
 
@@ -85,6 +111,11 @@ public class TestEventReader
             assertEquals("intEnt", ref.getName());
             EntityDeclaration ed = ref.getDeclaration();
             assertNotNull("Declaration of internal entity 'intEnt' should not be null", ed);
+            assertEquals("intEnt", ed.getName());
+            assertEquals("internal", ed.getReplacementText());
+            assertNullOrEmpty(ed.getNotationName());
+            assertNullOrEmpty(ed.getPublicId());
+            assertNullOrEmpty(ed.getSystemId());
 
             evt = er.nextEvent();
             assertTokenType(ENTITY_REFERENCE, evt.getEventType());
@@ -94,7 +125,10 @@ public class TestEventReader
             assertEquals("extParsedEnt", ref.getName());
             ed = ref.getDeclaration();
             assertNotNull("Declaration of external entity 'extParsedEnt' should not be null", ed);
-            assertNotNull(ed);
+            assertEquals("extParsedEnt", ed.getName());
+            assertNullOrEmpty(ed.getNotationName());
+            assertNullOrEmpty(ed.getPublicId());
+            assertEquals("url:dummy", ed.getSystemId());
 
             /*
             evt = er.nextEvent();
@@ -201,7 +235,7 @@ public class TestEventReader
         }
     }
 
-    public void testNextTag()
+    public void testNextTagOk()
         throws XMLStreamException
     {
         String XML = "<root>\n"
@@ -232,6 +266,56 @@ public class TestEventReader
 
             assertTokenType(END_DOCUMENT, er.nextEvent().getEventType());
             assertFalse(er.hasNext());
+        }
+    }
+
+    public void testNextTagInvalid()
+        throws XMLStreamException
+    {
+        String XML = "<root>   non-empty<leaf /></root>";
+        String XML2 = "<root><leaf></leaf>text   </root>";
+
+        for (int i = 0; i < 4; ++i) {
+            boolean ns = (i & 1) != 0;
+            boolean coal = (i & 2) != 0;
+            XMLEventReader er = getReader(XML, ns, coal);
+            assertTokenType(START_DOCUMENT, er.nextEvent().getEventType());
+            assertTokenType(START_ELEMENT, er.nextEvent().getEventType());
+            String msg = null;
+            try {
+                XMLEvent evt = er.nextTag();
+                msg = "Expected a XMLStreamException when trying to call XMLEventReader.nextTag() on non-empty CHARACTERS";
+            } catch (XMLStreamException sex) {
+                // fine!
+            } catch (Throwable t) {
+                msg = "Expected a XMLStreamException when trying to call XMLEventReader.nextTag() on non-empty CHARACTERS; got ("+t.getClass()+"): "+t;
+            }
+            if (msg != null) {
+                fail(msg);
+            }
+            er.close();
+
+            /* any other easily failing cases? Maybe if we are on top of
+             * END_ELEMENT, and will hit another one?
+             */
+            er = getReader(XML2, ns, coal);
+            assertTokenType(START_DOCUMENT, er.nextEvent().getEventType());
+            assertTokenType(START_ELEMENT, er.nextEvent().getEventType());
+            assertTokenType(START_ELEMENT, er.nextEvent().getEventType());
+            assertTokenType(END_ELEMENT, er.nextEvent().getEventType());
+
+            try {
+                XMLEvent evt = er.nextTag();
+                msg = "Expected a XMLStreamException when trying to call XMLEventReader.nextTag() on END_ELEMENT and hitting non-ws text; got event "+tokenTypeDesc(evt);
+            } catch (XMLStreamException sex) {
+                msg = null; // fine!
+            } catch (Throwable t) {
+                msg = "Expected a XMLStreamException when trying to call XMLEventReader.nextTag() on END_ELEMENT and hitting non-ws text; got: "+t;
+            }
+            if (msg != null) {
+                fail(msg);
+            }
+            er.close();
         }
     }
 
@@ -331,6 +415,7 @@ public class TestEventReader
 
         String XML = "<root>"+TEXT1+"<![CDATA["+TEXT2+"]]></root>";
 
+        // First, let's see how things work without peeking:
         for (int i = 0; i < 4; ++i) {
             boolean ns = (i & 1) != 0;
             boolean coal = (i & 2) != 0;
@@ -338,6 +423,31 @@ public class TestEventReader
             assertTokenType(START_DOCUMENT, er.nextEvent().getEventType());
             XMLEvent elem = er.nextEvent();
             assertTokenType(START_ELEMENT, elem.getEventType());
+
+            assertEquals(TEXT1+TEXT2, er.getElementText());
+
+            /* 06-Jan-2006, TSa: I'm really not sure whether to expect
+             *   END_ELEMENT, or END_DOCUMENT here... maybe the latter
+             *   makes more sense? For now let's accept both, however.
+             */
+            elem = er.nextEvent();
+            if (elem.getEventType() != END_DOCUMENT
+                && elem.getEventType() != END_ELEMENT) {
+                fail("Expected END_DOCUMENT or END_ELEMENT, got "+tokenTypeDesc(elem.getEventType()));
+            }
+        }
+
+        // and then with peeking:
+        for (int i = 0; i < 4; ++i) {
+            boolean ns = (i & 1) != 0;
+            boolean coal = (i & 2) != 0;
+            XMLEventReader er = getReader(XML, ns, coal);
+            assertTokenType(START_DOCUMENT, er.nextEvent().getEventType());
+            XMLEvent elem = er.nextEvent();
+            assertTokenType(START_ELEMENT, elem.getEventType());
+
+            XMLEvent peeked = er.peek();
+            assertTokenType(CHARACTERS, peeked.getEventType());
 
             assertEquals(TEXT1+TEXT2, er.getElementText());
 

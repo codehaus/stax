@@ -76,14 +76,10 @@ public class TestEventWriter
     public void testPassThrough()
         throws XMLStreamException
     {
-        /* note: since prolog/epilog white space may or may not be reported,
-         * let's leave the whole prolog/epilog empty (no comments, PIs,
-         * white space)
-         */
         final String INPUT =
             "<?xml version='1.0' encoding='UTF-8' standalone='yes'?>"
             +"<!DOCTYPE root ["
-            +"]><!-- the doc...-->"
+            +"]>\n<!-- the doc...-->"
             +"<root xmlns:ns='urn:foo'>\n"
             +"  <branch attr='val' ns:foo='bar'>\n"
             +"    <ns:leaf xmlns='another-uri' />\n"

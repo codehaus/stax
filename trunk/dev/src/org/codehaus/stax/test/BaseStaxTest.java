@@ -6,6 +6,7 @@ import java.util.HashMap;
 import junit.framework.TestCase;
 
 import javax.xml.stream.*;
+import javax.xml.stream.events.XMLEvent;
 
 /**
  * Base class for all StaxTest unit test classes. Contains shared
@@ -395,6 +396,18 @@ public class BaseStaxTest
         assertNoNsURI(sr);
     }
 
+    /**
+     * Helper assertion that assert that the String is either null or
+     * empty ("").
+     */
+    protected static void assertNullOrEmpty(String str)
+    {
+        if (str != null && str.length() > 0) {
+            fail("Expected String to be empty or null; was '"+str+"' (length "
+                 +str.length()+")");
+        }
+    }
+
     /*
     //////////////////////////////////////////////////
     // Debug/output helpers
@@ -408,6 +421,11 @@ public class BaseStaxTest
             return "["+tt+"]";
         }
         return desc;
+    }
+
+    protected static String tokenTypeDesc(XMLEvent evt)
+    {
+        return tokenTypeDesc(evt.getEventType());
     }
 
     final static int MAX_DESC_TEXT_CHARS = 8;
