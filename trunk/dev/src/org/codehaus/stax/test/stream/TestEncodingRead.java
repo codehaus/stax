@@ -73,6 +73,34 @@ public class TestEncodingRead
         }
     }
 
+    public void testUTF8Surrogates()
+        throws XMLStreamException, IOException
+    {
+        String XML = "<?xml version='1.0' encoding='UTF-8'?><root>XXXX</root>";
+        int ix = XML.indexOf('X');
+        byte[] src = XML.getBytes("UTF-8");
+
+        // A somewhat random high-order Unicode char:
+        src[ix] = (byte)0xF1;
+        src[ix+1] = (byte)0x90;
+        src[ix+2] = (byte)0x88;
+        src[ix+3] = (byte)0x88;
+
+        InputStream in = new ByteArrayInputStream(src);
+        XMLInputFactory f = getInputFactory();
+        XMLStreamReader sr = f.createXMLStreamReader(in);
+
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals("root", sr.getLocalName());
+        assertTokenType(CHARACTERS, sr.next());
+        String str = getAndVerifyText(sr);
+        // Should result in a surrogate pair...
+        assertEquals(2, str.length());
+        assertEquals((char) 0xd900, str.charAt(0));
+        assertEquals((char) 0xde08, str.charAt(1));
+        assertTokenType(END_ELEMENT, sr.next());
+    }
+
     public void testUTF16()
         throws XMLStreamException,
                UnsupportedEncodingException

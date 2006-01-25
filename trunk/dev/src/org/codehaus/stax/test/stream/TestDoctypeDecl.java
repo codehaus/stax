@@ -189,9 +189,14 @@ public class TestDoctypeDecl
         streamThroughFailing(getReader(INVALID1, nsAware), 
                              "invalid DOCTYPE declaration (missing root element)");
 
+        /* 23-Jan-2006, TSa: Does not necessarily fail in non-validating
+         *    mode...
+         */
+        /*
         final String INVALID2 = "<!DOCTYPE root>  <fubar />";
         streamThroughFailing(getReader(INVALID2, nsAware),
                              "invalid DOCTYPE declaration (root element does not match)");
+        */
 
         final String INVALID3 = "<!DOCTYPE root SYSTEM  ><root />";
         streamThroughFailing(getReader(INVALID3, nsAware),
