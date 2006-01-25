@@ -205,6 +205,16 @@ public class TestStructuralValidation
         }
     }
 
+    public void testInvalidWrongRoot()
+        throws XMLStreamException
+    {
+        for (int i = 0; i < 2; ++i) {
+            boolean nsAware = (i > 0);
+            String XML = "<!DOCTYPE root>  <fubar />";
+            streamThroughFailing(getReader(XML, nsAware), "wrong root element");
+        }
+    }
+
     public void testInvalidMixed()
         throws XMLStreamException
     {

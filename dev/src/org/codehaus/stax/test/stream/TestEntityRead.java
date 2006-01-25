@@ -40,6 +40,38 @@ public class TestEntityRead
         assertEquals(EXP, actual);
     }
 
+    /**
+     * This unit test checks that handling of character entities works
+     * as expected, including corner cases like characters that expand
+     * to surrogate pairs in Java.
+     */
+    public void testValidCharEntities()
+        throws XMLStreamException
+    {
+        String XML = "<root>surrogates: &#x50000;.</root>";
+        XMLStreamReader sr = getReader(XML, true, true, true);
+
+        assertTokenType(START_ELEMENT, sr.next());
+
+        assertTokenType(CHARACTERS, sr.next());
+        // may still be split, though (buggy coalescing)
+        StringBuffer sb = new StringBuffer(getAndVerifyText(sr));
+        int type;
+
+        while ((type = sr.next()) == CHARACTERS) {
+            sb.append(getAndVerifyText(sr));
+        }
+        String result = sb.toString();
+        String exp = "surrogates: \uD900\uDC00.";
+
+        if (!exp.equals(result)) {
+            failStrings("Expected character entity &x#50000 to expand to surrogate pair with chars 0xD900 and 0xDC00", exp, result);
+        }
+
+        assertTokenType(END_ELEMENT, type);
+        sr.close();
+    }
+
     public void testValidGeneralEntities()
         throws XMLStreamException
     {
