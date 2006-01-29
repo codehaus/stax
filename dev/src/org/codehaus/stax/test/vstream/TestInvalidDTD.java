@@ -26,6 +26,40 @@ public class TestInvalidDTD
         streamThroughFailing(getValidatingReader(XML), "invalid directive '<!ATRLIST ...>'");
     }
 
+    public void testInvalidGE()
+        throws XMLStreamException
+    {
+        // Need space between name, content
+        String XML = "<!DOCTYPE root [\n"
+            +"<!ENTITY ge'value'>\n"
+            +"]>\n<root />";
+        streamThroughFailing(getValidatingReader(XML),
+                             "missing space between general entity name and value");
+    }
+
+    public void testInvalidPE()
+        throws XMLStreamException
+    {
+        // Need space between name, content
+        String XML = "<!DOCTYPE root [\n"
+            +"<!ENTITY % pe'value'>\n"
+            +"]>\n<root />";
+        streamThroughFailing(getValidatingReader(XML), "missing space between parameter entity name and value");
+
+        // As well as after percent sign
+        XML = "<!DOCTYPE root [\n"
+            +"<!ENTITY %pe 'value'>\n"
+            +"]>\n<root />";
+        streamThroughFailing(getValidatingReader(XML), "missing space between parameter entity percent sign and name");
+
+        // and finally, no NDATA allowed for PEs
+        XML = "<!DOCTYPE root [\n"
+            +"<!NOTATION notation SYSTEM 'url:notation'>\n"
+            +"<!ENTITY % pe 'value' SYSTEM 'url:foo' NDATA notation>\n"
+            +"]>\n<root />";
+        streamThroughFailing(getValidatingReader(XML), "PEs can not be unparsed external (ie. have NDATA reference)");
+    }
+
     public void testInvalidComment()
         throws XMLStreamException
     {
@@ -34,6 +68,16 @@ public class TestInvalidDTD
             +"<!-- Can not have '--' in here! (unlike in SGML) -->\n"
             +"]><root />";
         streamThroughFailing(getValidatingReader(XML), "invalid directive '<!ELEM ...>'");
+    }
+
+    public void testInvalidPI()
+        throws XMLStreamException
+    {
+        String XML = "<!DOCTYPE root [\n"
+            +"<!ELEMENT root EMPTY>\n"
+            +"<?xml version='1.0'?>\n"
+            +"]><root />";
+        streamThroughFailing(getValidatingReader(XML), "invalid processing instruction in DTD; can not have target 'xml'");
     }
 
     /**
