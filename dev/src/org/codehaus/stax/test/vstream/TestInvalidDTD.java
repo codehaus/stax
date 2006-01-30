@@ -42,18 +42,26 @@ public class TestInvalidDTD
     {
         // Need space between name, content
         String XML = "<!DOCTYPE root [\n"
+            +"<!ELEMENT root EMPTY>\n"
             +"<!ENTITY % pe'value'>\n"
             +"]>\n<root />";
         streamThroughFailing(getValidatingReader(XML), "missing space between parameter entity name and value");
 
-        // As well as after percent sign
+        // As well as before and after percent sign
         XML = "<!DOCTYPE root [\n"
+            +"<!ELEMENT root EMPTY>\n"
             +"<!ENTITY %pe 'value'>\n"
             +"]>\n<root />";
         streamThroughFailing(getValidatingReader(XML), "missing space between parameter entity percent sign and name");
+        XML = "<!DOCTYPE root [\n"
+            +"<!ENTITY% e ''>\n"
+            +"<!ELEMENT root EMPTY>\n"
+            +"]><root />";
+        streamThroughFailing(getValidatingReader(XML), "missing space between ENTITY and parameter entity percent sign");
 
         // and finally, no NDATA allowed for PEs
         XML = "<!DOCTYPE root [\n"
+            +"<!ELEMENT root EMPTY>\n"
             +"<!NOTATION notation SYSTEM 'url:notation'>\n"
             +"<!ENTITY % pe 'value' SYSTEM 'url:foo' NDATA notation>\n"
             +"]>\n<root />";
