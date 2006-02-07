@@ -108,6 +108,43 @@ public class TestCDataRead
         streamThroughFailing(getReader(XML, true), MSG);
     }
 
+    /**
+     * This unit test verifies that nested CData sections cause
+     * an error. It is related to another test, which just checks
+     * that ]]> (with no quoting) is illegal, but parsers may deal
+     * with them differently.
+     *<p>
+     * Note: this is directly based on XMLTest/SAXTest #735.
+     */
+    public void testInvalidNestedCData()
+        throws XMLStreamException
+    {
+        String XML = "<doc>\n<![CDATA[\n"
+            +"<![CDATA[XML doesn't allow CDATA sections to nest]]>\n"
+            +"\n]]>\n</doc>";
+
+        for (int i = 0; i < 2; ++i) {
+            boolean coal = (i > 0);
+            XMLStreamReader sr = getReader(XML, coal);
+            assertTokenType(START_ELEMENT, sr.next());
+            // Ok, now should get an exception...
+            try {
+                StringBuffer sb = new StringBuffer();
+                int type;
+                while (true) {
+                    type = sr.next();
+                    if (type != CDATA && type != CHARACTERS) {
+                        break;
+                    }
+                    sb.append(getAndVerifyText(sr));
+                }
+                fail("Expected an exception for nested CDATA section (coalescing: "+coal+"); instead got text \""+sb.toString()+"\"");
+            } catch (XMLStreamException sex) {
+                // good
+            }
+        }
+    }
+
     /*
     ////////////////////////////////////////
     // Private methods, other
