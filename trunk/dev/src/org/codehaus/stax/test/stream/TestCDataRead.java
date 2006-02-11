@@ -128,8 +128,8 @@ public class TestCDataRead
             XMLStreamReader sr = getReader(XML, coal);
             assertTokenType(START_ELEMENT, sr.next());
             // Ok, now should get an exception...
+            StringBuffer sb = new StringBuffer();
             try {
-                StringBuffer sb = new StringBuffer();
                 int type;
                 while (true) {
                     type = sr.next();
@@ -138,10 +138,17 @@ public class TestCDataRead
                     }
                     sb.append(getAndVerifyText(sr));
                 }
-                fail("Expected an exception for nested CDATA section (coalescing: "+coal+"); instead got text \""+sb.toString()+"\"");
             } catch (XMLStreamException sex) {
                 // good
+                continue;
+            } catch (RuntimeException sex) {
+                /* Hmmh. Some implementations may throw a runtime exception,
+                 * if things are lazily parsed (for example, Woodstox)
+                 */
+                // acceptable too
+                continue;
             }
+            fail("Expected an exception for nested CDATA section (coalescing: "+coal+"); instead got text \""+sb.toString()+"\"");
         }
     }
 

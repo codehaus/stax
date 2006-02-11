@@ -379,16 +379,26 @@ public class TestEntityRead
              +"]><root>&partial;;</root>",
              false, false, true);
 
-        assertTokenType(DTD, sr.next());
-        assertTokenType(START_ELEMENT, sr.next());
+        /* Hmmh. Actually, fully conforming implementations should throw
+         * an exception when parsing internal DTD subset. But better
+         * late than never; it's ok to fail on expansion too, as far as
+         * this test is concerned.
+         */
+        int type1, type2;
+        int lastType;
 
         try {
-            int type;
-            while ((type = sr.next()) == CHARACTERS) {
+            type1 = sr.next();
+            type2 = sr.next();
+            while ((lastType = sr.next()) == CHARACTERS) {
                 ;
             }
-            fail("Expected an exception for partial entity reference: current token after text: "+tokenTypeDesc(type));
-        } catch (Exception e) { }
+        } catch (Exception e) {
+            return; // ok
+        }
+        assertTokenType(DTD, type1);
+        assertTokenType(START_ELEMENT, type2);
+        fail("Expected an exception for partial entity reference: current token after text: "+tokenTypeDesc(lastType));
     }
 
     /**
