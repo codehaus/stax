@@ -23,7 +23,7 @@ public class BaseEventTest
     ///////////////////////////////////////////////////
      */
 
-    protected BaseEventTest() { }
+    protected BaseEventTest() { super(); }
 
     protected BaseEventTest(String name) {
         super(name);
