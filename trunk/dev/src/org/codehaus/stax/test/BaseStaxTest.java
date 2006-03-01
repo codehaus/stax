@@ -167,7 +167,7 @@ public class BaseStaxTest
     protected static void setCoalescing(XMLInputFactory f, boolean state)
         throws XMLStreamException
     {
-        f.setProperty(XMLInputFactory.IS_COALESCING, Boolean.valueOf(state));
+        f.setProperty(XMLInputFactory.IS_COALESCING, state ? Boolean.TRUE : Boolean.FALSE);
         // Let's just double-check it...
         assertEquals(state, isCoalescing(f));
     }
@@ -182,7 +182,7 @@ public class BaseStaxTest
         throws XMLStreamException
     {
         try {
-            f.setProperty(XMLInputFactory.IS_VALIDATING, Boolean.valueOf(state));
+            f.setProperty(XMLInputFactory.IS_VALIDATING, (state ? Boolean.TRUE : Boolean.FALSE));
         } catch (IllegalArgumentException iae) {
             fail("Could not set DTD validating mode to "+state+": "+iae);
             //throw new XMLStreamException(iae.getMessage(), iae);
@@ -223,7 +223,7 @@ public class BaseStaxTest
     protected static void setReplaceEntities(XMLInputFactory f, boolean state)
         throws XMLStreamException
     {
-        Boolean b = Boolean.valueOf(state);
+        Boolean b = (state ? Boolean.TRUE : Boolean.FALSE);
         f.setProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES, b);
         assertEquals(b, f.getProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES));
     }
@@ -231,7 +231,7 @@ public class BaseStaxTest
     protected static void setSupportDTD(XMLInputFactory f, boolean state)
         throws XMLStreamException
     {
-        Boolean b = Boolean.valueOf(state);
+        Boolean b = (state ? Boolean.TRUE : Boolean.FALSE);
         f.setProperty(XMLInputFactory.SUPPORT_DTD, b);
         assertEquals(b, f.getProperty(XMLInputFactory.SUPPORT_DTD));
     }
@@ -239,7 +239,7 @@ public class BaseStaxTest
     protected static void setSupportExternalEntities(XMLInputFactory f, boolean state)
         throws XMLStreamException
     {
-        Boolean b = Boolean.valueOf(state);
+        Boolean b = (state ? Boolean.TRUE : Boolean.FALSE);
         f.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, b);
         assertEquals(b, f.getProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES));
     }

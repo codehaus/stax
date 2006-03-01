@@ -188,16 +188,18 @@ public class TestElements
         assertNull(sr.getPITarget());
         assertNull(sr.getPIData());
 
+        String evtStr = isStart ? "START_ELEMENT" : "END_ELEMENT";
+
         try {
             String str = sr.getText();
-            fail("Expected an IllegalStateException when trying to call getText() for START_ELEMENT");
+            fail("Expected an IllegalStateException when trying to call getText() for "+evtStr);
         } catch (IllegalStateException e) {
             // good
         }
 
         try {
             char[] c = sr.getTextCharacters();
-            fail("Expected an IllegalStateException when trying to call getTextCharacters() for START_ELEMENT");
+            fail("Expected an IllegalStateException when trying to call getTextCharacters() for "+evtStr);
         } catch (IllegalStateException e) {
             // good
         }
