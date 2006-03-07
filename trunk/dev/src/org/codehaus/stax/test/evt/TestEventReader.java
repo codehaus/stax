@@ -404,6 +404,9 @@ public class TestEventReader
             assertEquals("text", chars.getData());
             assertTokenType(END_ELEMENT, er.nextTag().getEventType());
             assertTokenType(END_DOCUMENT, er.nextEvent().getEventType());
+
+            // And at the end, peek() should return null
+            assertNull(er.peek());
         }
     }
 
