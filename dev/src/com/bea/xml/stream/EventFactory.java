@@ -174,17 +174,15 @@ public class EventFactory extends XMLEventFactory {
   public StartDocument createStartDocument(){ 
     return new StartDocumentEvent();
   }
-  public StartDocument createStartDocument(String encoding,
-                                                  String version,
-                                                  boolean standalone){ 
+  public StartDocument createStartDocument(String encoding, String version,
+                                           boolean standalone){ 
     StartDocumentEvent e = new StartDocumentEvent();
     e.setEncoding(encoding);
     e.setVersion(version);
     e.setStandalone(standalone);
     return e;
   }
-  public StartDocument createStartDocument(String encoding,
-                                                  String version){ 
+  public StartDocument createStartDocument(String encoding, String version){ 
     StartDocumentEvent e = new StartDocumentEvent();
     e.setEncoding(encoding);
     e.setVersion(version);

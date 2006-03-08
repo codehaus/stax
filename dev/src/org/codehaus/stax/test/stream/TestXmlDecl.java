@@ -104,14 +104,9 @@ public class TestXmlDecl
         if (nsAware) {
             assertNotNull(sr.getNamespaceContext());
         }
-        /* Interesting; according to Javadocs, these 2 methods behave
-         * nicely, ie. no exceptions even if they are not applicable...
-         */
-        assertNull(sr.getPrefix());
-        assertNull(sr.getNamespaceURI());
 
         // And then let's check methods that should throw specific exception
-        for (int i = 0; i < 4; ++i) {
+        for (int i = 0; i < 8; ++i) {
             String method = "";
 
             try {
@@ -122,16 +117,32 @@ public class TestXmlDecl
                     result = sr.getName();
                     break;
                 case 1:
+                    method = "getPrefix";
+                    result = sr.getPrefix();
+                    break;
+                case 2:
                     method = "getLocalName";
                     result = sr.getLocalName();
                     break;
-                case 2:
+                case 3:
+                    method = "getNamespaceURI";
+                    result = sr.getNamespaceURI();
+                    break;
+                case 4:
                     method = "getNamespaceCount";
                     result = new Integer(sr.getNamespaceCount());
                     break;
-                case 3:
+                case 5:
                     method = "getAttributeCount";
                     result = new Integer(sr.getAttributeCount());
+                    break;
+                case 6:
+                    method = "getPITarget";
+                    result = sr.getPITarget();
+                    break;
+                case 7:
+                    method = "getPIData";
+                    result = sr.getPIData();
                     break;
                 }
                 fail("Expected IllegalStateException, when calling "
@@ -140,12 +151,6 @@ public class TestXmlDecl
                 ; // good
             }
         }
-
-        /* StAX JavaDocs just say 'Proc. instr. target/data, or null', NOT
-         * that there should be an exception...
-         */
-        assertNull(sr.getPITarget());
-        assertNull(sr.getPIData());
     }
 
     private void doTestValid(boolean nsAware)

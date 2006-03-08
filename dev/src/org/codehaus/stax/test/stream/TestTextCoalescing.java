@@ -78,24 +78,30 @@ public class TestTextCoalescing
 
         assertTokenType(CHARACTERS, sr.next());
 
+        /* ugh. Since implementations are allowed to return CHARACTERS,
+         * instead of CDATA, we can only check that we get at least
+         * 4 segments of any type...
+         */
         // Now, we may get more than one CHARACTERS
-        int type = sr.next();
-        while (type == CHARACTERS) {
-            type = sr.next();
-        }
+        int count = 1;
+        StringBuffer sb = new StringBuffer();
+        sb.append('[');
+        sb.append(sr.getText());
+        sb.append(']');
+        int type;
 
-        // Same for CDATA
-        assertTokenType(CDATA, type);
-        type = sr.next();
-        while (type == CDATA) {
+        while (true) {
             type = sr.next();
+            if (type != CHARACTERS && type != CDATA) {
+                break;
+            }
+            ++count;
+            sb.append('[');
+            sb.append(sr.getText());
+            sb.append(']');
         }
-
-        // And then last CHARACTERS event:
-        assertTokenType(CHARACTERS, type);
-        type = sr.next();
-        while (type == CHARACTERS) {
-            type = sr.next();
+        if (count < 4) {
+            fail("Expected at least 4 separate segments (CDATA/CHARACTERS), in non-coalescing mode, got "+count+" (text: "+sb+")");
         }
 
         assertTokenType(END_ELEMENT, type);

@@ -3,7 +3,8 @@ package org.codehaus.stax.test.stream;
 import javax.xml.stream.*;
 
 /**
- * Unit test suite that tests handling of the DOCTYPE declaration.
+ * Unit test suite that tests handling of the DOCTYPE declaration event
+ * (XMLStreamConstants.DTD)
  */
 public class TestDoctypeDecl
     extends BaseStreamTest
@@ -75,14 +76,8 @@ public class TestDoctypeDecl
         assertEquals(false, sr.hasName());
         assertEquals(true, sr.hasText());
 
-        /* Interesting; according to Javadocs, these 2 methods behave
-         * nicely, ie. no exceptions even if they are not applicable...
-         */
-        assertNull(sr.getPrefix());
-        assertNull(sr.getNamespaceURI());
-
         // And then let's check methods that should throw specific exception
-        for (int i = 0; i < 4; ++i) {
+        for (int i = 0; i < 8; ++i) {
             String method = "";
 
             try {
@@ -93,37 +88,49 @@ public class TestDoctypeDecl
                     result = sr.getName();
                     break;
                 case 1:
+                    method = "getPrefix";
+                    result = sr.getPrefix();
+                    break;
+                case 2:
                     method = "getLocalName";
                     result = sr.getLocalName();
                     break;
-                case 2:
+                case 3:
+                    method = "getNamespaceURI";
+                    result = sr.getNamespaceURI();
+                    break;
+                case 4:
                     method = "getNamespaceCount";
                     result = new Integer(sr.getNamespaceCount());
                     break;
-                case 3:
+                case 5:
                     method = "getAttributeCount";
                     result = new Integer(sr.getAttributeCount());
                     break;
+                case 6:
+                    method = "getPITarget";
+                    result = sr.getPITarget();
+                    break;
+                case 7:
+                    method = "getPIData";
+                    result = sr.getPIData();
+                    break;
                 }
                 fail("Expected IllegalArgumentException, when calling "
-                     +method+"() for COMMENT");
+                     +method+"() for DTD");
             } catch (IllegalStateException iae) {
                 ; // good
             }
         }
 
-        // Here let's only check it's not null or empty, not exact contents
+        /* Here let's only check it's not null or empty, not exact contents
+         * (there are other tests for checking contents)
+         */
         String str = sr.getText();
         assertNotNull(str);
         if (str.trim().length() == 0) {
             fail("Internal subset not available; StreamReader.getText() returned an empty String (after trim())");
         }
-
-        /* Javadoc doesn't say anything about exceptions... so assumption
-         * is, we should get null here:
-         */
-        assertNull(sr.getPITarget());
-        assertNull(sr.getPIData());
     }
 
     private void doTestMinimalValid(boolean nsAware)

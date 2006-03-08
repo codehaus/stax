@@ -427,7 +427,11 @@ public class TestEventReader
             XMLEvent elem = er.nextEvent();
             assertTokenType(START_ELEMENT, elem.getEventType());
 
-            assertEquals(TEXT1+TEXT2, er.getElementText());
+            try {
+                assertEquals(TEXT1+TEXT2, er.getElementText());
+            } catch (XMLStreamException sex) {
+                fail("Failed on XMLEventReader.getElementText(): "+sex);
+            }
 
             /* 06-Jan-2006, TSa: I'm really not sure whether to expect
              *   END_ELEMENT, or END_DOCUMENT here... maybe the latter

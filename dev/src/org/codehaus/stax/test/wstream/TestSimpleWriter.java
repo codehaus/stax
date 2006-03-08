@@ -260,7 +260,11 @@ public class TestSimpleWriter
         assertEquals(URL_P1, sr.getNamespaceURI());
 
         // (close) branch
-        assertTokenType(END_ELEMENT, sr.next());
+        try { // catching exception to add more info to failure msg...
+            assertTokenType(END_ELEMENT, sr.next());
+        } catch (XMLStreamException sex) {
+            fail("Failed when trying to match </p1> (input '"+strw+"'): "+sex);
+        }
         assertEquals("branch", sr.getLocalName());
         assertNoPrefix(sr);
 
@@ -342,7 +346,11 @@ public class TestSimpleWriter
         assertNoPrefixOrNs(sr);
 
         // closing doc element
-        assertTokenType(END_ELEMENT, sr.next());
+        try {
+            assertTokenType(END_ELEMENT, sr.next());
+         } catch (XMLStreamException sex) {
+            fail("Failed when trying to match </doc> (input '"+strw+"'): "+sex);
+        }
         assertEquals("doc", sr.getLocalName());
         assertNoPrefixOrNs(sr);
 

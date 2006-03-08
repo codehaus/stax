@@ -23,7 +23,7 @@ public class StartDocumentEvent
   protected String systemId="";
   protected String publicId="";
   protected String encodingScheme="UTF-8";
-  protected boolean standalone=true;
+  protected boolean standalone=false;
   protected String version="1.0";
   private boolean encodingSchemeSet = false;
   private boolean standaloneSet = false;

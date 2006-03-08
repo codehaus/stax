@@ -58,6 +58,9 @@ import com.bea.xml.stream.events.DTDEvent;
 public class StaticAllocator 
   implements XMLEventAllocator 
 {
+    public static final String FEATURE_STAX_NOTATIONS = "javax.xml.stream.notations";
+    public static final String FEATURE_STAX_ENTITIES = "javax.xml.stream.entities";
+
   StartElementEvent startElement = new StartElementEvent();
   EndElementEvent endElement = new EndElementEvent();
   CharactersEvent characters = new CharactersEvent();

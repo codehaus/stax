@@ -393,7 +393,9 @@ public class TestEntityRead
             while ((lastType = sr.next()) == CHARACTERS) {
                 ;
             }
-        } catch (Exception e) {
+        } catch (XMLStreamException e) {
+            return; // ok
+        } catch (RuntimeException e) { // some impls throw lazy exceptions
             return; // ok
         }
         assertTokenType(DTD, type1);
@@ -418,7 +420,12 @@ public class TestEntityRead
 
         // ns-aware, coalescing (to simplify verifying), entity expanding
         XMLInputFactory f = doGetFactory(true, true, true);
-        setSupportExternalEntities(f, true);
+
+        if (!setSupportExternalEntities(f, true)) {
+            reportNADueToExtEnt("testExternalEntityWithResolver");
+            return;
+        }
+
         setResolver(f, new SimpleResolver(ENTITY_VALUE1));
 
         // First, simple content without further expansion etc
@@ -508,12 +515,8 @@ public class TestEntityRead
             assertNotNull(sr.getNamespaceContext());
         }
 
-        // No exception expected, just nulls:
-        assertNull(sr.getPrefix());
-        assertNull(sr.getNamespaceURI());
-
         // And then let's check methods that should throw specific exception
-        for (int i = 0; i < 3; ++i) {
+        for (int i = 0; i < 7; ++i) {
             String method = "";
 
             try {
@@ -524,26 +527,36 @@ public class TestEntityRead
                     result = sr.getName();
                     break;
                 case 1:
+                    method = "getPrefix";
+                    result = sr.getPrefix();
+                    break;
+                case 2:
+                    method = "getNamespaceURI";
+                    result = sr.getNamespaceURI();
+                    break;
+                case 3:
                     method = "getNamespaceCount";
                     result = new Integer(sr.getNamespaceCount());
                     break;
-                case 2:
+                case 4:
                     method = "getAttributeCount";
                     result = new Integer(sr.getAttributeCount());
                     break;
+                case 5:
+                    method = "getPITarget";
+                    result = sr.getPITarget();
+                    break;
+                case 6:
+                    method = "getPIData";
+                    result = sr.getPIData();
+                    break;
                 }
                 fail("Expected IllegalArgumentException, when calling "
-                     +method+"() for COMMENT");
+                     +method+"() for ENTITY_REFERENCE");
             } catch (IllegalStateException iae) {
                 ; // good
             }
         }
-
-        /* StAX JavaDocs just say 'Proc. instr. target/data, or null', NOT
-         * that there should be an exception...
-         */
-        assertNull(sr.getPITarget());
-        assertNull(sr.getPIData());
 
 
         // // Ok, and the second entity; an external one

@@ -34,7 +34,10 @@ public class TestNamespaces
         // element properties:
         assertNull(sr.getPrefix());
         assertEquals("root", sr.getLocalName());
-        assertEquals("", sr.getNamespaceURI());
+        String uri = sr.getNamespaceURI();
+        if (uri != null) {
+            fail("Undeclared (default) namespace should have null URI; had \""+uri+"\" (len "+uri.length()+")");
+        }
         // ns/attr properties:
         assertEquals("value", sr.getAttributeValue(null, "attr1"));
         assertEquals("", sr.getAttributeValue("myurl", "attr1"));
@@ -50,7 +53,7 @@ public class TestNamespaces
         assertNull(sr.getAttributeValue("xmlns", "a"));
         assertEquals("myurl", sr.getNamespaceURI("a"));
         assertNull(sr.getNamespaceURI("myurl"));
-        assertEquals("", sr.getNamespaceURI(""));
+        assertNull(sr.getNamespaceURI(""));
         assertNull(sr.getNamespaceURI("nosuchurl"));
 
         NamespaceContext nc = sr.getNamespaceContext();
@@ -183,10 +186,10 @@ public class TestNamespaces
         throws XMLStreamException
     {
         XMLStreamReader sr = getNsReader(VALID_NS_XML, false);
-	if (sr == null) {
-	    reportNADueToNS("testValidNonNs");
-	    return;
-	}
+        if (sr == null) {
+            reportNADueToNS("testValidNonNs");
+            return;
+        }
 
         assertEquals(START_ELEMENT, sr.next());
         assertEquals(0, sr.getNamespaceCount());
@@ -268,6 +271,20 @@ public class TestNamespaces
         testPotentiallyInvalid(false, "testInvalidNonNs");
     }
 
+    public void testInvalidStandardBindings()
+        throws XMLStreamException
+    {
+        doTestXmlBinding(true, "testInvalidStandardBindings");
+        doTestXmlnsBinding(true, "testInvalidStandardBindings");
+    }
+
+    public void testInvalidStandardBindingsNonNs()
+        throws XMLStreamException
+    {
+        doTestXmlBinding(false, "testInvalidStandardBindingsNonNs");
+        doTestXmlnsBinding(false, "testInvalidStandardBindingsNonNs");
+    }
+
     public void testDefaultNs()
         throws XMLStreamException
     {
@@ -284,7 +301,7 @@ public class TestNamespaces
         NamespaceContext ctxt = sr.getNamespaceContext();
         assertEquals(1, sr.getNamespaceCount());
         assertEquals("url", sr.getNamespaceURI(0));
-        assertEquals("", sr.getNamespacePrefix(0));
+        assertEquals(null, sr.getNamespacePrefix(0));
 
         assertEquals("url", ctxt.getNamespaceURI(""));
         assertEquals("", ctxt.getPrefix("url"));
@@ -417,11 +434,11 @@ public class TestNamespaces
         // First, check that undeclared namespace prefixes are not kosher
         try {
             XMLStreamReader sr = getNsReader("<ns1:elem />", nsAware);
-	    if (sr == null) {
-		reportNADueToNS(method);
-		return;
-	    }
-
+            if (sr == null) {
+                reportNADueToNS(method);
+                return;
+            }
+            
             streamThrough(sr);
             if (nsAware) {
                 fail("Was expecting an exception for content that uses undeclared namespace prefix.");
@@ -429,19 +446,6 @@ public class TestNamespaces
         } catch (Exception e) {
             if (!nsAware) {
                 fail("Was not expecting an exception for undeclared namespace when namespaces support not enabled: "+e);
-            }
-        }
-
-        // Then that neither 'xml' nor 'xmlns' can be redeclared
-        try {
-            XMLStreamReader sr = getNsReader("<elem xmlns:xml='xxx' xmlns:xmlns='yyy' />", nsAware);
-            streamThrough(sr);
-            if (nsAware) {
-                fail("Was expecting an exception for content that tries to redeclare 'xml' or 'xmlns' to different URI.");
-            }
-        } catch (Exception e) {
-            if (!nsAware) {
-                fail("Was not expecting an exception for redeclaration of 'xml' or 'xmlns' namespaces support not enabled: "+e);
             }
         }
 
@@ -479,6 +483,106 @@ public class TestNamespaces
         } catch (Exception e) {
             if (!nsAware) {
                 fail("Was NOT expecting an exception since in non-namespace mode attributes 'a:attr1' and 'b:attr1' are not equivalent: "+e);
+            }
+        }
+    }
+
+    private void doTestXmlBinding(boolean nsAware, String method)
+        throws XMLStreamException
+    {
+        // And 'xml' can only be bound to its correct URI
+        { // this should be fine
+            XMLStreamReader sr = getNsReader("<elem xmlns:xml='"+XMLConstants.XML_NS_URI+"' />", nsAware);
+            if (sr == null) {
+                reportNADueToNS(method);
+                return;
+            }
+            streamThrough(sr);
+        }
+
+        // But not to anything else:
+        try {
+            XMLStreamReader sr = getNsReader("<elem xmlns:xml='xxx' />", nsAware);
+            streamThrough(sr);
+            if (nsAware) {
+                fail("Was expecting an exception for content that tries to redeclare 'xml' to different URI.");
+            }
+        } catch (Exception e) {
+            if (!nsAware) {
+                fail("Was not expecting an exception for redeclaration of 'xml' when namespace support not enabled: "+e);
+            }
+        }
+
+        // Also, nothing else can bind to that URI, neither explicit prefix
+        try {
+            XMLStreamReader sr = getNsReader("<elem xmlns:foo='"+XMLConstants.XML_NS_URI+"' />", nsAware);
+            streamThrough(sr);
+            if (nsAware) {
+                fail("Was expecting an exception for content that tries to bind prefix other than 'xml' to URI '"+XMLConstants.XML_NS_URI+"'");
+            }
+        } catch (Exception e) {
+            if (!nsAware) {
+                fail("Was not expecting an exception for binding 'xml' URI");
+            }
+        }
+
+        // Nor default namespace
+        try {
+            XMLStreamReader sr = getNsReader("<elem xmlns='"+XMLConstants.XML_NS_URI+"' />", nsAware);
+            streamThrough(sr);
+            if (nsAware) {
+                fail("Was expecting an exception for content that tries to bind the default namespace to 'xml' URI '"+XMLConstants.XML_NS_URI+"'");
+            }
+        } catch (Exception e) {
+            if (!nsAware) {
+                fail("Was not expecting an exception for binding default namespace to 'xml' URI");
+            }
+        }
+    }
+
+    private void doTestXmlnsBinding(boolean nsAware, String method)
+        throws XMLStreamException
+    {
+        // Illegal to try to (re)declare 'xmlns' in any way
+        try {
+            XMLStreamReader sr = getNsReader("<elem xmlns:xmlns='yyy' />", nsAware);
+            if (sr == null) {
+                reportNADueToNS(method);
+                return;
+            }
+            streamThrough(sr);
+            if (nsAware) {
+                fail("Was expecting an exception for content that tries to redeclare 'xml' or 'xmlns' to different URI.");
+            }
+        } catch (Exception e) {
+            if (!nsAware) {
+                fail("Was not expecting an exception for redeclaration of 'xmlns' when namespace support not enabled: "+e);
+            }
+        }
+
+        // Also, nothing else can bind to that URI, neither explicit prefix
+        try {
+            XMLStreamReader sr = getNsReader("<elem xmlns:foo='"+XMLConstants.XMLNS_ATTRIBUTE_NS_URI+"' />", nsAware);
+            streamThrough(sr);
+            if (nsAware) {
+                fail("Was expecting an exception for content that tries to bind prefix other than 'xml' to URI '"+XMLConstants.XMLNS_ATTRIBUTE_NS_URI+"'");
+            }
+        } catch (Exception e) {
+            if (!nsAware) {
+                fail("Was not expecting an exception for binding 'xml' URI");
+            }
+        }
+
+        // Nor default namespace
+        try {
+            XMLStreamReader sr = getNsReader("<elem xmlns='"+XMLConstants.XMLNS_ATTRIBUTE_NS_URI+"' />", nsAware);
+            streamThrough(sr);
+            if (nsAware) {
+                fail("Was expecting an exception for content that tries to bind the default namespace to 'xml' URI '"+XMLConstants.XMLNS_ATTRIBUTE_NS_URI+"'");
+            }
+        } catch (Exception e) {
+            if (!nsAware) {
+                fail("Was not expecting an exception for binding default namespace to 'xml' URI");
             }
         }
     }

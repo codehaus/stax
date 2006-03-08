@@ -167,7 +167,8 @@ public class BaseStaxTest
     protected static void setCoalescing(XMLInputFactory f, boolean state)
         throws XMLStreamException
     {
-        f.setProperty(XMLInputFactory.IS_COALESCING, state ? Boolean.TRUE : Boolean.FALSE);
+        Boolean b = state ? Boolean.TRUE : Boolean.FALSE;
+        f.setProperty(XMLInputFactory.IS_COALESCING, b);
         // Let's just double-check it...
         assertEquals(state, isCoalescing(f));
     }
@@ -182,7 +183,8 @@ public class BaseStaxTest
         throws XMLStreamException
     {
         try {
-            f.setProperty(XMLInputFactory.IS_VALIDATING, (state ? Boolean.TRUE : Boolean.FALSE));
+            Boolean b = state ? Boolean.TRUE : Boolean.FALSE;
+            f.setProperty(XMLInputFactory.IS_VALIDATING, b);
         } catch (IllegalArgumentException iae) {
             fail("Could not set DTD validating mode to "+state+": "+iae);
             //throw new XMLStreamException(iae.getMessage(), iae);
@@ -223,7 +225,7 @@ public class BaseStaxTest
     protected static void setReplaceEntities(XMLInputFactory f, boolean state)
         throws XMLStreamException
     {
-        Boolean b = (state ? Boolean.TRUE : Boolean.FALSE);
+        Boolean b = state ? Boolean.TRUE : Boolean.FALSE;
         f.setProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES, b);
         assertEquals(b, f.getProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES));
     }
@@ -231,17 +233,25 @@ public class BaseStaxTest
     protected static void setSupportDTD(XMLInputFactory f, boolean state)
         throws XMLStreamException
     {
-        Boolean b = (state ? Boolean.TRUE : Boolean.FALSE);
+        Boolean b = Boolean.valueOf(state);
         f.setProperty(XMLInputFactory.SUPPORT_DTD, b);
         assertEquals(b, f.getProperty(XMLInputFactory.SUPPORT_DTD));
     }
 
-    protected static void setSupportExternalEntities(XMLInputFactory f, boolean state)
+    protected static boolean setSupportExternalEntities(XMLInputFactory f, boolean state)
         throws XMLStreamException
     {
-        Boolean b = (state ? Boolean.TRUE : Boolean.FALSE);
-        f.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, b);
-        assertEquals(b, f.getProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES));
+        Boolean b = state ? Boolean.TRUE : Boolean.FALSE;
+        try {
+            f.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, b);
+            Object act = f.getProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES);
+            return (act instanceof Boolean) && ((Boolean) act).booleanValue() == state;
+        } catch (IllegalArgumentException e) {
+            /* Let's assume, then, that the property (or specific value for it)
+             * is NOT supported...
+             */
+            return false;
+        }
     }
 
     protected static void setResolver(XMLInputFactory f, XMLResolver resolver)
@@ -446,6 +456,14 @@ public class BaseStaxTest
         return desc;
     }
 
+    protected static String valueDesc(String value)
+    {
+        if (value == null) {
+            return "[NULL]";
+        }
+        return "\"" + value + "\"";
+    }
+
     protected static String printable(char ch)
     {
         if (ch == '\n') {
@@ -503,16 +521,28 @@ public class BaseStaxTest
 
     protected void reportNADueToProperty(String method, String prop)
     {
-	String clsName = getClass().getName();
-	/* 27-Sep-2005, TSa: Should probably use some other mechanism for
-	 *   reporting this. Does JUnit have something applicable?
-	 */
-	System.err.println("Skipping "+clsName+"#"+method+": property '"
-			   +prop+"' (or one of its values) not supported.");
+        String clsName = getClass().getName();
+        /* 27-Sep-2005, TSa: Should probably use some other mechanism for
+         *   reporting this. Does JUnit have something applicable?
+         */
+        System.err.println("Skipping "+clsName+"#"+method+": property '"
+                           +prop+"' (or one of its values) not supported.");
     }
 
     protected void reportNADueToNS(String method)
     {
-	reportNADueToProperty(method, "IS_NAMESPACE_AWARE");
+        reportNADueToProperty(method, "IS_NAMESPACE_AWARE");
+    }
+
+    protected void reportNADueToExtEnt(String method)
+    {
+        reportNADueToProperty(method, "IS_SUPPORTING_EXTERNAL_ENTITIES");
+    }
+
+    protected void reportNADueToEntityExpansion(String method, int type)
+    {
+        String clsName = getClass().getName();
+        String msg = (type > 0) ? " (next event: "+tokenTypeDesc(type)+")" : "";
+        System.err.println("Skipping "+clsName+"#"+method+": entity expansion does not seem to be functioning properly"+msg+".");
     }
 }

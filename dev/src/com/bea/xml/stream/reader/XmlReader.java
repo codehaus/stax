@@ -115,7 +115,7 @@ final public class XmlReader extends Reader
      */
     public static Reader createReader (InputStream in) throws IOException
     {
-	return new XmlReader (in);
+        return new XmlReader (in);
     }
 
     /**
@@ -129,36 +129,37 @@ final public class XmlReader extends Reader
      * @exception IOException on error, including unrecognized encoding
      */
     public static Reader createReader (InputStream in, String encoding)
-    throws IOException
+        throws IOException
     {
-	if (encoding == null)
-	    return new XmlReader (in);
-	if ("UTF-8".equalsIgnoreCase (encoding)
-		|| "UTF8".equalsIgnoreCase (encoding))
-	    return new Utf8Reader (in);
-	if ("US-ASCII".equalsIgnoreCase (encoding)
-		|| "ASCII".equalsIgnoreCase (encoding))
-	    return new AsciiReader (in);
-	if ("ISO-8859-1".equalsIgnoreCase (encoding)
-		// plus numerous aliases ... 
-		)
-	    return new Iso8859_1Reader (in);
+        if (encoding == null) {
+            return new XmlReader(in);
+        }
+        if ("UTF-8".equalsIgnoreCase (encoding)
+            || "UTF8".equalsIgnoreCase (encoding)) {
+            return new Utf8Reader (in);
+        }
+        if ("US-ASCII".equalsIgnoreCase (encoding)
+            || "ASCII".equalsIgnoreCase (encoding)) {
+            return new AsciiReader (in);
+        }
+        if ("ISO-8859-1".equalsIgnoreCase (encoding)
+            // plus numerous aliases ... 
+            ) {
+            return new Iso8859_1Reader (in);
+        }
 
-	//
-	// What we really want is an administerable resource mapping
-	// encoding names/aliases to classnames.  For example a property
-	// file resource, "readers/mapping.props", holding and a set
-	// of readers in that (sub)package... defaulting to this call
-	// only if no better choice is available.
-	//
-	return new InputStreamReader (in, std2java (encoding));
+        // What we really want is an administerable resource mapping
+        // encoding names/aliases to classnames.  For example a property
+        // file resource, "readers/mapping.props", holding and a set
+        // of readers in that (sub)package... defaulting to this call
+        // only if no better choice is available.
+        //
+        return new InputStreamReader (in, std2java (encoding));
     }
 
-    //
     // JDK doesn't know all of the standard encoding names, and
     // in particular none of the EBCDIC ones IANA defines (and
     // which IBM encourages).
-    //
     static private final Hashtable charsets = new Hashtable (31);
 
     static {
@@ -201,24 +202,24 @@ final public class XmlReader extends Reader
     // for some cases required by the XML spec
     private static String std2java (String encoding)
     {
-	String temp = encoding.toUpperCase ();
-	temp = (String) charsets.get (temp);
-	return temp != null ? temp : encoding;
+        String temp = encoding.toUpperCase ();
+        temp = (String) charsets.get (temp);
+        return (temp != null) ? temp : encoding;
     }
 
     /** Returns the standard name of the encoding in use */
     public String getEncoding ()
     {
-	return assignedEncoding;
+        return assignedEncoding;
     }
 
     private XmlReader (InputStream stream) throws IOException
     {
-	super (stream);
-
-	PushbackInputStream	pb;
-        byte			buf [];
-	int			len;
+        super (stream);
+        
+        PushbackInputStream	pb;
+        byte buf [];
+        int len;
 
 	/*if (stream instanceof PushbackInputStream)
 	    pb = (PushbackInputStream) stream;
@@ -231,26 +232,26 @@ final public class XmlReader extends Reader
 	 * that's why we need to wrap the stream irrespective of what type
 	 * of stream we start off with.
 	 */
-	pb = new PushbackInputStream (stream, MAXPUSHBACK);
+        pb = new PushbackInputStream (stream, MAXPUSHBACK);
 
         //
         // See if we can figure out the character encoding used
         // in this file by peeking at the first few bytes.
         //
-	buf = new byte [4];
-	len = pb.read (buf);
-	if (len > 0)
-	    pb.unread (buf, 0, len);
+        buf = new byte [4];
+        len = pb.read (buf);
+        if (len > 0)
+            pb.unread (buf, 0, len);
 
-	if (len == 4) switch (buf [0] & 0x0ff) {
+        if (len == 4) switch (buf [0] & 0x0ff) {
             case 0:
               // 00 3c 00 3f == illegal UTF-16 big-endian
               if (buf [1] == 0x3c && buf [2] == 0x00 && buf [3] == 0x3f) {
-		  setEncoding (pb, "UnicodeBig");
+                  setEncoding (pb, "UnicodeBig");
                   return;
               }
-	      // else it's probably UCS-4
-	      break;
+              // else it's probably UCS-4
+              break;
 
             case '<':      // 0x3c: the most common cases!
               switch (buf [1] & 0x0ff) {
@@ -312,11 +313,11 @@ final public class XmlReader extends Reader
               break;
         }
 
-	//
+        //
         // If all else fails, assume XML without a declaration, and
         // using UTF-8 encoding.
-	//
-	setEncoding (pb, "UTF-8");
+        //
+        setEncoding (pb, "UTF-8");
     }
 
     /*
@@ -330,12 +331,12 @@ final public class XmlReader extends Reader
      * a common subset.)
      */
     private void useEncodingDecl (PushbackInputStream pb, String encoding)
-    throws IOException
+        throws IOException
     {
-	byte			buffer [] = new byte [MAXPUSHBACK];
-	int			len;
-	Reader			r;
-	int			c;
+        byte buffer[] = new byte [MAXPUSHBACK];
+        int len;
+        Reader r;
+        int c;
 
 	//
 	// Buffer up a bunch of input, and set up to read it in
@@ -462,16 +463,16 @@ final public class XmlReader extends Reader
     }
 
     private void setEncoding (InputStream stream, String encoding)
-    throws IOException
+        throws IOException
     {
-	assignedEncoding = encoding;
-	in = createReader (stream, encoding);
+        assignedEncoding = encoding;
+        in = createReader (stream, encoding);
     }
 
     /**
      * Reads the number of characters read into the buffer, or -1 on EOF.
      */
-    public int read (char buf [], int off, int len) throws IOException
+    public int read(char buf [], int off, int len) throws IOException
     {
 	int	val;
 
@@ -488,14 +489,16 @@ final public class XmlReader extends Reader
      */
     public int read () throws IOException
     {
-	int	val;
+        int	val;
 
-	if (closed)
-	    throw new IOException ("closed");
-	val = in.read ();
-	if (val == -1)
-	    close ();
-	return val;
+        if (closed) {
+            throw new IOException("Stream closed");
+        }
+        val = in.read();
+        if (val == -1) {
+            close();
+        }
+        return val;
     }
 
     /**
@@ -543,13 +546,13 @@ final public class XmlReader extends Reader
     /**
      * Closes the reader.
      */
-    public void close () throws IOException
+    public void close() throws IOException
     {
-	if (closed)
-	    return;
-	in.close ();
-	in = null;
-	closed = true;
+        if (closed)
+            return;
+        in.close ();
+        in = null;
+        closed = true;
     }
 
     //
@@ -560,7 +563,7 @@ final public class XmlReader extends Reader
     // for big and little endian streams make a difference, too;
     // fewer conditionals in the critical path!
     //
-    static abstract class BaseReader extends Reader
+    public static abstract class BaseReader extends Reader
     {
 	protected InputStream	instream;
 	protected byte		buffer [];
@@ -575,6 +578,8 @@ final public class XmlReader extends Reader
 
 	}
 
+    public abstract String getEncoding();
+        
 	public boolean ready () throws IOException
 	{
 	    return instream == null
@@ -610,50 +615,49 @@ final public class XmlReader extends Reader
 	    super (stream);
 	}
 
+    public String getEncoding() { return "UTF-8"; }
+
 	public int read (char buf [], int offset, int len) throws IOException
 	{
 	    int i = 0, c = 0;
 
 	    if (len <= 0)
-		return 0;
+            return 0;
 	 
 	    // avoid many runtime bounds checks ... a good optimizer
-            // (static or JIT) will now remove checks from the loop.
-            if ((offset + len) > buf.length || offset < 0)
-                throw new ArrayIndexOutOfBoundsException ();
+        // (static or JIT) will now remove checks from the loop.
+        if ((offset + len) > buf.length || offset < 0)
+            throw new ArrayIndexOutOfBoundsException ();
 
 	    // Consume remaining half of any surrogate pair immediately
 	    if (nextChar != 0) {
-		buf [offset + i++] = nextChar;
-		nextChar = 0;
+            buf [offset + i++] = nextChar;
+            nextChar = 0;
 	    }
-
+        
 	    while (i < len) {
-		// stop or read data if needed
-		if (finish <= start) {
-		    if (instream == null) {
-			c = -1;
-			break;
-		    }
-		    start = 0;
-		    finish = instream.read (buffer, 0, buffer.length);
-		    if (finish <= 0) {
-			this.close ();
-			c = -1;
-			break;
-		    }
-		}
+            // stop or read data if needed
+            if (finish <= start) {
+                if (instream == null) {
+                    c = -1;
+                    break;
+                }
+                start = 0;
+                finish = instream.read (buffer, 0, buffer.length);
+                if (finish <= 0) {
+                    this.close ();
+                    c = -1;
+                    break;
+                }
+            }
 		
-		//
 		// RFC 2279 describes UTF-8; there are six encodings.
 		// Each encoding takes a fixed number of characters
 		// (1-6 bytes) and is flagged by a bit pattern in the
 		// first byte.  The five and six byte-per-character
 		// encodings address characters which are disallowed
 		// in XML documents, as do some four byte ones.
-		// 
 
-		//
 		// Single byte == ASCII.  Common; optimize.
 		//
 		c = buffer [start] & 0x0ff;
@@ -784,75 +788,97 @@ final public class XmlReader extends Reader
     //
     static final class AsciiReader extends BaseReader
     {
-	AsciiReader (InputStream in) { super (in); }
-
-	public int read (char buf [], int offset, int len) throws IOException
-	{
-	    int		i, c;
-
-	    if (instream == null)
-		return -1;
-
-	    // avoid many runtime bounds checks ... a good optimizer
+        AsciiReader (InputStream in) { super (in); }
+        
+        public String getEncoding() { return "US-ASCII"; }
+        
+        public int read (char buf [], int offset, int len) throws IOException
+        {
+            if (instream == null) {
+                return -1;
+            }
+            
+            // avoid many runtime bounds checks ... a good optimizer
             // (static or JIT) will now remove checks from the loop.
             if ((offset + len) > buf.length || offset < 0)
                 throw new ArrayIndexOutOfBoundsException ();
+            
+            /* 07-Mar-2006, TSa: Actually, it's bad idea to try to fill the
+             *   whole buffer -- if this is a blocking source (network socket
+             *   for example), we may be blocking too early.
+             */
+            // So, do we need to try to read more?
+            int avail = (finish - start);
+            if (avail < 1) {
+                start = 0;
+                finish = instream.read (buffer, 0, buffer.length);
+                if (finish <= 0) {
+                    this.close();
+                    return -1;
+                }
+                if (len > finish) {
+                    len = finish;
+                }
+            } else {
+                if (len > avail) {
+                    len = avail;
+                }
+            }
 
-	    for (i = 0; i < len; i++) {
-		if (start >= finish) {
-		    start = 0;
-		    finish = instream.read (buffer, 0, buffer.length);
-		    if (finish <= 0) {
-			if (finish <= 0)
-			    this.close ();
-			break;
-		    }
-		}
-		c = buffer [start++];
-		if ((c & 0x80) != 0)
-		    throw new CharConversionException (
-			"Illegal ASCII character, 0x"
-			+ Integer.toHexString (c & 0xff)
-		    );
-		buf [offset + i] = (char) c;
-	    }
-	    if (i == 0 && finish <= 0)
-		return -1;
-	    return i;
-	}
+            for (int i = 0; i < len; i++) {
+                int c = buffer[start++];
+                if (c < 0) {
+                    throw new CharConversionException ("Illegal ASCII character, 0x"
+                                                       + Integer.toHexString(c & 0xff));
+                }
+                buf [offset + i] = (char) c;
+            }
+            return len;
+        }
     }
-
+    
     static final class Iso8859_1Reader extends BaseReader
     {
-	Iso8859_1Reader (InputStream in) { super (in); }
-
-	public int read (char buf [], int offset, int len) throws IOException
-	{
-	    int		i;
-
-	    if (instream == null)
-		return -1;
-
-	    // avoid many runtime bounds checks ... a good optimizer
+        Iso8859_1Reader (InputStream in) { super (in); }
+        
+        public String getEncoding() { return "ISO-8859-1"; }
+        
+        public int read (char buf [], int offset, int len) throws IOException
+        {
+            if (instream == null)
+                return -1;
+            
+            // avoid many runtime bounds checks ... a good optimizer
             // (static or JIT) will now remove checks from the loop.
             if ((offset + len) > buf.length || offset < 0)
                 throw new ArrayIndexOutOfBoundsException ();
+            
+            /* 07-Mar-2006, TSa: Actually, it's bad idea to try to fill the
+             *   whole buffer -- if this is a blocking source (network socket
+             *   for example), we may be blocking too early.
+             */
+            // So, do we need to try to read more?
+            int avail = (finish - start);
+            if (avail < 1) {
+                start = 0;
+                finish = instream.read (buffer, 0, buffer.length);
+                if (finish <= 0) {
+                    this.close();
+                    return -1;
+                }
+                if (len > finish) {
+                    len = finish;
+                }
+            } else {
+                if (len > avail) {
+                    len = avail;
+                }
+            }
 
-	    for (i = 0; i < len; i++) {
-		if (start >= finish) {
-		    start = 0;
-		    finish = instream.read (buffer, 0, buffer.length);
-		    if (finish <= 0) {
-			if (finish <= 0)
-			    this.close ();
-			break;
-		    }
-		}
-		buf [offset + i] = (char) (0x0ff & buffer [start++]);
-	    }
-	    if (i == 0 && finish <= 0)
-		return -1;
-	    return i;
-	}
+            for (int i = 0; i < len; i++) {
+                buf [offset + i] = (char) (buffer[start++] & 0xFF);
+            }
+            return len;
+        }
     }
 }

@@ -18,23 +18,58 @@ import java.util.List;
 import javax.xml.stream.events.XMLEvent;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.events.DTD;
+import javax.xml.stream.events.EntityDeclaration;
+import javax.xml.stream.events.NotationDeclaration;
+
+import com.wutka.dtd.DTDEntity;
+import com.wutka.dtd.DTDExternalID;
+import com.wutka.dtd.DTDNotation;
+import com.wutka.dtd.DTDPublic;
+import com.wutka.dtd.DTDSystem;
 
 public class DTDEvent 
   extends BaseEvent
   implements DTD
 {
+  private String dtd;
+
   private List notations;
   private List entities;
-  private String dtd;
-  public DTDEvent(){}
+
+  public DTDEvent() { init(); }
+
   public DTDEvent(String dtd) {
     init();
     setDTD(dtd);
   }
 
   protected void init() {setEventType(XMLEvent.DTD); }
+
+  public static EntityDeclaration createEntityDeclaration(DTDEntity dtdEntity)
+  {
+      return new EntityDeclarationEvent(dtdEntity.getName(), dtdEntity.getValue());
+  }
+
+  public static NotationDeclaration createNotationDeclaration(DTDNotation dtdNotation)
+  {
+      DTDExternalID extId = dtdNotation.getExternalID();
+      String systemId = extId.getSystem();
+      String publicId = (extId instanceof DTDPublic) ?
+          ((DTDPublic) extId).getPub() : null;
+
+      return new NotationDeclarationEvent(dtdNotation.getName(), publicId, systemId);
+  }
+                                                               
   public void setDTD(String dtd) {
     this.dtd=dtd;
+  }
+
+  public void setNotations(List l) {
+      notations = l;
+  }
+
+  public void setEntities(List l) {
+      entities = l;
   }
 
   public Object getProcessedDTD() {
@@ -53,6 +88,13 @@ public class DTDEvent
   protected void doWriteAsEncodedUnicode(java.io.Writer writer) 
       throws java.io.IOException
   {
-      writer.write(dtd);
+      writer.write("<!DOCTYPE ");
+      // !!! TBI: Should get the root element name here...
+      if (dtd != null && dtd.length() > 0) {
+          writer.write('[');
+          writer.write(dtd);
+          writer.write(']');
+      }
+      writer.write('>');
   }
 }
