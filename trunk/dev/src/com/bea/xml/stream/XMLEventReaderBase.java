@@ -84,8 +84,7 @@ public class XMLEventReaderBase
     StringBuffer buf = new StringBuffer();
     XMLEvent e = nextEvent();
     if (!e.isStartElement())
-      throw new XMLStreamException("Precondition for readText is"+
-                                   " nextEvent().getTypeEventType() == START_ELEMENT");
+      throw new XMLStreamException("Precondition for readText is nextEvent().getTypeEventType() == START_ELEMENT (got "+e.getEventType()+")");
     while(hasNext()) {
       e = peek();
       if(e.isStartElement())
@@ -150,10 +149,9 @@ public class XMLEventReaderBase
       return (XMLEvent) elementQ.peek();
     if (parseSome()) 
       return (XMLEvent) elementQ.peek();
-    
-    throw new java.util.NoSuchElementException("Attempt to peek() on a " +
-                                               " stream that has no more " +
-                                               " elements.");
+
+    // Stax specs indicate null should be returned, if no more stuff:
+    return null;
   }
 
   public void add(XMLEvent event) 

@@ -68,16 +68,20 @@ public class ReadOnlyNamespaceContextBase
   public String getPrefix(String uri) {
     if (uri == null)
       throw new IllegalArgumentException("uri may not be null");
-    if ("".equals(uri))
+    if (uri.length() == 0)
       throw new IllegalArgumentException("uri may not be empty string");
 
-    if(uri != null) {
-            for( int i = uris.length -1; i >= 0; i--) {
-                if( uri.equals( uris[ i ] ) ) {
-                    return checkNull(prefixes[ i ]);
-                }
-            }
-        } 
+    for( int i = uris.length -1; i >= 0; i--) {
+        if( uri.equals( uris[ i ] ) ) {
+            return checkNull(prefixes[ i ]);
+        }
+    }
+	if(XMLConstants.XML_NS_URI.equals(uri)) {
+        return "xml";
+    }
+	if (XMLConstants.XMLNS_ATTRIBUTE_NS_URI.equals(uri)) {
+		return "xmlns";
+    }
     return null;
   }
 

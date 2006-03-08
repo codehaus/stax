@@ -35,11 +35,15 @@ public class TestEncodingRead
     final static byte[] UTF8_BOM = new byte[] { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
 
     public void testUTF8()
-        throws XMLStreamException,
-               UnsupportedEncodingException
+        throws Exception
     {
         doTestEncoding("UTF-8", true, null);
         doTestEncoding("UTF-8", false, null);
+    }
+
+    public void testUTF8WithBOM()
+        throws Exception
+    {
         doTestEncoding("UTF-8", true, UTF8_BOM);
         doTestEncoding("UTF-8", false, UTF8_BOM);
     }

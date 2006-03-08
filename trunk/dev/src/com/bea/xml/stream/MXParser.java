@@ -7,12 +7,7 @@
 
 package com.bea.xml.stream;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Vector;
@@ -21,8 +16,11 @@ import java.util.Iterator;
 
 import javax.xml.namespace.NamespaceContext;
 
+import com.bea.xml.stream.events.DTDEvent;
+import com.bea.xml.stream.reader.XmlReader;
 import com.bea.xml.stream.util.EmptyIterator;
 import com.bea.xml.stream.util.ElementTypeNames;
+
 import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
 import javax.xml.stream.Location;
@@ -31,9 +29,11 @@ import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamException;
 import com.wutka.dtd.DTDParser;
 import com.wutka.dtd.DTD;
-import com.wutka.dtd.DTDEntity;
 import com.wutka.dtd.DTDAttlist;
 import com.wutka.dtd.DTDAttribute;
+import com.wutka.dtd.DTDElement;
+import com.wutka.dtd.DTDEntity;
+import com.wutka.dtd.DTDNotation;
 import javax.xml.stream.XMLInputFactory;
 
 
@@ -45,6 +45,10 @@ import javax.xml.stream.XMLInputFactory;
 public class MXParser
     implements XMLStreamReader, Location
 {
+    protected final static char CHAR_UTF8_BOM = '\uFEFF';
+
+    protected final static int MAX_UNICODE_CHAR = 0x10FFFF;
+
     protected static final String FEATURE_XML_ROUNDTRIP=
         "http://xmlpull.org/v1/doc/features.html#xml-roundtrip";
     protected static final String FEATURE_NAMES_INTERNED =
@@ -53,6 +57,9 @@ public class MXParser
     public static final String FEATURE_PROCESS_DOCDECL =
         "http://xmlpull.org/v1/doc/features.html#process-docdecl";
     //"http://java.sun.com/xml/stream/properties/report-cdata-event"
+
+    public static final String FEATURE_STAX_NOTATIONS = "javax.xml.stream.notations";
+    public static final String FEATURE_STAX_ENTITIES = "javax.xml.stream.entities";
 
     /**
      * Since EOF exception has no descriptive message, let's use something
@@ -94,6 +101,12 @@ public class MXParser
     // in that case), just in cursor
     //private static final int XML_DECLARATION=0x00010000;
     // NOTE - cwitt : from XmlPullParser interface
+
+    /**
+     * This constant defines URI used for "no namespace" (when the default
+     * namespace not defined, for elements; when attribute has no prefix,
+     * or for all URIs if namespace support is disabled).
+     */
     public static final String NO_NAMESPACE = "";
     
     /**
@@ -145,16 +158,34 @@ public class MXParser
     protected String elUri[];
     //protected String elValue[];
     protected int elNamespaceCount[];
-    
-    protected String xmlVersion;
-    protected boolean standalone=true;
+
+    /**
+     * XML version found from the xml declaration, if any.
+     */
+    protected String xmlVersion=null;
+
+    /**
+     * Flag that indicates whether 'standalone="yes"' was found from
+     * the xml declaration.
+     */
+    protected boolean standalone=false;
     protected boolean standaloneSet=false;
+
     protected String charEncodingScheme;
     
     protected String piTarget;
     protected String piData;
+
+    /**
+     * If the internal DTD subset was parsed, this object will be non-null,
+     * and can be used for accessing entities, elements and notations
+     * declared in the internal subset.
+     */
+    protected DTD mDtdIntSubset;
     
     protected HashMap defaultAttributes;
+
+
     /**
      * Make sure that we have enough space to keep element stack if passed size.
      * It will always create one additional slot then current depth
@@ -313,7 +344,26 @@ public class MXParser
     
     //protected boolean isChar(char ch) { return (ch < '\uD800' || ch > '\uDFFF')
     //  ch != '\u0000' ch < '\uFFFE'
-    
+
+    protected void checkCharValidity(int ch, boolean surrogatesOk)
+        throws XMLStreamException
+    {
+        if (ch < 0x0020) {
+            if (!isS((char) ch)) {
+                throw new XMLStreamException("Illegal white space character (code 0x"+Integer.toHexString(ch)+")");
+            }
+        } else if (ch >= 0xD800) { // surrogates illegal at this level
+            if (ch <= 0xDFFF) {
+                if (!surrogatesOk) {
+                    throw new XMLStreamException("Illegal character (code 0x"+Integer.toHexString(ch)+"): surrogate characters are not valid XML characters",
+                                                 getLocation());
+                }
+            } else if (ch > MAX_UNICODE_CHAR) {
+                throw new XMLStreamException("Illegal character (code 0x"+Integer.toHexString(ch)+"), past max. Unicode character 0x"+Integer.toHexString(MAX_UNICODE_CHAR),
+                                             getLocation());
+            }
+        }
+    }
     
     // attribute stack
     protected int attributeCount;
@@ -548,8 +598,13 @@ public class MXParser
     protected int bufLoadFactor = 95;  // 99%
     //protected int bufHardLimit;  // only matters when expanding
     
+    /**
+     * Logics for this should be clarified... but it looks like we use a
+     * 8k buffer if there's 1M of free memory or more, otherwise just
+     * 256 bytes?
+     */
     protected char buf[] = new char[
-        Runtime.getRuntime().freeMemory() > 1000000L ? READ_CHUNK_SIZE : 256 ];
+        (Runtime.getRuntime().freeMemory() > 1000000L) ? READ_CHUNK_SIZE : 256 ];
     protected int bufSoftLimit = ( bufLoadFactor * buf.length ) /100; // desirable size of buffer
     
     
@@ -721,7 +776,15 @@ public class MXParser
             BufferedReader breader = new BufferedReader(reader,7);
             reader = breader;
             breader.mark(7);
-            if (breader.read() == '<' &&
+
+            // Hmmh. May get UTF-8 BOM, apparently...
+            int ch = breader.read();
+            if (ch == CHAR_UTF8_BOM) { // let's just consume it no matter what
+                breader.mark(7);
+                ch = breader.read();
+            }
+            
+            if (ch == '<' &&
                     breader.read() == '?' &&
                     breader.read() == 'x' &&
                     breader.read() == 'm' &&
@@ -745,41 +808,49 @@ public class MXParser
             next();
         }
     }
-    public void setInput(java.io.InputStream in)
+    public void setInput(InputStream in)
         throws XMLStreamException
     {
         try {
-            setInput(com.bea.xml.stream.reader.XmlReader.createReader(in));
-        } catch (Exception e) {
+            Reader r = XmlReader.createReader(in);
+            /* 07-Mar-2006, TSa: Let's figure out encoding we detected
+             *   (whether based on xml declaration, BOM, or recognized
+             *   signature)...
+             */
+            String enc = null;
+            if (r instanceof XmlReader.BaseReader) {
+                enc = ((XmlReader.BaseReader) r).getEncoding();
+            }
+            setInput(r);
+            if (enc != null) {
+                inputEncoding = enc;
+            }
+        } catch (IOException e) {
             throw new XMLStreamException(e);
         }
     }
     
-    public void setInput(java.io.InputStream inputStream, String inputEncoding)
+    public void setInput(InputStream inputStream, String inputEncoding)
         throws XMLStreamException
     {
         if(inputStream == null) {
             throw new IllegalArgumentException("input stream can not be null");
         }
         Reader reader;
-        if(inputEncoding != null) {
-            try {
-                if(inputEncoding != null) {
-                    reader = new InputStreamReader(inputStream, inputEncoding);
-                } else {
-                    reader = new InputStreamReader(inputStream);
-                }
-            } catch (UnsupportedEncodingException une) {
-                throw new XMLStreamException(
-                    "could not create reader for encoding "+inputEncoding+" : "+une,
-                    getLocation(), une);
-            }
-        } else {
-            reader = new InputStreamReader(inputStream);
+        try {
+            reader = (inputEncoding != null) ?
+                XmlReader.createReader(inputStream, inputEncoding) :
+                XmlReader.createReader(inputStream);
+        } catch (IOException ioe) {
+            String encMsg = (inputEncoding == null) ? "(for encoding '"+inputEncoding+"')" : "";
+            throw new XMLStreamException("could not create reader "+encMsg+": "+ioe,
+                                         getLocation(), ioe);
         }
         setInput(reader);
         //must be  here as reest() was called in setInput() and has set this.inputEncoding to null ...
-        this.inputEncoding = inputEncoding;
+        if (inputEncoding != null) {
+            this.inputEncoding = inputEncoding;
+        }
     }
     
     public String getInputEncoding() {
@@ -819,7 +890,7 @@ public class MXParser
     public int getNamespaceCount()
     {
         if (!isElementEvent(eventType)) {
-            throw new IllegalStateException("Current state not START_ELEMENT or END_ELEMENT");
+            throwIllegalState(new int[] { START_ELEMENT, END_ELEMENT });
         }
         return getNamespaceCount(depth);
     }
@@ -838,7 +909,7 @@ public class MXParser
     public String getNamespacePrefix(int pos)
     {
         if (!isElementEvent(eventType)) {
-            throw new IllegalStateException("Current state not START_ELEMENT or END_ELEMENT");
+            throwIllegalState(new int[] { START_ELEMENT, END_ELEMENT });
         }
         int currentDepth = depth;
         int end = getNamespaceCount(currentDepth);//eventType == XMLStreamConstants.END_ELEMENT ? elNamespaceCount[ depth + 1 ] : namespaceEnd;
@@ -854,7 +925,7 @@ public class MXParser
     public String getNamespaceURI(int pos)
     {
         if (!isElementEvent(eventType)) {
-            throw new IllegalStateException("Current state not START_ELEMENT or END_ELEMENT");
+            throwIllegalState(new int[] { START_ELEMENT, END_ELEMENT });
         }
         int currentDepth = depth;
         int end = getNamespaceCount(currentDepth); //eventType == XMLStreamConstants.END_ELEMENT ? elNamespaceCount[ depth + 1 ] : namespaceEnd;
@@ -871,7 +942,7 @@ public class MXParser
         //throws XMLStreamException
     {
         if (!isElementEvent(eventType)) {
-            throw new IllegalStateException("Current state not START_ELEMENT or END_ELEMENT");
+            throwIllegalState(new int[] { START_ELEMENT, END_ELEMENT });
         }
         //int count = namespaceCount[ depth ];
         if(prefix != null && !"".equals(prefix)) {
@@ -992,7 +1063,7 @@ public class MXParser
                eventType == XMLStreamConstants.END_ELEMENT) {
             return processNamespaces ? elUri[ depth  ] : NO_NAMESPACE;
         }
-        return null;
+        return throwIllegalState(new int[] { START_ELEMENT, END_ELEMENT });
     }
     
     public String getLocalName()
@@ -1011,7 +1082,7 @@ public class MXParser
         /* TSa, 28-Oct-2004: StAX specs: need to throw IllegalStateException
          * here...
          */
-        throw new IllegalStateException("Current state ("+eventTypeDesc(eventType)+") not START_ELEMENT, END_ELEMENT or ENTITY_REFERENCE");
+        return throwIllegalState(new int[] { START_ELEMENT, END_ELEMENT, ENTITY_REFERENCE });
     }
     
     public String getPrefix()
@@ -1020,7 +1091,7 @@ public class MXParser
                eventType == XMLStreamConstants.END_ELEMENT) {
             return elPrefix[ depth ] ;
         }
-        return null;
+        return throwIllegalState(new int[] { START_ELEMENT, END_ELEMENT });
     }
     
     
@@ -1036,7 +1107,7 @@ public class MXParser
     {
         if(eventType != XMLStreamConstants.START_ELEMENT) {
             // As per specs, needs to throw an exception
-            throw new IllegalStateException("Current state not START_ELEMENT");
+            throwIllegalState(START_ELEMENT);
         }
         return attributeCount;
     }
@@ -1044,7 +1115,7 @@ public class MXParser
     public String getAttributeNamespace(int index)
     {
         if(eventType != XMLStreamConstants.START_ELEMENT) {
-            throw new IllegalStateException("only START_ELEMENT can have attributes");
+            throwIllegalState(START_ELEMENT);
         }
         if(processNamespaces == false) return NO_NAMESPACE;
         if(index < 0 || index >= attributeCount) throw new IndexOutOfBoundsException(
@@ -1055,7 +1126,7 @@ public class MXParser
     public String getAttributeLocalName(int index)
     {
         if(eventType != XMLStreamConstants.START_ELEMENT) {
-            throw new IllegalStateException("only START_ELEMENT can have attributes");
+            throwIllegalState(START_ELEMENT);
         }
         if(index < 0 || index >= attributeCount) throw new IndexOutOfBoundsException(
                 "attribute position must be 0.."+(attributeCount-1)+" and not "+index);
@@ -1065,7 +1136,7 @@ public class MXParser
     public String getAttributePrefix(int index)
     {
         if(eventType != XMLStreamConstants.START_ELEMENT) {
-            throw new IllegalStateException("only START_ELEMENT can have attributes");
+            throwIllegalState(START_ELEMENT);
         }
         if(processNamespaces == false) return null;
         if(index < 0 || index >= attributeCount) throw new IndexOutOfBoundsException(
@@ -1075,7 +1146,7 @@ public class MXParser
     
     public String getAttributeType(int index) {
         if(eventType != XMLStreamConstants.START_ELEMENT) {
-            throw new IllegalStateException("only START_ELEMENT can have attributes");
+            throwIllegalState(START_ELEMENT);
         }
         if(index < 0 || index >= attributeCount) throw new IndexOutOfBoundsException(
                 "attribute position must be 0.."+(attributeCount-1)+" and not "+index);
@@ -1084,7 +1155,7 @@ public class MXParser
     
     public boolean isAttributeSpecified(int index) {
         if(eventType != XMLStreamConstants.START_ELEMENT) {
-            throw new IllegalStateException("only START_ELEMENT can have attributes");
+            throwIllegalState(START_ELEMENT);
         }
         if(index < 0 || index >= attributeCount) throw new IndexOutOfBoundsException(
                 "attribute position must be 0.."+(attributeCount-1)+" and not "+index);
@@ -1094,7 +1165,7 @@ public class MXParser
     public String getAttributeValue(int index)
     {
         if(eventType != XMLStreamConstants.START_ELEMENT) {
-            throw new IllegalStateException("only START_ELEMENT can have attributes");
+            throwIllegalState(START_ELEMENT);
         }
         if(index < 0 || index >= attributeCount) throw new IndexOutOfBoundsException(
                 "attribute position must be 0.."+(attributeCount-1)+" and not "+index);
@@ -1105,7 +1176,7 @@ public class MXParser
                                     String name)
     {
         if(eventType != XMLStreamConstants.START_ELEMENT) {
-            throw new IllegalStateException("only START_ELEMENT can have attributes");
+            throwIllegalState(START_ELEMENT);
         }
         if(name == null) {
             throw new IllegalArgumentException("attribute name can not be null");
@@ -1449,10 +1520,10 @@ public class MXParser
          } else
          */
         if(eventType == XMLStreamConstants.ENTITY_REFERENCE) {
-	    // Do we have the value constructed?
-	    if (text == null && entityValue != null) {
-		text = new String(entityValue);
-	    }
+            // Do we have the value constructed?
+            if (text == null && entityValue != null) {
+                text = new String(entityValue);
+            }
             return text;
         }
         if(usePC) {
@@ -1489,8 +1560,8 @@ public class MXParser
                 return buf;
             }
         } else if( eventType == XMLStreamConstants.ENTITY_REFERENCE ) {
-	    return entityValue;
-	}
+            return entityValue;
+        }
         return buf;
     }
     
@@ -1512,8 +1583,8 @@ public class MXParser
     public int getTextLength() {
         checkTextEvent();
         if( eventType == XMLStreamConstants.ENTITY_REFERENCE) {
-	    return entityValue.length;
-	}
+            return (entityValue == null) ? 0 : entityValue.length;
+        }
         if(usePC) {
             return pcEnd - pcStart;
         } else {
@@ -1564,8 +1635,8 @@ public class MXParser
     }
     
     public QName getAttributeName(int index) {
-        if (!isElementEvent(eventType)) {
-            throw new IllegalStateException("Current state ("+eventTypeDesc(eventType)+") not START_ELEMENT or END_ELEMENT");
+        if(eventType != XMLStreamConstants.START_ELEMENT) {
+            throwIllegalState(START_ELEMENT);
         }
         return new QName(checkNull(getAttributeNamespace(index)),
                          getAttributeLocalName(index),
@@ -1891,7 +1962,7 @@ public class MXParser
             } else {
                 ch = more();
             }
-            
+
             if(eventType == XMLStreamConstants.START_DOCUMENT) {
                 // bootstrap parsing with getting first character input!
                 // deal with BOM
@@ -1902,7 +1973,7 @@ public class MXParser
                             "- input requires int swapping",
                         getLocation());
                 }
-                if(ch == '\uFEFF') {
+                if(ch == CHAR_UTF8_BOM) {
                     // skipping UNICODE int Order Mark (so called BOM)
                     ch = more();
                 }
@@ -1928,8 +1999,8 @@ public class MXParser
                         boolean isXMLDecl = parsePI();
                         if(tokenize) {
                             if (isXMLDecl)
-                                return eventType = XMLStreamConstants.START_DOCUMENT;
-                            return eventType = XMLStreamConstants.PROCESSING_INSTRUCTION;
+                                return (eventType = XMLStreamConstants.START_DOCUMENT);
+                            return (eventType = XMLStreamConstants.PROCESSING_INSTRUCTION);
                         }
                     } else if(ch == '!') {
                         ch = more();
@@ -2076,7 +2147,6 @@ public class MXParser
         eventType = XMLStreamConstants.END_ELEMENT;
         
         try {
-            
             char ch = more();
             if(!isNameStartChar(ch)) {
                 throw new XMLStreamException(
@@ -2432,7 +2502,17 @@ public class MXParser
                             newString(buf, colonPos - bufAbsoluteStart + 1,
                                       //pos - 1 - (colonPos + 1 - bufAbsoluteStart)
                                       pos - 2 - (colonPos - bufAbsoluteStart)
-                                     );
+                                      );
+                        /* 07-Mar-2006, TSa: Illegal to try to (re)declare
+                         *   prefix "xmlns" (even to its correct URI)...
+                         *   (similar check for "xml" has to wait until we
+                         *   see the URI -- that can be re-declared to the
+                         *   same URI)
+                         */
+                        if (name.equals("xmlns")) {
+                            throw new XMLStreamException("trying to bind reserved NS prefix 'xmlns'",
+                                                         getLocation());
+                        }
                     }
                 } else {
                     if(colonPos != -1) {
@@ -2571,12 +2651,37 @@ public class MXParser
                 }
                 ensureNamespacesCapacity(namespaceEnd);
                 int prefixHash = -1;
+
+                /* 07-Mar-2006, TSa: It is illegal (as per XML Namespaces
+                 *    specs) to bind anything to 'xmlns' URI; and anything
+                 *    other than 'xml' to 'xml' URI...
+                 */
+                if (ns.equals(XMLConstants.XML_NS_URI)) {
+                    if (!"xml".equals(name)) {
+                        throw new XMLStreamException("trying to bind reserved NS URI  '"+XMLConstants.XML_NS_URI+"' to prefix other than 'xml'");
+                    }
+                } else if (ns.equals(XMLConstants.XMLNS_ATTRIBUTE_NS_URI)) {
+                    // Can bind nothing to this URI:
+                    throw new XMLStreamException("trying to bind reserved NS URI  '"+XMLConstants.XMLNS_ATTRIBUTE_NS_URI+"'");
+                }
+
                 if(colonPos != -1) {
                     if(ns.length() == 0) {
                         throw new XMLStreamException(
-                            "non-default namespace can not be declared to be empty string",
+                            "non-default namespace can not be declared to be empty string (in xml 1.0)",
                             getLocation());
                     }
+
+                    /* 07-Mar-2006, TSa: Can only declare 'xml' to bind to
+                     *   its standard URI -- otherwise that's an error.
+                     */
+                    if (name.equals("xml")) {
+                        if (!ns.equals(XMLConstants.XML_NS_URI)) {
+                            throw new XMLStreamException("trying to bind reserved NS prefix 'xml' to URI other than its standard value ("+XMLConstants.XML_NS_URI+")",
+                                                         getLocation());
+                        }
+                    }
+
                     // declare new namespace
                     namespacePrefix[ namespaceEnd ] = name;
                     if(!allStringsInterned) {
@@ -2628,7 +2733,17 @@ public class MXParser
         }
     }
     
+    /**
+     * This buffer is used for expanding single character (non-surrogate)
+     * character entity expansions.
+     */
     protected char[] charRefOneCharBuf = new char[1];
+
+    /**
+     * This buffer is used in cases where an entity expands to a surrogate
+     * pair. Since this is a rare occurence, it's lazily created if needed.
+     */
+    protected char[] charRefTwoCharBuf = null;
 
     /**
      * @return Character array that contains value the reference expands
@@ -2646,32 +2761,34 @@ public class MXParser
             char ch = more();
             if(ch == '#') {
                 // parse character reference
-                char charRef = 0;
+                int charRef = 0;
                 ch = more();
                 if(ch == 'x') {
                     //encoded in hex
-                    while(true) {
+                    do {
                         ch = more();
-                        if(ch >= '0' && ch <= '9') {
-                            charRef = (char)(charRef * 16 + (ch - '0'));
-                        } else if(ch >= 'a' && ch <= 'f') {
-                            charRef = (char)(charRef * 16 + (ch - ('a' - 10)));
-                        } else if(ch >= 'A' && ch <= 'F') {
-                            charRef = (char)(charRef * 16 + (ch - ('A' - 10)));
-                        } else if(ch == ';') {
+                        if (ch == ';') {
                             break;
+                        }
+                        charRef = (charRef << 4); // 16x
+                        if(ch >= '0' && ch <= '9') {
+                            charRef += (ch - '0');
+                        } else if(ch >= 'a' && ch <= 'f') {
+                            charRef += (ch - ('a' - 10));
+                        } else if(ch >= 'A' && ch <= 'F') {
+                            charRef += (ch - ('A' - 10));
                         } else {
                             throw new XMLStreamException(
                                 "character reference (with hex value) may not contain "
                                     +printable(ch), getLocation());
                         }
-                    }
+                    } while (charRef <= MAX_UNICODE_CHAR);
                 } else {
                     // encoded in decimal
-                    while(true) {
+                    do {
                         if(ch >= '0' && ch <= '9') {
-                            charRef = (char)(charRef * 10 + (ch - '0'));
-                        } else if(ch == ';') {
+                            charRef = (charRef * 10) + (ch - '0');
+                        } else if (ch == ';') {
                             break;
                         } else {
                             throw new XMLStreamException(
@@ -2679,11 +2796,27 @@ public class MXParser
                                     +printable(ch), getLocation());
                         }
                         ch = more();
-                    }
+                    } while (charRef <= MAX_UNICODE_CHAR);
                 }
                 posEnd = pos - 1;
-                charRefOneCharBuf[0] = charRef;
-		return (entityValue = charRefOneCharBuf);
+
+                /* 07-Mar-2006, TSa: Character entities still have to expand
+                 *    to valid XML characters...
+                 */
+                checkCharValidity(charRef, false);
+
+                if (charRef > 0xFFFF) { // surrogate pair
+                    if (charRefTwoCharBuf == null) {
+                        charRefTwoCharBuf = new char[2];
+                    }
+                    charRef -= 0x10000;
+                    charRefTwoCharBuf[0] = (char) ((charRef >> 10)  + 0xD800);
+                    charRefTwoCharBuf[1] = (char) ((charRef & 0x3FF)  + 0xDC00);
+                    return (entityValue = charRefTwoCharBuf);
+                }
+                // normal char:
+                charRefOneCharBuf[0] = (char) charRef;
+                return (entityValue = charRefOneCharBuf);
             } else {
                 // name reference
                 
@@ -2697,7 +2830,7 @@ public class MXParser
                         text = "<";
                     charRefOneCharBuf[0] = '<';
                     
-		    return (entityValue = charRefOneCharBuf);
+                    return (entityValue = charRefOneCharBuf);
                     //if(paramPC || isParserTokenizing) {
                     //    if(pcEnd >= pc.length) ensurePC();
                     //   pc[pcEnd++] = '<';
@@ -2708,13 +2841,13 @@ public class MXParser
                         text = "&";
                     charRefOneCharBuf[0] = '&';
                     
-		    return (entityValue = charRefOneCharBuf);
+                    return (entityValue = charRefOneCharBuf);
                 } else if(len == 2 && buf[posStart] == 'g' && buf[posStart+1] == 't') {
                     if(!replace)
                         text = ">";
                     charRefOneCharBuf[0] = '>';
                     
-		    return (entityValue = charRefOneCharBuf);
+                    return (entityValue = charRefOneCharBuf);
                 } else if(len == 4 && buf[posStart] == 'a' && buf[posStart+1] == 'p'
                               && buf[posStart+2] == 'o' && buf[posStart+3] == 's')
                 {
@@ -2722,7 +2855,7 @@ public class MXParser
                         text = "'";
                     charRefOneCharBuf[0] = '\'';
                     
-		    return (entityValue = charRefOneCharBuf);
+                    return (entityValue = charRefOneCharBuf);
                 } else if(len == 4 && buf[posStart] == 'q' && buf[posStart+1] == 'u'
                               && buf[posStart+2] == 'o' && buf[posStart+3] == 't')
                 {
@@ -2730,11 +2863,11 @@ public class MXParser
                         text = "\"";
                     charRefOneCharBuf[0] = '"';
                     
-		    return (entityValue = charRefOneCharBuf);
+                    return (entityValue = charRefOneCharBuf);
                 }
 
-		// No, should be a general entity:
-		return (entityValue = lookupEntityReplacement(len));
+                // No, should be a general entity:
+                return (entityValue = lookupEntityReplacement(len));
             }
             
         } catch (EOFException eofe) {
@@ -2838,11 +2971,15 @@ public class MXParser
     }
     
     public String getPITarget() {
-        if (eventType != XMLStreamConstants.PROCESSING_INSTRUCTION) return null;
+        if (eventType != XMLStreamConstants.PROCESSING_INSTRUCTION) {
+            throwIllegalState(PROCESSING_INSTRUCTION);
+        }
         return piTarget;
     }
     public String getPIData() {
-        if (eventType != XMLStreamConstants.PROCESSING_INSTRUCTION) return null;
+        if (eventType != XMLStreamConstants.PROCESSING_INSTRUCTION) {
+            throwIllegalState(PROCESSING_INSTRUCTION);
+        }
         return piData;
     }
     public NamespaceContext getNamespaceContext() {
@@ -2850,7 +2987,11 @@ public class MXParser
                                                 namespaceUri,
                                                 namespaceEnd);
     }
-    
+
+    /**
+     * @return True if this was the xml declaration; false if a regular
+     *    processing instruction
+     */
     protected boolean parsePI()
         throws XMLStreamException
     {
@@ -3084,10 +3225,6 @@ public class MXParser
                 ch = skipS(ch);
                 
                 if(ch == ENCODING[0]) {
-                    /* 07-Nov-2004, TSa: This is wrong (see bug #187); encoding
-                     *    declaration is optional: may as well get stand-alone
-                     *    declaration at this point.
-                     */
                     ch = requireInput(ch, ENCODING);
                     ch = skipS(ch);
                     if(ch != '=') {
@@ -3191,7 +3328,8 @@ public class MXParser
         throws XMLStreamException
     {
         //ASSUMPTION: seen <!D
-        posStart = pos-3;
+        posStart = pos-3; // will actually be updated later on
+
         try {
             if(more() != 'O'
                    || more() != 'C'
@@ -3210,16 +3348,95 @@ public class MXParser
             /* 07-Nov-2004, TSa: Should be fairly easy to verify (obligatory)
              *   root element, and optional public/system ids too.
              */
-            
-            int bracketLevel = 0;
-            while(true) {
-                char ch = more();
-                if(ch == '[') ++bracketLevel;
-                if(ch == ']') --bracketLevel;
-                if(ch == '>' && bracketLevel == 0) break;
+            // (but only in validating mode, since that's a VC, not WFC)
+
+            // First obligatory white space:
+            char ch = requireNextS();
+
+            // Then obligatory root element name (copied from parseEndTag())
+            if(!isNameStartChar(ch)) {
+                throwNotNameStart(ch);
             }
-            posEnd = pos ;
-            processDTD();
+            int nameStart = pos - 1 + bufAbsoluteStart;
+            do {
+                ch = more();
+            } while(isNameChar(ch));
+
+            // Ok, root element name gotten. Any white space to skip?
+            ch = skipS(ch);
+
+            if (ch == 'S' || ch == 'P') { // SYSTEM/PUBLIC identifier
+                if (ch == 'S') {
+                    if (more() != 'Y' || more() != 'S' || more() != 'T'
+                        || more() != 'E' || more() != 'M') {
+                        throw new XMLStreamException("expected keyword SYSTEM", getLocation());
+                    }
+                } else {
+                    if(more() != 'U' || more() != 'B' || more() != 'L'
+                       || more() != 'I' || more() != 'C') {
+                        throw new XMLStreamException("expected keyword PUBLIC", getLocation());
+                    }
+                    // Need to skip the public id
+                    char quotChar = requireNextS();
+                    if (quotChar != '"' && quotChar != '\'') {
+                        throw new XMLStreamException("Public identifier has to be enclosed in quotes, not "+printable(ch), getLocation());
+                    }
+                    while ((ch = more()) != quotChar) {
+                        // should probably check if it's valid...
+                    }
+                }
+
+                char quotChar = requireNextS();
+                if (quotChar != '"' && quotChar != '\'') {
+                    throw new XMLStreamException("System identifier has to be enclosed in quotes, not "+printable(ch), getLocation());
+                }
+                while ((ch = more()) != quotChar) {
+                    // should probably check if it's valid...
+                }
+                // Ok, great, names skipped, can try to locate the int. subset
+                ch = skipS(ch);
+            }
+
+            if (ch == '[') {
+                posStart = pos;
+                int bracketLevel = 1;
+                loop:
+                /* Ok, let's try to find the boundary of the internal
+                 * subset. It's not 100% reliable, since we don't really
+                 * parse... but should be good enough for now
+                 */
+                while(true) {
+                    ch = more();
+                    switch (ch) {
+                    case '[':
+                        ++bracketLevel;
+                        break;
+                    case ']': // should we check for underflow?
+                        --bracketLevel;
+                        break;
+                    case '>':
+                        if (bracketLevel <= 0) {
+                            break loop;
+                        }
+                        break;
+                    case '\'': // entity expansion value, attr. default or such?
+                    case '"':
+                        while (more() != ch) {
+                            // let's just loop over it...
+                        }
+                        break;
+                    }
+                }
+                posEnd = pos-2; // to exclude closing bracket
+                processDTD();
+            } else {
+                // No internal subset, empty contents
+                posStart = posEnd = pos;
+                if (ch != '>') {
+                    throw new XMLStreamException("Expected closing '>' after internal DTD subset, not "
+                                                 +printable(ch), getLocation());
+                }
+            }
         } catch (EOFException eofe) {
             throw new XMLStreamException(EOF_MSG, getLocation(), eofe);
         }
@@ -3230,50 +3447,41 @@ public class MXParser
     {
         try {
             String internalDTD = new String(buf, posStart, posEnd - posStart);
-            int start = internalDTD.indexOf('[');
-            int end = internalDTD.lastIndexOf(']');
-            if (start == -1 || end == -1 || end <= start) return;
-            String expectedDTD = internalDTD.substring(start+1,end);
-            DTDParser dtdParser = new DTDParser(
-                new java.io.StringReader(expectedDTD));
-            DTD dtd = dtdParser.parse();
-            java.io.StringWriter out = new java.io.StringWriter();
+            DTDParser dtdParser = new DTDParser(new java.io.StringReader(internalDTD));
+            mDtdIntSubset = dtdParser.parse();
             // Get general entities
-            Vector v = dtd.getItemsByType(
-                                             (new com.wutka.dtd.DTDEntity()).getClass());
+            Vector v = mDtdIntSubset.getItemsByType(DTDEntity.class);
             Enumeration e = v.elements();
             while(e.hasMoreElements()) {
                 DTDEntity entity = (DTDEntity) e.nextElement();
-                if (!entity.isParsed())
+                if (!entity.isParsed()) {
                     defineEntityReplacementText(entity.getName(),
                                                 entity.getValue());
-                
+                }
             }
             
             // Get default attributes
-            v = dtd.getItemsByType(
-                                      (new com.wutka.dtd.DTDAttlist()).getClass());
+            v = mDtdIntSubset.getItemsByType(DTDAttlist.class);
             e = v.elements();
             while(e.hasMoreElements()) {
                 DTDAttlist list = (DTDAttlist) e.nextElement();
                 DTDAttribute[] atts = list.getAttribute();
                 for (int i=0; i < atts.length; i++) {
-                    
                     DTDAttribute att = atts[i];
                     if (att.getDefaultValue() != null) {
                         if (defaultAttributes == null)
                             defaultAttributes = new HashMap();
-                        defaultAttributes.put(list.getName(),
-                                              list);
+                        defaultAttributes.put(list.getName(), list);
                     }
                 }
             }
         } catch (IOException ioe) {
             //System.out.println(ioe);
-            ioe.printStackTrace();
+            //ioe.printStackTrace();
             throw new XMLStreamException(ioe);
         }
     }
+
     protected void parseCDATA()
         throws XMLStreamException
     {
@@ -3310,7 +3518,7 @@ public class MXParser
         try {
             int bracketCount = 0;
             while(true) {
-                // scan until it hits -->
+                // scan until it hits ]]>
                 ch = more();
                 if(ch == ']') {
                     ++bracketCount;
@@ -3336,7 +3544,7 @@ public class MXParser
         if(reader == null) throw new XMLStreamException(
                 "reader must be set before parsing is started");
         
-        // see if we are in comapction area
+        // see if we are in compaction area
         if(bufEnd > bufSoftLimit) {
             
             // expand buffer it makes sense!!!!
@@ -3345,10 +3553,10 @@ public class MXParser
             if(!compact) {
                 //freeSpace
                 if(bufStart < buf.length / 2) {
-                    // less then half buffer available forcompactin --> expand instead!!!
+                    // less then half buffer available for compacting --> expand instead!!!
                     expand = true;
                 } else {
-                    // at least half of buffer cna reclaimed --> worthwhile effort!!!
+                    // at least half of buffer can be reclaimed --> worthwhile effort!!!
                     compact = true;
                 }
             }
@@ -3380,9 +3588,11 @@ public class MXParser
             bufAbsoluteStart += bufStart;
             bufStart = 0;
         }
-        // at least one charcter must be read or error
-        int len = buf.length - bufEnd > READ_CHUNK_SIZE ? READ_CHUNK_SIZE : buf.length - bufEnd;
+        // at least one character must be read or error
+        int room = (buf.length - bufEnd);
+        int len = (room > READ_CHUNK_SIZE) ? READ_CHUNK_SIZE : room;
         int ret;
+
         try {
             ret = reader.read(buf, bufEnd, len);
         } catch (IOException ioe) {
@@ -3475,8 +3685,70 @@ public class MXParser
     public ConfigurationContextBase getConfigurationContext() {
         return configurationContext;
     }
-    public  Object getProperty(String name) {
+
+    public  Object getProperty(String name)
+    {
+        if (name.equals(FEATURE_STAX_ENTITIES)) {
+            if (mDtdIntSubset != null) {
+                Vector v = mDtdIntSubset.getItemsByType(DTDEntity.class);
+                Enumeration e = v.elements();
+                ArrayList result = new ArrayList(v.size());
+                while(e.hasMoreElements()) {
+                    DTDEntity ent = (DTDEntity) e.nextElement();
+                    Object nd = DTDEvent.createEntityDeclaration(ent);
+                    if (nd != null) {
+                        result.add(nd);
+                    }
+                }
+                return result;
+            }
+            return null;
+        }
+        if (name.equals(FEATURE_STAX_NOTATIONS)) {
+            if (mDtdIntSubset != null) {
+                Vector v = mDtdIntSubset.getItemsByType(DTDNotation.class);
+                Enumeration e = v.elements();
+                ArrayList result = new ArrayList(v.size());
+                while(e.hasMoreElements()) {
+                    DTDNotation n = (DTDNotation) e.nextElement();
+                    Object ed = DTDEvent.createNotationDeclaration(n);
+                    if (ed != null) {
+                        result.add(ed);
+                    }
+                }
+                return result;
+            }
+            return null;
+        }
         return configurationContext.getProperty(name);
+    }
+
+    private String throwIllegalState(int expState)
+        throws IllegalStateException
+    {
+        throw new IllegalStateException("Current state ("+eventTypeDesc(eventType)+") not "+eventTypeDesc(expState));
+    }
+
+    private String throwIllegalState(int[] expStates)
+        throws IllegalStateException
+    {
+        StringBuffer sb = new StringBuffer();
+        sb.append(eventTypeDesc(expStates[0]));
+        int last = expStates.length-1;
+        for (int i = 0; i < last; ++i) {
+            sb.append(", ");
+            sb.append(eventTypeDesc(expStates[i]));
+        }
+        sb.append(" or ");
+        sb.append(eventTypeDesc(expStates[last]));
+
+        throw new IllegalStateException("Current state ("+eventTypeDesc(eventType)+") not "+sb.toString());
+    }
+
+    private void throwNotNameStart(char ch)
+        throws XMLStreamException
+    {
+        throw new XMLStreamException("expected name start character and not "+printable(ch), getLocation());
     }
 }
 

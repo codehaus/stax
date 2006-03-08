@@ -207,7 +207,11 @@ public class TestRepairingWriter
         assertEquals(URL_DEF, sr.getNamespaceURI());
         assertEquals(1, sr.getAttributeCount());
         assertEquals("attr", sr.getAttributeLocalName(0));
-        assertEquals(URL_DEF, sr.getAttributeNamespace(0));
+
+        String uri = sr.getAttributeNamespace(0);
+        if (!URL_DEF.equals(uri)) {
+            fail("Expected attribute 'attr' to have NS '"+URL_DEF+"', was "+valueDesc(uri)+"; input = '"+strw+"'");
+        }
         assertEquals(ATTR_VALUE, sr.getAttributeValue(0));
         assertTokenType(END_ELEMENT, sr.next(), sr);
         assertEquals("leaf", sr.getLocalName());

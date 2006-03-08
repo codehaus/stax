@@ -33,10 +33,10 @@ public class TestProcInstrRead
     public void testSpaceHandling()
         throws XMLStreamException
     {
-	String CONTENT_TEXT = "some   data ";
-	String CONTENT = "   "+CONTENT_TEXT;
-	String XML = "<?target   "+CONTENT+"?><root />";
-
+        String CONTENT_TEXT = "some   data ";
+        String CONTENT = "   "+CONTENT_TEXT;
+        String XML = "<?target   "+CONTENT+"?><root />";
+        
         for (int i = 0; i < 3; ++i) {
             boolean ns = (i & 1) != 0;
             boolean dtd = (i & 2) != 0;
@@ -106,21 +106,28 @@ public class TestProcInstrRead
     {
         String XML = "<!DOCTYPE root [\n"
             + "<!ENTITY pi '<?target d'>\n"
-            +"]>\n"
+            +"]>"
             + "<root>&pi;?></root>";
 
-        streamThroughFailing(getReader(XML, true, true),
-                             "split/runaway proc. instr.");
-        // Uncomment for debugging (and comment out previous line)
-        /*
-          while (sr.hasNext()) {
-          int type = sr.next();
-          System.err.println("PI, type -> "+tokenTypeDesc(type));
-          if (sr.hasText()) {
-          System.err.println("  ["+sr.getTextLength()+" c]");
-          }
-          }
-        */
+        XMLStreamReader sr = getReader(XML, true, true);
+
+        try {
+            // May get an exception when parsing entity declaration... ?
+            // (since it contains partial token)
+            assertTokenType(DTD, sr.next());
+            assertTokenType(START_ELEMENT, sr.next());
+            int type = sr.next();
+            if (type != PROCESSING_INSTRUCTION) {
+                reportNADueToEntityExpansion("testRunawayProcInstr", type);
+                return;
+            }
+            type = sr.next();
+            fail("Expected an exception for split/runaway processing instruction (instead got event "+tokenTypeDesc(type)+")");
+        } catch (XMLStreamException sex) {
+            // good
+        } catch (RuntimeException rex) {
+            // some impls. throw lazy exceptions, too...
+        }
     }
 
     /*
@@ -152,14 +159,8 @@ public class TestProcInstrRead
             assertNotNull(sr.getNamespaceContext());
         }
 
-        /* Interesting; according to Javadocs, these 2 methods behave
-         * nicely, ie. no exceptions even if they are not applicable...
-         */
-        assertNull(sr.getPrefix());
-        assertNull(sr.getNamespaceURI());
-
         // And then let's check methods that should throw specific exception
-        for (int i = 0; i < 8; ++i) {
+        for (int i = 0; i < 10; ++i) {
             String method = "";
 
             try {
@@ -170,30 +171,38 @@ public class TestProcInstrRead
                     result = sr.getName();
                     break;
                 case 1:
+                    method = "getPrefix";
+                    result = sr.getPrefix();
+                    break;
+                case 2:
                     method = "getLocalName";
                     result = sr.getLocalName();
                     break;
-                case 2:
+                case 3:
+                    method = "getNamespaceURI";
+                    result = sr.getNamespaceURI();
+                    break;
+                case 4:
                     method = "getNamespaceCount";
                     result = new Integer(sr.getNamespaceCount());
                     break;
-                case 3:
+                case 5:
                     method = "getAttributeCount";
                     result = new Integer(sr.getAttributeCount());
                     break;
-                case 4:
+                case 6:
                     method = "getText";
                     result = sr.getText();
                     break;
-                case 5:
+                case 7:
                     method = "getTextCharacters";
                     result = sr.getTextCharacters();
                     break;
-                case 6:
+                case 8:
                     method = "getTextStart";
                     result = new Integer(sr.getTextStart());
                     break;
-                case 7:
+                case 9:
                     method = "getTextLength";
                     result = new Integer(sr.getTextLength());
                     break;

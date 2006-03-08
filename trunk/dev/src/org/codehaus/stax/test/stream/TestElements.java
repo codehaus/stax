@@ -133,7 +133,9 @@ public class TestElements
                                 boolean isStart)
         throws XMLStreamException
     {
-        assertEquals(isStart ? START_ELEMENT : END_ELEMENT, sr.getEventType());
+        int evtType = isStart ? START_ELEMENT : END_ELEMENT;
+        assertEquals(evtType, sr.getEventType());
+        String eventStr = tokenTypeDesc(evtType);
 
         // simple type info
         assertEquals(isStart, sr.isStartElement());
@@ -170,7 +172,7 @@ public class TestElements
         } else {
             try {
                 int count = sr.getAttributeCount();
-                fail("Expected an IllegalStateException when trying to call getAttributeCount() for END_ELEMENT");
+                fail("Expected an IllegalStateException when trying to call getAttributeCount() for "+eventStr);
             } catch (IllegalStateException e) {
                 // good
             }
@@ -182,26 +184,34 @@ public class TestElements
              */
             assertNotNull(sr.getNamespaceContext());
         }
-        /* StAX JavaDocs just say 'Proc. instr. target/data, or null', NOT
-         * that there should be an exception...
-         */
-        assertNull(sr.getPITarget());
-        assertNull(sr.getPIData());
 
-        String evtStr = isStart ? "START_ELEMENT" : "END_ELEMENT";
+        for (int i = 0; i < 4; ++i) {
+            String method = "";
 
-        try {
-            String str = sr.getText();
-            fail("Expected an IllegalStateException when trying to call getText() for "+evtStr);
-        } catch (IllegalStateException e) {
-            // good
-        }
-
-        try {
-            char[] c = sr.getTextCharacters();
-            fail("Expected an IllegalStateException when trying to call getTextCharacters() for "+evtStr);
-        } catch (IllegalStateException e) {
-            // good
+            try {
+                Object result = null;
+                switch (i) {
+                case 0:
+                    method = "getText";
+                    result = sr.getText();
+                    break;
+                case 1:
+                    method = "getTextCharacters";
+                    result = sr.getTextCharacters();
+                    break;
+                case 2:
+                    method = "getPITarget";
+                    result = sr.getPITarget();
+                    break;
+                case 3:
+                    method = "getPIData";
+                    result = sr.getPIData();
+                    break;
+                }
+                fail("Expected IllegalStateException, when calling "+method+"() for "+eventStr);
+            } catch (IllegalStateException iae) {
+                ; // good
+            }
         }
     }
 

@@ -129,8 +129,8 @@ public class TestCDataRead
             assertTokenType(START_ELEMENT, sr.next());
             // Ok, now should get an exception...
             StringBuffer sb = new StringBuffer();
+            int type;
             try {
-                int type;
                 while (true) {
                     type = sr.next();
                     if (type != CDATA && type != CHARACTERS) {
@@ -148,7 +148,7 @@ public class TestCDataRead
                 // acceptable too
                 continue;
             }
-            fail("Expected an exception for nested CDATA section (coalescing: "+coal+"); instead got text \""+sb.toString()+"\"");
+            fail("Expected an exception for nested CDATA section (coalescing: "+coal+"); instead got text \""+sb.toString()+"\" (next event "+tokenTypeDesc(type)+")");
         }
     }
 

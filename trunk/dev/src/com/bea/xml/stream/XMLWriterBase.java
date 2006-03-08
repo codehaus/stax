@@ -306,7 +306,7 @@ public class XMLWriterBase
             String prefix = context.getPrefix(uri);
             if (prefix == null) {
                 throw new XMLStreamException("Unable to default prefix with uri:"+
-                                                 uri);
+                                             uri);
             }
             writeNamespace(prefix,uri);
         }
@@ -406,17 +406,24 @@ public class XMLWriterBase
     public void writeEndElement()
         throws XMLStreamException
     {
-        //boolean wasEmpty = startElementOpened;
-        boolean wasEmpty = isEmpty = isOpen();
-        closeStartElement();
+        /* 07-Mar-2006, TSa: Empty elements do not need special handling,
+         *    since this call only 'closes' them as a side effect: real
+         *    effect is for the open non-empty start element (non-empty
+         *    just meaning it was written using full writeStartElement()
+         *    as opposed to writeEmptyElement()).
+         */
+        //boolean wasEmpty = isEmpty;
+        if (isOpen()) {
+            closeStartElement();
+        }
         String prefix = (String) prefixStack.pop();
         String local = (String) localNameStack.pop();
         uriStack.pop();
-        if(!wasEmpty) {
+        //if(!wasEmpty) {
             openEndTag();
             writeName(prefix,"",local);
             closeEndTag();
-        }
+        //}
         context.closeScope();
     }
     

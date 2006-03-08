@@ -18,6 +18,7 @@ package com.bea.xml.stream;
 import com.bea.xml.stream.util.ElementTypeNames;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.xml.namespace.QName;
 
@@ -30,6 +31,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.*;
 
 import com.bea.xml.stream.util.EmptyIterator;
+import com.bea.xml.stream.events.DTDEvent;
 import com.bea.xml.stream.events.EntityDeclarationEvent;
 
 /**
@@ -138,6 +140,13 @@ public class XMLEventAllocatorBase
   {
       // no factory method for entity declarations... weird.
       String name = reader.getLocalName();
+
+      if (reader instanceof MXParser) {
+          /* Should be able to get additional information (public/system id
+           * for external entities, declaration)... but not yet implemented.
+           */
+          // !!! TBI
+      }
       EntityDeclarationEvent ed = new EntityDeclarationEvent(name, reader.getText());
       return factory.createEntityReference(name, ed);
   }
@@ -170,7 +179,20 @@ public class XMLEventAllocatorBase
   public DTD allocateDTD(XMLStreamReader reader)
     throws XMLStreamException
   {
-    return factory.createDTD(reader.getText());
+      /* 07-Mar-2006, TSa: Need to be able to specify notations and
+       *    (external unparsed?) entities contained in the DTD, so can not
+       *    use the constructor that just takes String..
+       */
+      if (reader instanceof MXParser) {
+          MXParser mxp = (MXParser) reader;
+          DTDEvent evt = new DTDEvent(reader.getText());
+          evt.setNotations((List) mxp.getProperty(MXParser.FEATURE_STAX_NOTATIONS));
+          evt.setEntities((List) mxp.getProperty(MXParser.FEATURE_STAX_ENTITIES));
+          return evt;
+      }
+
+      // Blah. Using some other reader...
+      return factory.createDTD(reader.getText());
   }
 
   public StartDocument allocateXMLDeclaration(XMLStreamReader reader)

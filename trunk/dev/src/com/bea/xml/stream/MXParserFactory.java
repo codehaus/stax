@@ -15,17 +15,16 @@
 
 package com.bea.xml.stream;
 
-import java.io.Reader;
-import java.util.Enumeration;
+import java.io.*;
 import javax.xml.stream.EventFilter;
 import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.util.XMLEventAllocator;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLReporter;
 import javax.xml.stream.StreamFilter;
 import javax.xml.stream.XMLResolver;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.util.XMLEventAllocator;
 
 import javax.xml.transform.Source;
 
@@ -46,12 +45,11 @@ public class MXParserFactory extends XMLInputFactory {
    * Create a new XMLStreamReader from a java.io.stream
    * @param stream the InputStream to read from
    */
-  public XMLStreamReader createXMLStreamReader(java.io.InputStream stream) throws XMLStreamException {
-    try {
-      return createXMLStreamReader(com.bea.xml.stream.reader.XmlReader.createReader(stream));
-    } catch (java.io.IOException ioe) {
-      throw new XMLStreamException("Unable to instantiate a reader",ioe);
-    }
+  public XMLStreamReader createXMLStreamReader(InputStream stream) throws XMLStreamException {
+    MXParser pp = new MXParser();
+    pp.setInput(stream);
+    pp.setConfigurationContext(config);
+    return pp;
   }
 
   /**
@@ -59,12 +57,11 @@ public class MXParserFactory extends XMLInputFactory {
    * @param stream the InputStream to read from
    * @param encoding the character encoding of the stream
    */
-  public XMLStreamReader createXMLStreamReader(java.io.InputStream stream, String encoding) throws XMLStreamException {
-    try {
-      return createXMLStreamReader(new java.io.InputStreamReader(stream,encoding));
-    } catch (java.io.UnsupportedEncodingException uee) {
-      throw new XMLStreamException("The encoding "+encoding+" is not supported.",uee);
-    }
+  public XMLStreamReader createXMLStreamReader(InputStream stream, String encoding) throws XMLStreamException {
+    MXParser pp = new MXParser();
+    pp.setInput(stream, encoding);
+    pp.setConfigurationContext(config);
+    return pp;
 
   }
 
@@ -88,7 +85,7 @@ public class MXParserFactory extends XMLInputFactory {
    * Create a new XMLEventReader from a reader
    * @param reader the XML data to read from
    */
-  public XMLEventReader createXMLEventReader(java.io.Reader reader) throws XMLStreamException {
+  public XMLEventReader createXMLEventReader(Reader reader) throws XMLStreamException {
     return createXMLEventReader(createXMLStreamReader(reader));
   }
 
@@ -118,19 +115,19 @@ public class MXParserFactory extends XMLInputFactory {
   }
 
   /**
-   * Create a new XMLEventReader from a java.io.stream
+   * Create a new XMLEventReader from an input stream
    * @param stream the InputStream to read from
    */
-  public XMLEventReader createXMLEventReader(java.io.InputStream stream) throws XMLStreamException {
+  public XMLEventReader createXMLEventReader(InputStream stream) throws XMLStreamException {
     return createXMLEventReader(createXMLStreamReader(stream));
   }
 
   /**
-   * Create a new XMLEventReader from a java.io.stream
+   * Create a new XMLEventReader from an input stream
    * @param stream the InputStream to read from
    * @param encoding the character encoding of the stream
    */
-  public XMLEventReader createXMLEventReader(java.io.InputStream stream, String encoding) throws XMLStreamException {
+  public XMLEventReader createXMLEventReader(InputStream stream, String encoding) throws XMLStreamException {
     return createXMLEventReader(createXMLStreamReader(stream,encoding));
   }
 

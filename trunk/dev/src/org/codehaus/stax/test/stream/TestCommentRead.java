@@ -32,7 +32,7 @@ public class TestCommentRead
     public void testCommentProperties()
         throws XMLStreamException
     {
-        /* Neither ns-awareness nor dtd-support should make any differnece,
+        /* Neither ns-awareness nor dtd-support should make any difference,
          * but let's double check them...
          */
         doTestProperties(true, true);
@@ -80,30 +80,36 @@ public class TestCommentRead
      * comments that start from within an entity expansion, but have
      * no matching close marker until in the context that had the entity
      * reference.
+     *<p>
+     * Note: if entity expansion does not work, we will have to skip the
+     * test...
      */
     public void testRunawayComment()
         throws XMLStreamException
     {
         String XML = "<!DOCTYPE root [\n"
             + "<!ENTITY comm '<!-- start'>\n"
-            +"]>\n"
+            +"]>"
             + "<root>&comm;   --></root>";
 
         XMLStreamReader sr = getReader(XML, true, true);
         try {
-            streamThrough(sr);
-              // Uncomment for debugging (and comment out previous line)
-            /*
-            while (sr.hasNext()) {
-                int type = sr.next();
-                System.err.println("PI, type -> "+tokenTypeDesc(type));
-                if (sr.hasText()) {
-                    System.err.println("  ["+sr.getTextLength()+" c]");
-                }
+            // May get an exception when parsing entity declaration... ?
+            // (since it contains partial token)
+            assertTokenType(DTD, sr.next());
+            assertTokenType(START_ELEMENT, sr.next());
+            int type = sr.next();
+            if (type != COMMENT) {
+                reportNADueToEntityExpansion("testRunawayComment", type);
+                return;
             }
-            */
-            fail("Expected an exception for split/runaway comment");
-        } catch (Exception e) { }
+            type = sr.next();
+            fail("Expected an exception for split/runaway comment (instead got event "+tokenTypeDesc(type)+")");
+        } catch (XMLStreamException sex) {
+            // good
+        } catch (RuntimeException rex) {
+            // some impls. throw lazy exceptions, too...
+        }
     }
 
     /*
@@ -134,14 +140,8 @@ public class TestCommentRead
             assertNotNull(sr.getNamespaceContext());
         }
 
-        /* Interesting; according to Javadocs, these 2 methods behave
-         * nicely, ie. no exceptions even if they are not applicable...
-         */
-        assertNull(sr.getPrefix());
-        assertNull(sr.getNamespaceURI());
-
         // And then let's check methods that should throw specific exception
-        for (int i = 0; i < 4; ++i) {
+        for (int i = 0; i < 8; ++i) {
             String method = "";
 
             try {
@@ -152,16 +152,32 @@ public class TestCommentRead
                     result = sr.getName();
                     break;
                 case 1:
+                    method = "getPrefix";
+                    result = sr.getPrefix();
+                    break;
+                case 2:
                     method = "getLocalName";
                     result = sr.getLocalName();
                     break;
-                case 2:
+                case 3:
+                    method = "getNamespaceURI";
+                    result = sr.getNamespaceURI();
+                    break;
+                case 4:
                     method = "getNamespaceCount";
                     result = new Integer(sr.getNamespaceCount());
                     break;
-                case 3:
+                case 5:
                     method = "getAttributeCount";
                     result = new Integer(sr.getAttributeCount());
+                    break;
+                case 6:
+                    method = "getPITarget";
+                    result = sr.getPITarget();
+                    break;
+                case 7:
+                    method = "getPIData";
+                    result = sr.getPIData();
                     break;
                 }
                 fail("Expected IllegalStateException, when calling "
@@ -170,12 +186,6 @@ public class TestCommentRead
                 ; // good
             }
         }
-
-        /* StAX JavaDocs just say 'Proc. instr. target/data, or null', NOT
-         * that there should be an exception...
-         */
-        assertNull(sr.getPITarget());
-        assertNull(sr.getPIData());
 
         String content = getAndVerifyText(sr);
         assertEquals("comment & <content>", content);
