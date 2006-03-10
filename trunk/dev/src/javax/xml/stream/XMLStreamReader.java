@@ -414,9 +414,9 @@ public interface XMLStreamReader extends XMLStreamConstants {
   public boolean isAttributeSpecified(int index);
 
   /**
-   * Returns the count of namespaces declared on this START_ELEMENT or END_ELEMENT;
-   * this method is only valid on a START_ELEMENT, END_ELEMENT. On
-   * an END_ELEMENT the count is of the namespaces that are about to go
+   * Returns the count of namespaces declared on this START_ELEMENT or END_ELEMENT.
+   * This method is only valid on a START_ELEMENT, END_ELEMENT or NAMESPACE.
+   * On an END_ELEMENT the count is of the namespaces that are about to go
    * out of scope.  This is the equivalent of the information reported
    * by SAX callback for an end element event.
    * @return returns the number of namespace declarations on this specific element
@@ -431,7 +431,8 @@ public interface XMLStreamReader extends XMLStreamConstants {
    *
    * @param index the position of the namespace declaration
    * @return returns the namespace prefix
-   * @throws IllegalStateException if this is not a START_ELEMENT or END_ELEMENT
+   * @throws IllegalStateException if this is not a START_ELEMENT,
+   *    END_ELEMENT or NAMESPACE
    */
   public String getNamespacePrefix(int index);
   
@@ -441,7 +442,8 @@ public interface XMLStreamReader extends XMLStreamConstants {
    *
    * @param index the position of the namespace declaration
    * @return returns the namespace uri
-   * @throws IllegalStateException if this is not a START_ELEMENT or END_ELEMENT
+   * @throws IllegalStateException if this is not a START_ELEMENT,
+   *   END_ELEMENT or NAMESPACE
    */
   public String getNamespaceURI(int index);
 
@@ -637,8 +639,7 @@ public interface XMLStreamReader extends XMLStreamConstants {
    * Returns the prefix of the current event or null if the event does not
    * have a prefix
    * @return the prefix or null
-   * @throws IllegalStateException if this is not a START_ELEMENT, END_ELEMENT
-   *    or ATTRIBUTE
+   * @throws IllegalStateException if this is not a START_ELEMENT or END_ELEMENT
    */
   public String getPrefix();
   
@@ -651,8 +652,7 @@ public interface XMLStreamReader extends XMLStreamConstants {
 
   /**
    * Get the standalone declaration from the xml declaration, if one found
-   * ({@link #standaloneSet} returns true if one was specified). Defaults
-   * to false if none found.
+   * ({@link #standaloneSet} returns true if one was specified).
    *
    * @return true if this is standalone, or false otherwise
    */
