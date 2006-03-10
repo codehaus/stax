@@ -36,8 +36,15 @@ public class TestEntityRead
         assertTokenType(START_ELEMENT, sr.next());
         assertTokenType(CHARACTERS, sr.next());
 
-        String actual = getAndVerifyText(sr);
-        assertEquals(EXP, actual);
+        // Let's not count on coalescing working, though...
+        StringBuffer sb = new StringBuffer(getAndVerifyText(sr));
+        int type;
+
+        while ((type = sr.next()) == CHARACTERS) {
+            sb.append(getAndVerifyText(sr));
+        }
+        assertEquals(EXP, sb.toString());
+        assertTokenType(END_ELEMENT, type);
     }
 
     /**
@@ -104,29 +111,6 @@ public class TestEntityRead
          *   regarding parameter entities)
          */
     }
-
-    /* !!! This test would not be meaningful; would need to use parameter
-     *   entities... but to allow those to be used to test for proper
-     *   quote handling, external DTD subset would have to be used (int.
-     *   subset only allows PEs to expand to full declaration, not partial)
-     */
-    /*
-    public void testValidWithQuotes()
-        throws XMLStreamException
-    {
-        String XML = "<!DOCTYPE root [\n"
-            +"<!ENTITY myapos \"'quoted1'\">\n"
-            +"<!ENTITY myquot '\"quoted1\"'>\n"
-            +"<!ENTITY ent1 '&myapos;&myquot'>\n"
-            +"<!ENTITY ent2 \"&myapos;&myquot\">\n"
-            +"]>\n"
-            +"<root>&ent1;  &ent2;</root>";
-
-        XMLStreamReader sr = getReader(XML, false, false, true);
-        // Should be just fine, no exceptions should be thrown
-        streamThrough(sr);
-    }
-    */
 
     /**
      * Test that checks that generic parsed entities are returned as
@@ -245,8 +229,17 @@ public class TestEntityRead
         assertEquals("root", sr.getLocalName());
 
         // First, entity that expands to element
-	type = sr.next();
-        assertTokenType(START_ELEMENT, type);
+        type = sr.next();
+        if (type != START_ELEMENT) { // failure
+            if (type == ENTITY_REFERENCE) { // most likely failure?
+                fail("Implementation fails to re-parse general entity expansion text: instead of element <tag>, received entity reference &"+sr.getLocalName()+";");
+            }
+            if (type == CHARACTERS) {
+                String text = sr.getText();
+                fail("Implementation fails to re-parse general entity expansion text: instead of element <tag>, received text ["+text.length()+"]: '"+text+"'");
+            }
+            assertTokenType(START_ELEMENT, type);
+        }
         assertEquals("tag", sr.getLocalName());
         assertTokenType(CHARACTERS, sr.next());
         assertEquals("text", sr.getText());
