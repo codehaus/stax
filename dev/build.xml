@@ -19,7 +19,8 @@
                                        com/bea/xml/stream/util/*.java,
                                        com/bea/xml/stream/filters/*.java,
                                        com/bea/xml/stream/reader/*.java,
-                                       com/bea/xml/stream/events/*.java"/>
+                                       com/bea/xml/stream/events/*.java"
+  />
 
   <!-- API properties -->
   <property name="api_version" value="1.0"/>
@@ -108,6 +109,18 @@
       includes="${topdirs}"
       destdir="${class_dir}"
       debug="true">
+      <classpath>
+        <pathelement path="${java.class.path}"/>
+        <pathelement path="${class_dir}"/>
+      </classpath>
+    </javac>
+  </target>
+
+  <target name="samples" depends="compile">
+    <!--javac srcdir="${src}:${api_src_dir}"-->
+    <javac srcdir="${src}" source="1.2" target="1.2"
+      destdir="${class_dir}" debug="true">
+      <include name="samples/*.java" />
       <classpath>
         <pathelement path="${java.class.path}"/>
         <pathelement path="${class_dir}"/>

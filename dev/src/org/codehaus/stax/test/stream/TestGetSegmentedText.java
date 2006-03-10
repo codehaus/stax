@@ -47,6 +47,62 @@ public class TestGetSegmentedText
         doTest(false, false, false); // non-ns
         doTest(true, false, false); // ns-aware
     }
+
+    public void testSegmentedGetCharacters()
+        throws XMLStreamException
+    {
+        final String TEXT = "Let's just add some content in here ('') to fill some of the parser buffers, to test multi-argument getTextCharacters() method";
+        final String XML = "<!--comment--><root><?proc instr?>"+TEXT+"</root>";
+
+		XMLInputFactory f = getFactory(true, false, true);
+		XMLStreamReader sr = constructStreamReader(f, XML);
+
+        // May or may not get the prolog comment
+        int type = sr.next();
+        if (type == COMMENT) {
+            type = sr.next();
+        }
+        assertTokenType(START_ELEMENT, type);
+        assertTokenType(PROCESSING_INSTRUCTION, sr.next());
+        type = sr.next();
+        assertTokenType(CHARACTERS, type);
+
+        /* Ok... let's just access all the text, by one char reads, from
+         * possibly multiple events:
+         */
+        StringBuffer sb = new StringBuffer();
+          while (type == CHARACTERS) {
+            char[] buf = new char[5];
+            int offset = 0;
+            int count;
+
+            while (true) { // let's use 2 different size of requests...
+                int start, len;
+
+                if ((offset & 1) == 0) {
+                    start = 2;
+                    len = 1;
+                } else {
+                    start = 0;
+                    len = buf.length;
+                }
+                count = sr.getTextCharacters(offset, buf, start, len);
+                if (count > 0) {
+                    sb.append(buf, start, count);
+                    offset += count;
+                }
+                if (count < len) {
+                    break;
+                }
+            }
+
+            type = sr.next();
+        }
+
+        assertEquals(TEXT, sb.toString());
+        assertTokenType(END_ELEMENT, type);
+    }
+
     /*
     ////////////////////////////////////////
     // Private methods, common test code
@@ -56,15 +112,15 @@ public class TestGetSegmentedText
     private void doTest(boolean ns, boolean coalescing, boolean autoEntity)
         throws Exception
     {
-	// This is bit hacky, but speeds up testing...
-	if (sXmlInput == null) {
-	    initData();
-	}
+        // This is bit hacky, but speeds up testing...
+        if (sXmlInput == null) {
+            initData();
+        }
 
-	// And let's also check using different buffer sizes:
-	for (int sz = 0; sz < 3; ++sz) {
-	    // Let's test different input methods too:
-	    for (int j = 0; j < 3; ++j) {
+        // And let's also check using different buffer sizes:
+        for (int sz = 0; sz < 3; ++sz) {
+            // Let's test different input methods too:
+            for (int j = 0; j < 3; ++j) {
 		
 		XMLInputFactory f = getFactory(ns, coalescing, autoEntity);
 		XMLStreamReader sr;
@@ -128,9 +184,9 @@ public class TestGetSegmentedText
 		    int readCount = 0;
 
 		    while ((count = sr.getTextCharacters(offset, cbuf, 0, cbuf.length)) > 0) {
-			++readCount;
-			sb.append(cbuf, 0, count);
-			offset += count;
+                ++readCount;
+                sb.append(cbuf, 0, count);
+                offset += count;
 		    }
 		    int expLen = sr.getTextLength();
 
@@ -156,10 +212,10 @@ public class TestGetSegmentedText
 
 		// Lengths are ok,  but how about content?
 		assertEquals(sExpResult, totalBuf.toString());
-
+        
 		sr.close();
-	    }
-	}
+            }
+        }
     }
 
     /*
@@ -183,33 +239,33 @@ public class TestGetSegmentedText
     }
 
     private void initData()
-	throws XMLStreamException
+        throws XMLStreamException
     {
-	StringBuffer sb = new StringBuffer("<?xml version='1.0'?>");
-	sb.append("<root>");
-
-	/* Let's create a ~64kchar text segment for testing, first; and one
-	 * including stuff like linefeeds and (pre-defined) entities.
-	 */
-	while (sb.length() < 65000) {
-	    sb.append("abcd efgh\r\nijkl &amp; mnop &lt; &gt; qrst\n uvwx\r yz &#65;");
-	}
-
-	sb.append("</root>");
-	final String XML = sb.toString();
-
-	/* But more than that, let's also see what we should get
-	 * as a result...
-	 */
-	XMLInputFactory f = getFactory(true, false, true);
-	XMLStreamReader sr = constructStreamReader(f, XML);
-	assertTokenType(START_ELEMENT, sr.next());
-	StringBuffer sb2 = new StringBuffer(XML.length());
-	while (sr.next() == CHARACTERS) {
-	    sb2.append(sr.getText());
-	}
-
-	sXmlInput = XML;
-	sExpResult = sb2.toString();
+        StringBuffer sb = new StringBuffer("<?xml version='1.0'?>");
+        sb.append("<root>");
+        
+        /* Let's create a ~64kchar text segment for testing, first; and one
+         * including stuff like linefeeds and (pre-defined) entities.
+         */
+        while (sb.length() < 65000) {
+            sb.append("abcd efgh\r\nijkl &amp; mnop &lt; &gt; qrst\n uvwx\r yz &#65;");
+        }
+        
+        sb.append("</root>");
+        final String XML = sb.toString();
+        
+        /* But more than that, let's also see what we should get
+         * as a result...
+         */
+        XMLInputFactory f = getFactory(true, false, true);
+        XMLStreamReader sr = constructStreamReader(f, XML);
+        assertTokenType(START_ELEMENT, sr.next());
+        StringBuffer sb2 = new StringBuffer(XML.length());
+        while (sr.next() == CHARACTERS) {
+            sb2.append(sr.getText());
+        }
+        
+        sXmlInput = XML;
+        sExpResult = sb2.toString();
     }
 }

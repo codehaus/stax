@@ -560,7 +560,7 @@ public class MXParser
     protected void ensureEntityCapacity() {
         int entitySize = entityReplacementBuf != null ? entityReplacementBuf.length : 0;
         if(entityEnd >= entitySize) {
-            int newSize = entityEnd > 7 ? 2 * entityEnd : 8; // = lucky 7 + 1 //25
+            int newSize = (entityEnd > 7) ? (2 * entityEnd) : 8; // = lucky 7 + 1 //25
             if(TRACE_SIZING) {
                 System.err.println("entitySize "+entitySize+" ==> "+newSize);
             }
@@ -1538,16 +1538,34 @@ public class MXParser
         throws XMLStreamException
     {
         checkTextEvent();
-        
-        if (getTextStart()+sourceStart > getTextLength())
+
+        int intLen = getTextLength();
+
+        /* First: "'sourceStart' argument must be greater or equal to 0 and
+         * less than or equal to the number of characters associated with
+         * the event"
+         */
+        if (sourceStart < 0 || sourceStart > intLen) {
             throw new ArrayIndexOutOfBoundsException();
-        int numCopy;
-        if (getTextStart()+sourceStart+length < getTextLength())
-            numCopy = length;
-        else
-            numCopy = getTextLength() - (getTextStart()+sourceStart);
-        System.arraycopy(getTextCharacters(), getTextStart() + sourceStart, target, targetStart, numCopy);
-        return numCopy;
+        }
+
+        /* We need not explicitly check for target restrictions: arraycopy
+         * will throw appropriate exceptions (could check them too if that
+         * seems cleaner though?)
+         */
+        int avail = intLen - sourceStart;
+
+        if (avail < length) {
+            length = avail;
+        }
+
+        if (length > 0) {
+            char[] intBuf = getTextCharacters();
+            int intStart = getTextStart();
+            System.arraycopy(intBuf, intStart + sourceStart,
+                             target, targetStart, length);
+        }
+        return length;
     }
     
     public char[] getTextCharacters() {
@@ -1570,8 +1588,8 @@ public class MXParser
         checkTextEvent();
 
         if( eventType == XMLStreamConstants.ENTITY_REFERENCE) {
-	    return 0;
-	}
+            return 0;
+        }
 
         if(usePC) {
             return pcStart;
@@ -3394,7 +3412,7 @@ public class MXParser
                     // should probably check if it's valid...
                 }
                 // Ok, great, names skipped, can try to locate the int. subset
-                ch = skipS(ch);
+                ch = skipS(more());
             }
 
             if (ch == '[') {
@@ -3432,9 +3450,10 @@ public class MXParser
             } else {
                 // No internal subset, empty contents
                 posStart = posEnd = pos;
+                ch = skipS(ch);
                 if (ch != '>') {
-                    throw new XMLStreamException("Expected closing '>' after internal DTD subset, not "
-                                                 +printable(ch), getLocation());
+                    throw new XMLStreamException("Expected closing '>' after internal DTD subset, not '"
+                                                 +printable(ch)+"'", getLocation());
                 }
             }
         } catch (EOFException eofe) {
