@@ -603,8 +603,7 @@ public class MXParser
      * 8k buffer if there's 1M of free memory or more, otherwise just
      * 256 bytes?
      */
-    protected char buf[] = new char[
-        (Runtime.getRuntime().freeMemory() > 1000000L) ? READ_CHUNK_SIZE : 256 ];
+    protected char buf[] = new char[(Runtime.getRuntime().freeMemory() > 1000000L) ? READ_CHUNK_SIZE : 256 ];
     protected int bufSoftLimit = ( bufLoadFactor * buf.length ) /100; // desirable size of buffer
     
     
@@ -1045,7 +1044,7 @@ public class MXParser
                 }
                 return true;
             }
-        } else if(eventType == /* XMLStreamConstants.IGNORABLE_WHITESPACE */ XMLStreamConstants.SPACE) {
+        } else if(eventType == XMLStreamConstants.SPACE) {
             return true;
             
             // COMMENT - cwitt : our interface doesn't define this
@@ -1284,17 +1283,16 @@ public class MXParser
     {
         next();
         // Skip white space, comments and processing instructions:
-        while ((eventType == XMLStreamConstants.CHARACTERS && isWhiteSpace())
-                   || (eventType == XMLStreamConstants.CDATA && isWhiteSpace())
-                   // skip whitespace
-                   || eventType == XMLStreamConstants.SPACE
-                   || eventType == XMLStreamConstants.COMMENT
-                   || eventType == XMLStreamConstants.PROCESSING_INSTRUCTION) {
+        while (eventType == XMLStreamConstants.SPACE
+               || eventType == XMLStreamConstants.COMMENT
+               || eventType == XMLStreamConstants.PROCESSING_INSTRUCTION
+               || (eventType == XMLStreamConstants.CHARACTERS && isWhiteSpace())
+               || (eventType == XMLStreamConstants.CDATA && isWhiteSpace())) {
             next();
         }
         if (eventType != XMLStreamConstants.START_ELEMENT && eventType != XMLStreamConstants.END_ELEMENT) {
             throw new XMLStreamException("expected XMLStreamConstants.START_ELEMENT or XMLStreamConstants.END_ELEMENT not "
-                                             +ElementTypeNames.getEventTypeString(getEventType()),
+                                         +ElementTypeNames.getEventTypeString(getEventType()),
                                          getLocation());
         }
         return eventType;
@@ -1898,21 +1896,15 @@ public class MXParser
                             //posStart = pos  -  1;
                             needsMerging = false;
                         }
-                        
-                        
                         //no MARKUP not ENTITIES so work on character data ...
                         
-                        
-                        
                         // [14] CharData ::=   [^<&]* - ([^<&]* ']]>' [^<&]*)
-                        
                         
                         hadCharData = true;
                         
                         boolean normalizedCR = false;
                         // use loop locality here!!!!
                         do {
-                            
                             //if(tokenize == false) {
                             if (true) {
                                 // deal with normalization issues ...
@@ -2008,7 +2000,7 @@ public class MXParser
                     if(gotS && tokenize) {
                         posEnd = pos - 1;
                         seenMarkup = true;
-                        return eventType = /* XMLStreamConstants.IGNORABLE_WHITESPACE */ XMLStreamConstants.SPACE;
+                        return eventType = XMLStreamConstants.SPACE;
                     }
                     ch = more();
                     if(ch == '?') {
@@ -2095,7 +2087,7 @@ public class MXParser
                     if(gotS && tokenize) {
                         posEnd = pos - 1;
                         seenMarkup = true;
-                        return eventType = /* XMLStreamConstants.IGNORABLE_WHITESPACE */ XMLStreamConstants.SPACE;
+                        return eventType = XMLStreamConstants.SPACE;
                     }
                     ch = more();
                     if(ch == '?') {
@@ -2147,7 +2139,7 @@ public class MXParser
             reachedEnd = true;
             if(tokenize && gotS) {
                 posEnd = pos; // well - this is LAST available character pos
-                return eventType = /* XMLStreamConstants.IGNORABLE_WHITESPACE */ XMLStreamConstants.SPACE;
+                return eventType = XMLStreamConstants.SPACE;
             }
             return eventType = XMLStreamConstants.END_DOCUMENT;
         }
@@ -2930,7 +2922,6 @@ public class MXParser
         return null;
     }
     
-    
     protected void parseComment()
         throws XMLStreamException
     {
@@ -2938,42 +2929,63 @@ public class MXParser
         //ASSUMPTION: seen <!-
         
         try {
-            
             char ch = more();
-            if(ch != '-') throw new XMLStreamException(
-                    "expected <!-- for COMMENT start", getLocation());
-            if(tokenize) posStart = pos;
+            if(ch != '-') {
+                throw new XMLStreamException("expected <!-- for COMMENT start", getLocation());
+            }
+            posStart = pos;
             
             int curLine = lineNumber;
             int curColumn = columnNumber;
             try {
-                boolean seenDash = false;
-                boolean seenDashDash = false;
+                int expDash = -2;
+                int skipLfAt = -2;
+                int at = -1;
+                boolean anySkipped = false;
+
                 while(true) {
-                    // scan until it hits -->
                     ch = more();
-                    if(seenDashDash && ch != '>') {
-                        throw new XMLStreamException(
-                            "in COMMENT after two dashes (--) next character must be >"
-                                +" not "+printable(ch), getLocation());
-                    }
+                    ++at;
+                    // scan until it hits -->
                     if(ch == '-') {
-                        if(!seenDash) {
-                            seenDash = true;
-                        } else {
-                            seenDashDash = true;
-                            seenDash = false;
+                        if(expDash < at) { // first dash
+                            expDash = at+1;
+                        } else { // second dash
+                            ch = more();
+                            if(ch != '>') {
+                                throw new XMLStreamException("in COMMENT after two dashes (--) next character must be '>' not "+printable(ch), getLocation());
+                            }
+                            break;
                         }
-                    } else if(ch == '>') {
-                        if(seenDashDash) {
-                            break;  // found end sequence!!!!
-                        } else {
-                            seenDashDash = false;
+                    } else if(ch == '\r') {
+                        columnNumber = 1; // more() fails to set this
+                        skipLfAt = at+1; // to skip trailing \n, if any
+                        // Need to replace current char with \n:
+                        if (!anySkipped) { // no gaps yet?
+                            buf[pos-1] = '\n';
+                            continue;
                         }
-                        seenDash = false;
-                    } else {
-                        seenDash = false;
+                        // If gaps, let's just follow through:
+                        ch = '\n';
+                    } else if(ch == '\n') { // part of \r\n?
+                        if (skipLfAt == at) { // yes, let's skip
+                            anySkipped = true;
+                            posEnd = pos-1; // to replace this \n next time
+                            continue;
+                        }
                     }
+                    /* Ok, need to add at the end of buffer, if we have
+                     * replaced any \r\n combos with \n... or 
+                     */
+                    if (anySkipped) {
+                        buf[posEnd] = ch;
+                        ++posEnd;
+                    }
+                }
+                if (anySkipped) { // need to trim one '-'
+                    --posEnd;
+                } else { // the whole '-->' is in input buffer
+                    posEnd = pos-3;
                 }
             } catch(EOFException ex) {
                 // detect EOF and create meaningful error ...
@@ -2981,7 +2993,6 @@ public class MXParser
                     "COMMENT started on line "+curLine+" and column "+curColumn+" was not closed",
                     getLocation(), ex);
             }
-            if(tokenize) posEnd = pos - 3;
             
         } catch (EOFException eofe) {
             throw new XMLStreamException(EOF_MSG, getLocation(), eofe);
@@ -3017,20 +3028,17 @@ public class MXParser
         
         // [16] PI ::= '<?' PITarget (S (Char* - (Char* '?>' Char*)))? '?>'
         
-        //ASSUMPTION: seen <?
-        boolean isXMLDecl=false;
-        piTarget = null;
-        piData = null;
-        if(tokenize) posStart = pos;
         int curLine = lineNumber;
         int curColumn = columnNumber;
-        int piTargetStart = pos;
-        int piTargetBegin = pos;
-        int piTargetEnd = -1;
-        
         try {
+            //ASSUMPTION: seen <?
+            piTarget = null;
+            piData = null;
+            
             // Let's first scan for the PI target:
             char ch;
+
+            posStart = pos;
             
             while (true) {
                 ch = more();
@@ -3046,63 +3054,92 @@ public class MXParser
                                                  getLocation());
                 }
             }
-            
-            piTargetEnd = pos - 1;
-            piTarget=new String(buf,piTargetStart,piTargetEnd-piTargetStart);
-            // [17] PITarget ::= Name - (('X' | 'x') ('M' | 'm') ('L' | 'l'))
-            
+            int len = pos-posStart-1;
             // Let's first verify there was a target:
-            int targetLen = piTargetEnd - piTargetStart;
-            if(targetLen == 0) { // missing target
+            if (len == 0) { // missing target
                 throw new XMLStreamException("processing instruction must have PITarget name", getLocation());
             }
+
+            // [17] PITarget ::= Name - (('X' | 'x') ('M' | 'm') ('L' | 'l'))
+            piTarget=new String(buf, posStart, len);
             
             /* And then let's skip (unnecessary) white space, if we hit white
              * space.
              */
             if (ch != '?') {
-                do {
-                    ch = more();
-                } while (isS(ch));
+                ch = skipS(ch);
             }
-            
-            // Ok, got the target name; need to check it then:
-            piTargetBegin = pos-1;
+
+            boolean isXMLDecl = piTarget.equalsIgnoreCase("xml");
             
             // Do we now have the xml declaration?
-            if(targetLen == 3
-                   && ((buf[piTargetStart] == 'x' || buf[piTargetStart] == 'X')
-                           && (buf[piTargetStart+1] == 'm' || buf[piTargetStart+1] == 'M')
-                           && (buf[piTargetStart+2] == 'l' || buf[piTargetStart+2] == 'L')
-                      )) {
-                //if(piTargetStart != 2) {  //<?xml is allowed as first characters in input ...
-                if(piTargetStart > 3) {  //<?xml is allowed as first characters in input ...
-                    throw new XMLStreamException("processing instruction can not have PITarget with reserved xml name",
+            if(isXMLDecl) {
+                /* 10-Mar-2006, TSa: This is not really sufficient I think.
+                 *   We really should check xml declaration earlier, and
+                 *   never have double check here. But, usually this should
+                 *   work, too...
+                 */
+                if((posStart+bufAbsoluteStart) > 2) {  //<?xml is allowed as first characters in input ...
+                    throw new XMLStreamException("processing instruction can not have PITarget with reserved name 'xml'",
                                                  getLocation());
-                } else {
-                    if(buf[piTargetStart] != 'x'
-                           && buf[piTargetStart+1] != 'm'
-                           && buf[piTargetStart+2] != 'l') {
-                        throw new XMLStreamException("XMLDecl must have xml name in lowercase",
-                                                     getLocation());
-                    }
-                    parseXmlDecl(ch);
-                    isXMLDecl = true;
                 }
+                if (!"xml".equals(piTarget)) {
+                    throw new XMLStreamException("XMLDecl must have xml name in lowercase",
+                                                 getLocation());
+                }
+                posStart = pos-1;
+                parseXmlDecl(ch);
+                isXMLDecl = true;
+                posEnd = pos - 2;
             } else { // nope, just a regular PI:
-                data_loop:
-                while(true) {
-                    while (ch != '?') {
-                        ch = more();
-                    }
-                    do {
-                        ch = more();
-                        if (ch == '>') {
-                            break data_loop;
+                posStart = pos-1;
+
+                int expLT = -2;
+                int skipLfAt = -2;
+                int at = -1;
+                boolean anySkipped = false;
+
+                for (;; ch = more()) {
+                    ++at;
+                    if (ch == '?') {
+                        expLT = at+1;
+                    } else if (ch == '>') {
+                        if (at == expLT) {
+                            break;
                         }
-                    } while (ch == '?');
+                    } else if(ch == '\r') {
+                        columnNumber = 1; // more() fails to set this
+                        skipLfAt = at+1; // to skip trailing \n, if any
+                        // Need to replace current char with \n:
+                        if (!anySkipped) { // no gaps yet?
+                            buf[pos-1] = '\n';
+                            continue;
+                        }
+                        // If gaps, let's just follow through:
+                        ch = '\n';
+                    } else if(ch == '\n') { // part of \r\n?
+                        if (skipLfAt == at) { // yes, let's skip
+                            anySkipped = true;
+                            posEnd = pos-1; // to replace this \n next time
+                            continue;
+                        }
+                    }
+                    /* Ok, need to add at the end of buffer, if we have
+                     * replaced any \r\n combos with \n... or 
+                     */
+                    if (anySkipped) {
+                        buf[posEnd] = ch;
+                        ++posEnd;
+                    }
+                }
+                if (anySkipped) { // need to trim one '?'
+                    --posEnd;
+                } else { // "?>" is in input buffer
+                    posEnd = pos-2;
                 }
             }
+            piData = new String(buf, posStart, (posEnd-posStart));
+            return isXMLDecl;
             
         } catch(EOFException ex) {
             // detect EOF and create meaningful error ...
@@ -3110,9 +3147,6 @@ public class MXParser
                                              +" was not closed",
                                          getLocation(), ex);
         }
-        if(tokenize) posEnd = pos - 2;
-        piData = new String(buf,piTargetBegin,posEnd - piTargetBegin);
-        return isXMLDecl;
     }
     
     protected final static char[] VERSION = {'v','e','r','s','i','o','n'};
@@ -3536,17 +3570,54 @@ public class MXParser
         int curColumn = columnNumber;
         try {
             int bracketCount = 0;
+            int skipLfAt = -2;
+            int at = -1;
+            boolean anySkipped = false;
             while(true) {
                 // scan until it hits ]]>
+                ++at;
                 ch = more();
                 if(ch == ']') {
                     ++bracketCount;
                 } else {
-                    if(ch == '>' && bracketCount >= 2) {
-                        break;  // found end sequence!!!!
+                    if(ch == '>') {
+                        if (bracketCount >= 2) {
+                            break;  // found end sequence!!!!
+                        }
+                        bracketCount = 0;
+                    } else {
+                        bracketCount = 0;
+                        if (ch == '\r') {
+                            columnNumber = 1; // more() fails to set this
+                            skipLfAt = at+1; // to skip trailing \n, if any
+                            // Need to replace current char with \n:
+                            if (!anySkipped) { // no gaps yet?
+                                buf[pos-1] = '\n';
+                                continue;
+                            }
+                            // If gaps, let's just fall through:
+                            ch = '\n';
+                        } else if(ch == '\n') { // part of \r\n?
+                            if (skipLfAt == at) { // yes, let's skip
+                                anySkipped = true;
+                                posEnd = pos-1; // to replace this \n next time
+                                continue;
+                            }
+                        }
                     }
-                    bracketCount = 0;
                 }
+                /* Ok, need to add at the end of buffer, if we have
+                 * replaced any \r\n combos with \n... or 
+                 */
+                if (anySkipped) {
+                    buf[posEnd] = ch;
+                    ++posEnd;
+                }
+            }
+            if (anySkipped) { // have extra ']]' in there
+                posEnd -= 2;
+            } else { // the whole ']]>' is in input buffer
+                posEnd = pos-3;
             }
         } catch(EOFException ex) {
             // detect EOF and create meaningful error ...
@@ -3554,8 +3625,6 @@ public class MXParser
                 "CDATA section on line "+curLine+" and column "+curColumn+" was not closed",
                 getLocation(), ex);
         }
-        //if(tokenize)
-        posEnd = pos - 3;
     }
     
     protected void fillBuf() throws XMLStreamException, EOFException {
@@ -3633,6 +3702,9 @@ public class MXParser
         if(pos >= bufEnd) fillBuf();
         char ch = buf[pos++];
         //line/columnNumber
+        /* 10-Mar-2006, TSa: Won't work reliably with combinations of
+         *   \r and \n... should be improved.
+         */
         if(ch == '\n') { ++lineNumber; columnNumber = 1; }
         else { ++columnNumber; }
         return ch;

@@ -112,6 +112,36 @@ public class TestCommentRead
         }
     }
 
+    public void testLongComments()
+        throws XMLStreamException
+    {
+        final String COMMENT1 =
+            "Some longish comment to see if the input buffer size restrictions might apply here: the reference\nimplementation had problems beyond 256 characters\n"
+            +" so let's add at least that much, and preferably quite a bit more\n"
+            +"too... Blah blah yadda yadda: also, unquoted '&' and '<' are kosher here"
+            +"\nwithout any specific problems or issues."
+            +" Is this long enough now? :-)"
+            ;
+
+        String XML = "<?xml version='1.0'?>"
++"<!--"+COMMENT1+"-->"
++"<?xml-stylesheet href='xmlconformance.xsl' type='text/xsl'?>"
++"<!DOCTYPE root [\n"
++" <!-- comments in DTD --> <?proc instr too?>\n"
++"]><root><!--"+COMMENT1+"--></root>"
+            ;
+        XMLStreamReader sr = getReader(XML, true, true);
+        assertTokenType(COMMENT, sr.next());
+        assertEquals(COMMENT1, getAndVerifyText(sr));
+        assertTokenType(PROCESSING_INSTRUCTION, sr.next());
+        assertTokenType(DTD, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals("root", sr.getLocalName());
+        assertTokenType(COMMENT, sr.next());
+        assertEquals(COMMENT1, getAndVerifyText(sr));
+        assertTokenType(END_ELEMENT, sr.next());
+    }
+
     /*
     ////////////////////////////////////////
     // Private methods, shared test code

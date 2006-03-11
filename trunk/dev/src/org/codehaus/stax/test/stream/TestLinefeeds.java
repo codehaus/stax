@@ -178,7 +178,7 @@ public class TestLinefeeds
             assertEquals("target", sr.getPITarget());
 
             // Ok, how about the contents:
-            String data = sr.getPIData().trim();
+            String data = sr.getPIData();
             String exp = "["+OUT_SPACES1+OUT_SPACES2+"]";
 
             assertEquals(printable(exp), printable(data));
