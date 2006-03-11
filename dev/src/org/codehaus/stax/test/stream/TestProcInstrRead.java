@@ -130,6 +130,42 @@ public class TestProcInstrRead
         }
     }
 
+    /**
+     * Unit test based on a bug found in the Stax reference implementation.
+     */
+    public void testLongerProcInstr()
+        throws XMLStreamException
+    {
+        String XML = "<?xml version='1.0'?>\n\n"
++"<!-- Richard Tobin's XML 1.0 2nd edition errata test suite. \n"
++"     Copyright Richard Tobin, HCRC July 2003.\n"
++"     May be freely redistributed provided copyright notice is retained.\n"
++"  -->\n\n"
++"<?xml-stylesheet href='xmlconformance.xsl' type='text/xsl'?>\n\n"
++"<!DOCTYPE TESTSUITE SYSTEM 'testcases.dtd' [\n"
++"    <!ENTITY eduni-errata2e SYSTEM 'errata2e.xml'>\n"
++"]>\n\n"
++"<TESTSUITE PROFILE=\"Richard Tobin's XML 1.0 2nd edition errata test suite 21 Jul 2003\">\n"
++"    &eduni-errata2e;\n"
+            +"</TESTSUITE>\n";
+
+        XMLStreamReader sr = getReader(XML, true, true);
+
+        // May get an exception when parsing entity declaration... ?
+        // (since it contains partial token)
+        int type;
+
+        while ((type = sr.next()) == SPACE) { }
+        assertTokenType(COMMENT, type);
+        while ((type = sr.next()) == SPACE) { }
+        assertTokenType(PROCESSING_INSTRUCTION, type);
+        assertEquals("xml-stylesheet", sr.getPITarget());
+        while ((type = sr.next()) == SPACE) { }
+        assertTokenType(DTD, type);
+        while ((type = sr.next()) == SPACE) { }
+        assertTokenType(START_ELEMENT, type);
+    }
+
     /*
     ////////////////////////////////////////
     // Private methods, shared test code
