@@ -142,7 +142,7 @@ public class TestProcInstrRead
 +"     May be freely redistributed provided copyright notice is retained.\n"
 +"  -->\n\n"
 +"<?xml-stylesheet href='xmlconformance.xsl' type='text/xsl'?>\n\n"
-+"<!DOCTYPE TESTSUITE SYSTEM 'testcases.dtd' [\n"
++"<!DOCTYPE TESTSUITE [\n"
 +"    <!ENTITY eduni-errata2e SYSTEM 'errata2e.xml'>\n"
 +"]>\n\n"
 +"<TESTSUITE PROFILE=\"Richard Tobin's XML 1.0 2nd edition errata test suite 21 Jul 2003\">\n"

@@ -6,7 +6,7 @@
   <!-- for details see src/build.xml -->
 
   <!-- Ref. impl properties -->
-  <property name="version" value="1.2.0_rc1"/>
+  <property name="version" value="1.2.0_rc2"/>
   <property name="build_dir" value="build"/>
   <property name="class_dir" value="${build_dir}/classes"/>
   <property name="javadoc_dir" value="${build_dir}/javadoc"/>
@@ -23,7 +23,7 @@
   />
 
   <!-- API properties -->
-  <property name="api_version" value="1.0"/>
+  <property name="api_version" value="1.0.1"/>
   <property name="api_src_dir" value="${build_dir}/api_src"/>
   <property name="api_dir" value="api"/>
   <property name="jar_api" value="${build_dir}/stax-api-${api_version}.jar"/>
@@ -151,7 +151,7 @@
      - javadocs, test suite)
     -->
 
-  <target name="dist" depends="ri_src_dist,ri_bin_dist" />
+  <target name="dist" depends="compile,ri_src_dist,ri_bin_dist" />
 
   <!-- Ref. Impl. "binary" -->
   <target name="ri_jar" depends="ri_bin_dist" />
