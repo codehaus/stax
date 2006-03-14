@@ -2292,19 +2292,22 @@ public class MXParser
             }
             
             while(true) {
-                while(isS(ch)) { ch = more(); } // skip additional white spaces
+                boolean gotS = isS(ch);
+                if (gotS) {
+                    do { ch = more(); } while (isS(ch));
+                }
                 if(ch == '>') {
                     break;
                 } else if(ch == '/') {
-                    if(emptyElementTag) throw new XMLStreamException(
-                            "repeated / in tag declaration",
-                            getLocation());
                     emptyElementTag = true;
                     ch = more();
                     if(ch != '>') throw new XMLStreamException(
                             "expected > to end empty tag not "+printable(ch), getLocation());
                     break;
                 } else if(isNameStartChar(ch)) {
+                    if (!gotS) {
+                        if(ch != '>') throw new XMLStreamException("expected a white space between attributes", getLocation());
+                    }
                     ch = parseAttribute();
                     ch = more();
                     continue;
