@@ -866,15 +866,16 @@ public class MXParser
         ensureEntityCapacity();
         
         // this is to make sure that if interning works we wil take advatage of it ...
-        this.entityName[entityEnd] = newString(entityName.toCharArray(), 0, entityName.length());
-        entityNameBuf[entityEnd] = entityName.toCharArray();
+        char[] ch = entityName.toCharArray();
+        this.entityName[entityEnd] = newString(ch, 0, entityName.length());
+        entityNameBuf[entityEnd] = ch;
         
         entityReplacement[entityEnd] = replacementText;
         /* 06-Nov-2004, TSa: Null is apparently returned for external
          *   entities (including parsed ones); to prevent an NPE, let's
          *   just use a shared dummy array... (could use null too?)
          */
-        char[] ch = (replacementText == null) ? NO_CHARS : replacementText.toCharArray();
+        ch = (replacementText == null) ? NO_CHARS : replacementText.toCharArray();
         entityReplacementBuf[entityEnd] = ch;
         if(!allStringsInterned) {
             entityNameHash[ entityEnd ] =
@@ -1849,9 +1850,11 @@ public class MXParser
                         
                         int oldStart = posStart;
                         int oldEnd = posEnd;
-                        char[] resolvedEntity = parseEntityRef();
-                        if (!getConfigurationContext().isReplacingEntities())
-                            return eventType = XMLStreamConstants.ENTITY_REFERENCE;
+                        boolean replace = getConfigurationContext().isReplacingEntities();
+                        char[] resolvedEntity = parseEntityRef(replace);
+                        if (!replace) {
+                            return (eventType = XMLStreamConstants.ENTITY_REFERENCE);
+                        }
                         eventType = XMLStreamConstants.CHARACTERS;
                         // check if replacement text can be resolved !!!
                         if(resolvedEntity == null) {
@@ -2604,7 +2607,7 @@ public class MXParser
                     }
                     //assert usePC == true;
                     
-                    char[] resolvedEntity = parseEntityRef();
+                    char[] resolvedEntity = parseEntityRef(getConfigurationContext().isReplacingEntities());
                     // check if replacement text can be resolved !!!
                     if(resolvedEntity == null) {
                         if(entityRefName == null) {
@@ -2647,7 +2650,7 @@ public class MXParser
                         pc[pcEnd++] = ch;
                     }
                 }
-                normalizedCR = ch == '\r';
+                normalizedCR = (ch == '\r');
             }
             
             
@@ -2759,16 +2762,16 @@ public class MXParser
      * @return Character array that contains value the reference expands
      *    to.
      */
-    protected char[] parseEntityRef()
+    protected char[] parseEntityRef(boolean replace)
         throws XMLStreamException
     {
-        boolean replace = getConfigurationContext().isReplacingEntities();
         try {
-            
             // ASSUMPTION just after &
             entityRefName = null;
             posStart = pos;
             char ch = more();
+
+            // Character entity?
             if(ch == '#') {
                 // parse character reference
                 int charRef = 0;
@@ -2827,15 +2830,17 @@ public class MXParser
                 // normal char:
                 charRefOneCharBuf[0] = (char) charRef;
                 return (entityValue = charRefOneCharBuf);
-            } else {
-                // name reference
-                
-                // scan until ;
-                do{ ch = more(); } while(ch != ';');
-                posEnd = pos - 1;
-                // determine what name maps to
-                int len = posEnd - posStart;
-                if(len == 2 && buf[posStart] == 'l' && buf[posStart+1] == 't') {
+            }
+
+            // Not a character entity, general entity:
+
+            // scan until ;
+            do{ ch = more(); } while(ch != ';');
+            posEnd = pos - 1;
+            // determine what name maps to
+            int len = posEnd - posStart;
+            if(len == 2) {
+                if (buf[posStart] == 'l' && buf[posStart+1] == 't') {
                     if(!replace)
                         text = "<";
                     charRefOneCharBuf[0] = '<';
@@ -2845,50 +2850,56 @@ public class MXParser
                     //    if(pcEnd >= pc.length) ensurePC();
                     //   pc[pcEnd++] = '<';
                     //}
-                } else if(len == 3 && buf[posStart] == 'a'
-                              && buf[posStart+1] == 'm' && buf[posStart+2] == 'p') {
-                    if(!replace)
-                        text = "&";
-                    charRefOneCharBuf[0] = '&';
-                    
-                    return (entityValue = charRefOneCharBuf);
-                } else if(len == 2 && buf[posStart] == 'g' && buf[posStart+1] == 't') {
+                }
+                if (buf[posStart] == 'g' && buf[posStart+1] == 't') {
                     if(!replace)
                         text = ">";
                     charRefOneCharBuf[0] = '>';
                     
                     return (entityValue = charRefOneCharBuf);
-                } else if(len == 4 && buf[posStart] == 'a' && buf[posStart+1] == 'p'
-                              && buf[posStart+2] == 'o' && buf[posStart+3] == 's')
-                {
+                }
+            } else if(len == 3) {
+                if (buf[posStart] == 'a'
+                    && buf[posStart+1] == 'm' && buf[posStart+2] == 'p') {
+                    if(!replace)
+                        text = "&";
+                    charRefOneCharBuf[0] = '&';
+                    
+                    return (entityValue = charRefOneCharBuf);
+                }
+            } else if(len == 4) {
+                if (buf[posStart] == 'a' && buf[posStart+1] == 'p'
+                    && buf[posStart+2] == 'o' && buf[posStart+3] == 's') {
                     if(!replace)
                         text = "'";
                     charRefOneCharBuf[0] = '\'';
                     
                     return (entityValue = charRefOneCharBuf);
-                } else if(len == 4 && buf[posStart] == 'q' && buf[posStart+1] == 'u'
-                              && buf[posStart+2] == 'o' && buf[posStart+3] == 't')
-                {
+                }
+                if (buf[posStart] == 'q' && buf[posStart+1] == 'u'
+                    && buf[posStart+2] == 'o' && buf[posStart+3] == 't') {
                     if(!replace)
                         text = "\"";
                     charRefOneCharBuf[0] = '"';
                     
                     return (entityValue = charRefOneCharBuf);
                 }
-
-                // No, should be a general entity:
-                return (entityValue = lookupEntityReplacement(len));
             }
-            
+
+            // No, should be a general entity:
+            return (entityValue = lookupEntityReplacement(len));
         } catch (EOFException eofe) {
             throw new XMLStreamException(EOF_MSG, getLocation(), eofe);
         }
     }
-    
+
+    /**
+     * @return Character array that contains (unparsed) entity expansion
+     *    value; or null if no such entity has been declared
+     */
     protected char[] lookupEntityReplacement(int entitNameLen)
         throws XMLStreamException
     {
-        
         if(!allStringsInterned) {
             int hash = fastHash(buf, posStart, posEnd - posStart);
             LOOP:
@@ -2901,8 +2912,9 @@ public class MXParser
                         if(buf[posStart + j] != entityBuf[j]) continue LOOP;
                     }
                     if(tokenize) {
-			text = entityReplacement[ i ];
-		    }
+                        text = entityReplacement[ i ];
+                    }
+                    entityRefName = entityName[i];
                     return entityReplacementBuf[ i ];
                 }
             }
@@ -2913,8 +2925,8 @@ public class MXParser
                 // take advantage that interning for newString is enforced
                 if(entityRefName == entityName[ i ]) {
                     if(tokenize) {
-			text = entityReplacement[ i ];
-		    }
+                        text = entityReplacement[ i ];
+                    }
                     return entityReplacementBuf[ i ];
                 }
             }

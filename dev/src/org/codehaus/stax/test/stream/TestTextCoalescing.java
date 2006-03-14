@@ -51,6 +51,8 @@ public class TestTextCoalescing
     public void testNonCoalescing()
         throws XMLStreamException
     {
+        // VALID_XML = "<root>Text <![CDATA[cdata\nin two lines]]><![CDATA[!]]>/that's all!</root>";
+
         XMLStreamReader sr = getReader(VALID_XML, true, false);
         assertTokenType(START_ELEMENT, sr.next());
 
@@ -73,6 +75,8 @@ public class TestTextCoalescing
     public void testNonCoalescingSkipping()
         throws XMLStreamException
     {
+        // VALID_XML = "<root>Text <![CDATA[cdata\nin two lines]]><![CDATA[!]]>/that's all!</root>";
+
         XMLStreamReader sr = getReader(VALID_XML, true, false);
         assertTokenType(START_ELEMENT, sr.next());
 
@@ -133,6 +137,8 @@ public class TestTextCoalescing
         setCoalescing(f, coalescing);
         setReplaceEntities(f, true);
         setValidating(f, false);
+        // 13-Mar-2006, TSa: Let's try to get accurate CDATA reporting...
+        setReportCData(f, true);
         return constructStreamReader(f, contents);
     }
 

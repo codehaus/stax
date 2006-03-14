@@ -19,6 +19,12 @@ public class BaseStaxTest
     extends TestCase
     implements XMLStreamConstants
 {
+    /**
+     * This is a de facto standard property that enables accurate reporting
+     * of CDATA events.
+     */
+    final static String PROP_REPORT_CDATA = "http://java.sun.com/xml/stream/properties/report-cdata-event";
+
     final static HashMap mTokenTypes = new HashMap();
     static {
         mTokenTypes.put(new Integer(START_ELEMENT), "START_ELEMENT");
@@ -258,6 +264,18 @@ public class BaseStaxTest
         throws XMLStreamException
     {
         f.setProperty(XMLInputFactory.RESOLVER, resolver);
+    }
+
+    protected static boolean setReportCData(XMLInputFactory f, boolean state)
+        throws XMLStreamException
+    {
+
+        Boolean b = state ? Boolean.TRUE : Boolean.FALSE;
+        if (f.isPropertySupported(PROP_REPORT_CDATA)) {
+            f.setProperty(PROP_REPORT_CDATA, b);
+            return true;
+        }
+        return false;
     }
 
     /*
