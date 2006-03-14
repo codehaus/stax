@@ -27,6 +27,10 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.util.XMLEventAllocator;
 
 import javax.xml.transform.Source;
+import javax.xml.transform.sax.SAXSource;
+import javax.xml.transform.dom.DOMSource;
+
+import org.xml.sax.InputSource;
 
 public class MXParserFactory extends XMLInputFactory {
 
@@ -37,8 +41,33 @@ public class MXParserFactory extends XMLInputFactory {
     return XMLInputFactory.newInstance();
   }
 
-  public XMLStreamReader createXMLStreamReader(Source source) throws XMLStreamException {
-      throw new UnsupportedOperationException("XMLInputFactory.createXMLStreamRader(Source) not yet implemented");
+  public XMLStreamReader createXMLStreamReader(Source source) throws XMLStreamException
+  {
+      /* 13-Mar-2006, TSa: Let's add minimal support, to make life bit
+       *   easier when interacting with SAX tools...
+       */
+        if (source instanceof SAXSource) {
+            SAXSource ss = (SAXSource) source;
+            InputSource isource = ss.getInputSource();
+            if (isource != null) {
+                String sysId = isource.getSystemId();
+                Reader r = isource.getCharacterStream();
+                if (r != null) {
+                    return createXMLStreamReader(sysId, r);
+                }
+                InputStream in = isource.getByteStream();
+                if (in != null) {
+                    return createXMLStreamReader(sysId, in);
+                }
+            }
+            throw new XMLStreamException("Can only create STaX reader for a SAXSource if Reader or InputStream exposed via getSource(); can not use -- not implemented.");
+        }
+
+        if (source instanceof DOMSource) { 
+            // !!! TBI?
+            //DOMSource sr = (DOMSource) source;
+        }
+        throw new UnsupportedOperationException("XMLInputFactory.createXMLStreamReader("+source.getClass().getName()+") not yet implemented");
   }
 
   /**
