@@ -107,7 +107,7 @@ public class MXParser
      * namespace not defined, for elements; when attribute has no prefix,
      * or for all URIs if namespace support is disabled).
      */
-    public static final String NO_NAMESPACE = "";
+    public static final String NO_NAMESPACE = null;
     
     /**
      * Implementation notice:
@@ -865,7 +865,7 @@ public class MXParser
         //protected char[] entityReplacement[];
         ensureEntityCapacity();
         
-        // this is to make sure that if interning works we wil take advatage of it ...
+        // this is to make sure that if interning works we will take advatage of it ...
         char[] ch = entityName.toCharArray();
         this.entityName[entityEnd] = newString(ch, 0, entityName.length());
         entityNameBuf[entityEnd] = ch;
@@ -945,7 +945,7 @@ public class MXParser
             throwIllegalState(new int[] { START_ELEMENT, END_ELEMENT });
         }
         //int count = namespaceCount[ depth ];
-        if(prefix != null && !"".equals(prefix)) {
+        if(prefix != null && prefix.length() > 0) { // non-default namespace
             for( int i = namespaceEnd -1; i >= 0; i--) {
                 if( prefix.equals( namespacePrefix[ i ] ) ) {
                     return namespaceUri[ i ];
@@ -1227,7 +1227,16 @@ public class MXParser
         
         if (ok && namespace != null) {
             if (currType == START_ELEMENT || currType == START_ELEMENT) {
-                ok = namespace.equals(getNamespaceURI());
+                /* 20-Mar-2006, TSa: Unbound namespaces are reported as
+                 *    null; but caller has to give "" to match against
+                 *    it (since null means 'do not check').
+                 */
+                String currNsUri = getNamespaceURI();
+                if (namespace.length() == 0) {
+                    ok = (currNsUri == null);
+                } else {
+                    ok = namespace.equals(currNsUri);
+                }
             }
         }
         
@@ -2366,13 +2375,12 @@ public class MXParser
                     for (int j = 0; j < i; j++)
                     {
                         if( attributeUri[j] == attributeUri[i]
-                               && (allStringsInterned && attributeName[j].equals(attributeName[i])
-                                       || (!allStringsInterned
-                                               && attributeNameHash[ j ] == attributeNameHash[ i ]
-                                               && attributeName[j].equals(attributeName[i])) )
-                               
+                            && (allStringsInterned && attributeName[j].equals(attributeName[i])
+                                || (!allStringsInterned
+                                    && attributeNameHash[ j ] == attributeNameHash[ i ]
+                                    && attributeName[j].equals(attributeName[i])) )
                           ) {
-                            // prepare data for nice error messgae?
+                            // prepare data for nice error message?
                             String attr1 = attributeName[j];
                             if(attributeUri[j] != null) attr1 = attributeUri[j]+":"+attr1;
                             String attr2 = attributeName[i];
@@ -2446,8 +2454,8 @@ public class MXParser
                 if (!found) {
                     attributeCount++;
                     ensureAttributesCapacity(attributeCount);
-                    attributePrefix[attributeCount-1] = "";
-                    attributeUri[attributeCount-1]="";
+                    attributePrefix[attributeCount-1] = null;
+                    attributeUri[attributeCount-1] = NO_NAMESPACE;
                     attributeName[attributeCount-1] = att.getName();
                     attributeValue[attributeCount-1] = att.getDefaultValue();
                 }
@@ -2706,6 +2714,9 @@ public class MXParser
                 } else {
                     // declare  new default namespace ...
                     namespacePrefix[ namespaceEnd ] = null;
+                    if (ns.length() == 0) { // need to use null
+                        ns = NO_NAMESPACE;
+                    }
                     if(!allStringsInterned) {
                         prefixHash = namespacePrefixHash[ namespaceEnd ] = -1;
                     }
