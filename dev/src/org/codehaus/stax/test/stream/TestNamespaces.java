@@ -350,7 +350,7 @@ public class TestNamespaces
         assertEquals("a", ctxt.getPrefix("ns:b"));
         assertNull(ctxt.getNamespaceURI("b"));
 
-        // This is testing of actual masking:
+        // This is testing of actual masking, using NamespaceContext
         {
             // Previous binding should be masked by now!
             String prefix = ctxt.getPrefix("ns:a");
