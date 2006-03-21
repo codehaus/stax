@@ -220,10 +220,10 @@ public class TestRepairingWriter
         // empty leaf
         assertTokenType(START_ELEMENT, sr.next(), sr);
         assertEquals("leaf", sr.getLocalName());
-        assertEquals("", sr.getNamespaceURI());
+        assertNull("Element <leaf/> should not be in a namespace", sr.getNamespaceURI());
         assertTokenType(END_ELEMENT, sr.next(), sr);
         assertEquals("leaf", sr.getLocalName());
-        assertEquals("", sr.getNamespaceURI());
+        assertNull(sr.getNamespaceURI());
         
         // third leaf
         assertTokenType(START_ELEMENT, sr.next(), sr);
@@ -233,7 +233,7 @@ public class TestRepairingWriter
         assertEquals(1, sr.getAttributeCount());
         assertEquals("attr2", sr.getAttributeLocalName(0));
         String nsURI = sr.getAttributeNamespace(0);
-        if (nsURI != null && nsURI.length() > 0) {
+        if (nsURI != null) {
             fail("Attribute 'attr2' should not belong to a namespace; reported to belong to '"+nsURI+"'");
         }
         assertEquals(ATTR_VALUE2, sr.getAttributeValue(0));

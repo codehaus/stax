@@ -153,7 +153,7 @@ public class TestNamespaces
         assertEquals("empty", sr.getLocalName());
         assertEquals("http://foo", sr.getNamespaceURI());
         assertEquals("myurl", sr.getNamespaceURI("a"));
-        assertEquals("", sr.getAttributeNamespace(0));
+        assertNull(sr.getAttributeNamespace(0));
         assertNull(sr.getAttributePrefix(0));
         assertEquals("&", sr.getAttributeValue(0));
         assertTokenType(END_ELEMENT, sr.next());
@@ -288,25 +288,34 @@ public class TestNamespaces
     public void testDefaultNs()
         throws XMLStreamException
     {
-        final String XML = "<root xmlns='url' />";
+        String XML = "<root xmlns='url' />";
 
         XMLStreamReader sr = getNsReader(XML, true);
         assertEquals(START_ELEMENT, sr.next());
         assertEquals("root", sr.getLocalName());
-        /* 07-Jun-2005, TSa: Prefix may probably be either null or empty
-         *   String?
-         */
-        //assertEquals("", sr.getPrefix());
+        assertNull(sr.getPrefix());
         assertEquals("url", sr.getNamespaceURI());
         NamespaceContext ctxt = sr.getNamespaceContext();
         assertEquals(1, sr.getNamespaceCount());
         assertEquals("url", sr.getNamespaceURI(0));
-        assertEquals(null, sr.getNamespacePrefix(0));
+        assertNull(sr.getNamespacePrefix(0));
 
         assertEquals("url", ctxt.getNamespaceURI(""));
         assertEquals("", ctxt.getPrefix("url"));
         assertNull(ctxt.getNamespaceURI("b"));
         assertNull(ctxt.getPrefix("ns:b"));
+
+
+        XML = "<root xmlns:a='url' />";
+
+        sr = getNsReader(XML, true);
+        assertEquals(START_ELEMENT, sr.next());
+        assertEquals("root", sr.getLocalName());
+        assertNull(sr.getPrefix());
+        assertNull(sr.getNamespaceURI());
+        assertEquals(1, sr.getNamespaceCount());
+        assertEquals("url", sr.getNamespaceURI(0));
+        assertEquals("a", sr.getNamespacePrefix(0));
     }
 
     /**

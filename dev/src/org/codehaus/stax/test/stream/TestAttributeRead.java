@@ -27,10 +27,6 @@ public class TestAttributeRead
         + "<tree attr='&val1;' attr2=\"&val1;\" "
         +" attr3='&val2;' attr4=\"&val2;\" />";
 
-    public TestAttributeRead(String name) {
-        super(name);
-    }
-
     public void testValidNsAttrsByName()
         throws XMLStreamException
     {
@@ -84,13 +80,45 @@ public class TestAttributeRead
         
         assertEquals("r&b", sr.getAttributeValue(index1));
         assertEquals("\"", sr.getAttributeValue(index2));
-	String prefix = sr.getAttributePrefix(index1);
-	if (prefix != null) {
-	    fail("Expected null as prefix for attribute 'a', got '"+prefix+"'");
-	}
+        String prefix = sr.getAttributePrefix(index1);
+        if (prefix != null) {
+            fail("Expected null as prefix for attribute 'a', got '"+prefix+"'");
+        }
         assertEquals("a", sr.getAttributePrefix(index2));
-        assertEquals("", sr.getAttributeNamespace(index1));
+        String ns = sr.getAttributeNamespace(index1);
+        assertNull("Unbound attribute should return null for XMLStreamReader.sr.getAttributeNamespace(int): got '"+ns+"'", ns);
         assertEquals("url", sr.getAttributeNamespace(index2));
+    }
+
+    public void testValidNsAttrNsInfo()
+        throws XMLStreamException
+    {
+        XMLStreamReader sr = getReader
+            ("<root a='xyz' xmlns:b='http://foo'><leaf b:attr='1' /></root>",
+             true);
+
+        assertEquals(START_ELEMENT, sr.next());
+        assertEquals("root", sr.getLocalName());
+        assertEquals(1, sr.getNamespaceCount());
+        assertEquals(1, sr.getAttributeCount());
+        assertNull(sr.getAttributePrefix(0));
+        assertNull(sr.getAttributeNamespace(0));
+        assertEquals("xyz", sr.getAttributeValue(0));
+
+        assertEquals(START_ELEMENT, sr.next());
+        assertEquals("leaf", sr.getLocalName());
+        assertEquals(0, sr.getNamespaceCount());
+        assertEquals(1, sr.getAttributeCount());
+        assertEquals("b", sr.getAttributePrefix(0));
+        assertEquals("http://foo", sr.getAttributeNamespace(0));
+        assertEquals("1", sr.getAttributeValue(0));
+
+        assertEquals(END_ELEMENT, sr.next());
+        assertEquals("leaf", sr.getLocalName());
+        assertEquals(END_ELEMENT, sr.next());
+        assertEquals("root", sr.getLocalName());
+
+        assertEquals(END_DOCUMENT, sr.next());
     }
 
     public void testValidNonNsAttrs()
@@ -156,13 +184,7 @@ public class TestAttributeRead
         assertNull(sr.getAttributePrefix(index1));
         assertNull(sr.getAttributePrefix(index2));
 
-        /* 31-Aug-2004, TSa: Not 100% sure if we should expect "" (the default
-         *   namespace) or null... for now, let's assume 'null' is returned
-         *   non-namespace-aware mode.
-         */
-        //assertEquals("", sr.getAttributeNamespace(index1));
         assertNull(sr.getAttributeNamespace(index1));
-        //assertEquals("", sr.getAttributeNamespace(index2));
         assertNull(sr.getAttributeNamespace(index2));
     }
 
