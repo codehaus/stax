@@ -114,14 +114,11 @@ public class TestElements
         throws XMLStreamException
     {
         XMLStreamReader sr = getElemReader("<root />", nsAware);
-	if (sr == null) {
-	    reportNADueToNS(method);
-	    return;
-	}
-
-        final String EXPECTED_EMPTY_URI = nsAware ?
-            DEFAULT_URI_NS : DEFAULT_URI_NON_NS;
-
+        if (sr == null) {
+            reportNADueToNS(method);
+            return;
+        }
+        
         assertEquals(START_ELEMENT, sr.next());
         testStartOrEnd(nsAware, sr, true);
 
@@ -160,7 +157,7 @@ public class TestElements
             assertTrue((prefix == null) || prefix.length() == 0);
         }
 
-        // Similarly, ns URI apparently is never null...
+        // Similarly, ns URI (from QName) apparently is never null...
         //assertEquals((nsAware ? DEFAULT_URI_NS : DEFAULT_URI_NON_NS), n.getNamespaceURI());
         {
             String uri = n.getNamespaceURI();
@@ -243,8 +240,6 @@ public class TestElements
 
         // And then let's do it step by step
         sr = getElemReader(VALID_CONTENT, nsAware);
-        final String EXPECTED_EMPTY_URI = nsAware ?
-            DEFAULT_URI_NS : DEFAULT_URI_NON_NS;
 
         // First, need to get <root>
         assertTokenType(START_ELEMENT, sr.next());
@@ -258,11 +253,9 @@ public class TestElements
          */
         if (nsAware) {
             // In NS-mode, null is not allowed however
-            assertEquals("Default (non-defined) namespace should be reported as empty String", "", nsURI);
+            assertNull("Default (non-defined) namespace should be reported as empty String", nsURI);
         } else {
-            if (nsURI != null && nsURI.length() > 0) {
-                fail("Default (non-defined) namespace should be reported either as NULL, or as empty String, in non-NS mode");
-            }
+            assertNull("Default (non-defined) namespace should be reported as NULL in non-NS mode", nsURI);
         }
 
         // Let's also check QName seems valid:
@@ -271,7 +264,7 @@ public class TestElements
         assertEquals(name, new QName("root"));
 
         // Hmmh. In ns-aware mode, is it ok to get null, ever?
-        assertEquals(EXPECTED_EMPTY_URI, sr.getNamespaceURI());
+        assertNull(sr.getNamespaceURI());
         assertEquals(0, sr.getAttributeCount());
         assertEquals(0, sr.getNamespaceCount());
 
@@ -284,7 +277,7 @@ public class TestElements
         } else {
             assertEquals(NS_PREFIX1+":elem", sr.getLocalName());
             assertEquals(null, sr.getPrefix());
-            assertEquals(DEFAULT_URI_NON_NS, sr.getNamespaceURI());
+            assertNull(sr.getNamespaceURI());
         }
 
         int expNs = nsAware ? 1 : 0;
@@ -306,8 +299,8 @@ public class TestElements
             assertEquals(NS_URL1, sr.getNamespaceURI());
         } else {
             assertEquals(NS_PREFIX1+":elem", sr.getLocalName());
-            assertEquals(null, sr.getPrefix());
-            assertEquals(DEFAULT_URI_NON_NS, sr.getNamespaceURI());
+            assertNull(sr.getPrefix());
+            assertNull(sr.getNamespaceURI());
         }
         assertEquals(expNs, sr.getNamespaceCount());
 
@@ -318,7 +311,7 @@ public class TestElements
         if (nsAware) {
             assertEquals(NS_URL2, sr.getNamespaceURI());
         } else {
-            assertEquals(DEFAULT_URI_NON_NS, sr.getNamespaceURI());
+            assertNull(sr.getNamespaceURI());
         }
         assertEquals(expAttr, sr.getAttributeCount());
         assertEquals(expNs, sr.getNamespaceCount());
@@ -330,7 +323,7 @@ public class TestElements
         if (nsAware) {
             assertEquals(NS_URL2, sr.getNamespaceURI());
         } else {
-            assertEquals(DEFAULT_URI_NON_NS, sr.getNamespaceURI());
+            assertNull(sr.getNamespaceURI());
         }
         assertEquals(expNs, sr.getNamespaceCount());
 
@@ -338,7 +331,7 @@ public class TestElements
         assertEquals("root", sr.getLocalName());
         assertEquals(null, sr.getPrefix());
 
-        assertEquals(EXPECTED_EMPTY_URI, sr.getNamespaceURI());
+        assertNull(sr.getNamespaceURI());
         assertEquals(0, sr.getNamespaceCount());
     }
 

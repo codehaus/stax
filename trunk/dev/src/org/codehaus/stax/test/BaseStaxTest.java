@@ -405,15 +405,18 @@ public class BaseStaxTest
     }
 
     /**
-     * Similar to {@link #assertNoPrefix}, it's not clear whether
-     * "no namespace" (or default namespace) should be null or ""
+     * Similar to {@link #assertNoPrefix}, but here we do know that unbound
+     * namespace URI should be indicated as null, not empty String.
      */
     protected static void assertNoNsURI(XMLStreamReader sr)
         throws XMLStreamException
     {
         String uri = sr.getNamespaceURI();
-        if (uri != null && uri.length() > 0) {
-            fail("Excepted no (or empty) namespace URI: got '"+uri+"'");
+        if (uri != null) {
+            if (uri.length() == 0) { // most likely
+                fail("Excepted no (null) namespace URI: got empty string; non-conformant");
+            }
+            fail("Excepted no (null) namespace URI: got '"+uri+"'");
         }
     }
 

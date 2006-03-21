@@ -146,6 +146,7 @@ public class TestTextCoalescing
         throws XMLStreamException
     {
         assertTokenType(expType, sr.getEventType());
+        //if (expType != sr.getEventType()) System.err.println("WARN: expected "+tokenTypeDesc(expType)+", got "+tokenTypeDesc(sr.getEventType()));
         StringBuffer sb = new StringBuffer(getAndVerifyText(sr));
         int count = 1;
         while ((sr.next()) == expType) {
