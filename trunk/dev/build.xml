@@ -54,7 +54,7 @@
         <pathelement path="${class_dir}" />
   </path>
 
-  <target name="all" depends="clean,build,ri_jar,run"/>
+  <target name="all" depends="clean,build,ri_bin_dist,run"/>
   <target name="clean">
     <delete dir="${build_dir}"/>
   </target>
@@ -154,8 +154,6 @@
   <target name="dist" depends="compile,ri_src_dist,ri_bin_dist" />
 
   <!-- Ref. Impl. "binary" -->
-  <target name="ri_jar" depends="ri_bin_dist" />
-
   <target name="ri_bin_dist" depends="compile">
     <jar jarfile="${jar_ri}">
       <!-- Let's add bit more information into jar... like version -->
@@ -181,10 +179,7 @@
   </target>
 
   <!-- Package the source code of the ref. impl -->
-  <target name="ri_src_jar" depends="dist" />
-  <target name="src_dist" depends="dist" />
-
-  <target name="ri_src_dist">
+  <target name="ri_src_dist" depends="compile">
     <jar jarfile="${jar_src}">
       <fileset dir="."
         includes=
@@ -195,6 +190,7 @@
          ${src}/com/bea/xml/stream/filters/,
          ${src}/com/bea/xml/stream/reader/,
          ${src}/com/bea/xml/stream/events/,
+         ${src}/org/codehaus/stax/test/**,
          ${src}/javax/**,
          ${src}/samples/**,
          ${src}/test/**"/>

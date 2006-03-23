@@ -55,7 +55,7 @@ public class XMLEventReaderBase
     if (reader==null) 
       throw new IllegalArgumentException("XMLStreamReader may not be null");
     if (alloc==null) 
-      throw new IllegalArgumentException("XMLEvent Allocator may not be null");
+      throw new IllegalArgumentException("XMLEventAllocator may not be null");
 
     this.reader = reader;
     open = true;

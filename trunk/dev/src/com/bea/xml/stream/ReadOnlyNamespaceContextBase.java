@@ -45,7 +45,7 @@ public class ReadOnlyNamespaceContextBase
   public String getNamespaceURI(String prefix) {
     if (prefix == null)
       throw new IllegalArgumentException("Prefix may not be null.");
-    if(!"".equals(prefix)) {
+    if(prefix.length() > 0) { // explicit prefix (not default ns)
       for( int i = uris.length -1; i >= 0; i--) {
         if( prefix.equals( prefixes[ i ] ) ) {
           return uris[ i ];
@@ -57,7 +57,7 @@ public class ReadOnlyNamespaceContextBase
         return XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
       }
     } else {
-      for( int i = uris.length -1; i >= 0; i--) {
+      for( int i = uris.length -1; i >= 0; i--) { // default NS
         if( prefixes[ i ]  == null ) {
           return uris[ i ];
         }
@@ -70,10 +70,29 @@ public class ReadOnlyNamespaceContextBase
       throw new IllegalArgumentException("uri may not be null");
     if (uri.length() == 0)
       throw new IllegalArgumentException("uri may not be empty string");
-
+    
+    main_loop:
     for( int i = uris.length -1; i >= 0; i--) {
         if( uri.equals( uris[ i ] ) ) {
-            return checkNull(prefixes[ i ]);
+            /* 21-Mar-2006, TSa: Possible match; but we have to ensure that
+             *   the prefix is not masked by a later declaration:
+             */
+            String prefix = prefixes[i];
+            if (prefix == null) { // default NS
+                for (int j = uris.length-1; j > i; --j) {
+                    if (prefixes[j] == null) {
+                        continue main_loop;
+                    }
+                }
+                return "";
+            }
+            // nope, explicit prefix
+            for (int j = uris.length-1; j > i; --j) {
+                if (prefix.equals(prefixes[j])) {
+                    continue main_loop;
+                }
+            }
+            return prefix;
         }
     }
 	if(XMLConstants.XML_NS_URI.equals(uri)) {
@@ -105,11 +124,33 @@ public class ReadOnlyNamespaceContextBase
     if ("".equals(uri))
       throw new IllegalArgumentException("uri may not be empty string");
     HashSet s = new HashSet();
+
+    main_loop:
     for( int i = uris.length -1; i >= 0; i--) {
       String prefix = checkNull(prefixes[i]);
-      if( uri.equals( uris[ i ] ) && !s.contains(prefix)) {
-        s.add(prefix);
+      if (!uri.equals(uris[i]) || s.contains(prefix)) {
+          continue;
       }
+      
+      /* 21-Mar-2006, TSa: Match, but the prefix may be masked by a later
+       *    declaration
+       */
+      if (prefix.length() == 0) { // default NS
+          for (int j = uris.length-1; j > i; --j) {
+              if (prefixes[j] == null) {
+                  continue main_loop;
+              }
+          }
+      } else {
+          // nope, explicit prefix
+          for (int j = uris.length-1; j > i; --j) {
+              if (prefix.equals(prefixes[j])) {
+                  continue main_loop;
+              }
+          }
+      }
+    
+      s.add(prefix);
     }
     return s.iterator();
   }
