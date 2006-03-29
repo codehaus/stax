@@ -15,12 +15,6 @@ import org.codehaus.stax.test.BaseStaxTest;
 public class BaseWriterTest
     extends BaseStaxTest
 {
-    protected BaseWriterTest() { super(); }
-
-    protected BaseWriterTest(String name) {
-        super(name);
-    }
-
     public XMLStreamWriter getRepairingWriter(Writer w)
         throws XMLStreamException
     {

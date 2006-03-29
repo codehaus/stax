@@ -7,14 +7,12 @@ import javax.xml.stream.events.*;
 /**
  * Class that contains simple tests for making sure that event types
  * produced have expected settings.
+ *
+ * @author Tatu Saloranta
  */
 public class TestEventTypes
     extends BaseEventTest
 {
-    public TestEventTypes(String name) {
-        super(name);
-    }
-
     public void testTypes()
         throws XMLStreamException
     {

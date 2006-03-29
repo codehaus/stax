@@ -9,6 +9,8 @@ import java.io.*;
  * in "non-repairing" mode. It also includes writer tests for things
  * for which repair/non-repair modes should not matter (comments, PIs
  * etc).
+ *
+ * @author Tatu Saloranta
  */
 public class TestSimpleWriter
     extends BaseWriterTest

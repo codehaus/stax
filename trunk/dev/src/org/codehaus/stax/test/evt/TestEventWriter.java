@@ -9,14 +9,12 @@ import javax.xml.stream.events.*;
 /**
  * Class that contains simple tests for making sure that event objects
  * get serialized properly when using {@link XMLEventWriter}.
+ *
+ * @author Tatu Saloranta
  */
 public class TestEventWriter
     extends BaseEventTest
 {
-    public TestEventWriter(String name) {
-        super(name);
-    }
-
     public void testNonRepairingNsWrite()
         throws XMLStreamException
     {
