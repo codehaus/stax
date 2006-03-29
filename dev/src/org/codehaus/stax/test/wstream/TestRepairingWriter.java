@@ -7,6 +7,8 @@ import javax.xml.stream.*;
 /**
  * Set of unit tests for verifying operation of {@link XMLStreamWriter}
  * in "repairing" mode.
+ *
+ * @author Tatu Saloranta
  */
 public class TestRepairingWriter
     extends BaseWriterTest

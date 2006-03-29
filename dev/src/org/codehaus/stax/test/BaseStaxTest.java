@@ -20,7 +20,7 @@ public class BaseStaxTest
     implements XMLStreamConstants
 {
     /**
-     * This is a de facto standard property that enables accurate reporting
+     * This is the de facto standard property that enables accurate reporting
      * of CDATA events.
      */
     final static String PROP_REPORT_CDATA = "http://java.sun.com/xml/stream/properties/report-cdata-event";

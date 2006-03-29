@@ -10,14 +10,12 @@ import javax.xml.stream.events.*;
 /**
  * Unit tests for testing that START_ELEMENT event object behaves
  * as expected
+ *
+ * @author Tatu Saloranta
  */
 public class TestStartElem
     extends BaseEventTest
 {
-    public TestStartElem(String name) {
-        super(name);
-    }
-
     /**
      * Simple tests to ensure that the namespace declarations are properly
      * parsed and accessible via {@link StartElement}.

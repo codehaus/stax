@@ -33,11 +33,11 @@
   					javax/xml/stream/**/*.java"/>
 
   <!-- Unit test (StaxTest) package properties -->
-  <property name="test_version" value="0.9"/>
+  <property name="test_version" value="1.0rc1"/>
   <property name="test_class_dir" value="${build_dir}/test-classes"/>
   <property name="test_results_dir" value="${build_dir}/test-results"/>
   <property name="test_jar" value="staxtest_${test_version}.jar"/>
-  <property name="test_src_jar" value="staxtest_${test_version}_src.jar"/>
+  <property name="test_src_zip" value="staxtest_src_${test_version}.zip"/>
 
   <property name="lib" value="lib"/>
 
@@ -229,10 +229,10 @@
   </target>
 
   <!-- And test suite sources -->
-  <target name="test_src_jar">
-    <jar jarfile="${test_src_jar}">
+  <target name="test_src_zip">
+    <zip destfile="${test_src_zip}">
       <fileset dir="${src}" includes="org/codehaus/stax/test/" />
-    </jar>
+    </zip>
   </target>
 
   <!-- Targets that run things like unit tests

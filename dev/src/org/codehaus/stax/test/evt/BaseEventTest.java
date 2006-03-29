@@ -17,17 +17,7 @@ import org.codehaus.stax.test.BaseStaxTest;
 public class BaseEventTest
     extends BaseStaxTest
 {
-    /*
-    ///////////////////////////////////////////////////
-    // Life-cycle
-    ///////////////////////////////////////////////////
-     */
-
     protected BaseEventTest() { super(); }
-
-    protected BaseEventTest(String name) {
-        super(name);
-    }
 
     /*
     ///////////////////////////////////////////////////

@@ -9,6 +9,8 @@ import javax.xml.stream.events.*;
 /**
  * Class that contains simple tests for making sure that event objets
  * created by the {@link XMLEventFactory} have expected properties.
+ *
+ * @author Tatu Saloranta
  */
 public class TestEventFactory
     extends BaseEventTest

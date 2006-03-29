@@ -10,6 +10,8 @@ import java.util.*;
 /**
  * Class that contains simple tests for making sure that event objects
  * created by the {@link XMLEventFactory} have expected properties.
+ *
+ * @author Tatu Saloranta
  */
 public class TestEventReader
     extends BaseEventTest
