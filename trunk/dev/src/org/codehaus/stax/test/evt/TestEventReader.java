@@ -386,6 +386,7 @@ public class TestEventReader
             boolean ns = (i & 1) != 0;
             boolean coal = (i & 2) != 0;
             XMLEventReader er = getReader(XML, ns, coal);
+            assertTokenType(START_DOCUMENT, er.nextEvent().getEventType());
 
             XMLEvent tag = er.nextTag();
             assertTokenType(START_ELEMENT, tag.getEventType());

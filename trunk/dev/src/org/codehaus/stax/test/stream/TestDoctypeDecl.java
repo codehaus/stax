@@ -77,7 +77,7 @@ public class TestDoctypeDecl
         assertEquals(true, sr.hasText());
 
         // And then let's check methods that should throw specific exception
-        for (int i = 0; i < 8; ++i) {
+        for (int i = 0; i <= 10; ++i) {
             String method = "";
 
             try {
@@ -114,6 +114,18 @@ public class TestDoctypeDecl
                 case 7:
                     method = "getPIData";
                     result = sr.getPIData();
+                    break;
+                case 8:
+                    method = "getTextCharacters";
+                    result = sr.getTextCharacters();
+                    break;
+                case 9:
+                    method = "getTextStart";
+                    result = new Integer(sr.getTextStart());
+                    break;
+                case 10:
+                    method = "getTextLength";
+                    result = new Integer(sr.getTextLength());
                     break;
                 }
                 fail("Expected IllegalArgumentException, when calling "
@@ -152,8 +164,7 @@ public class TestDoctypeDecl
             "<!DOCTYPE root [ "+INT_SUBSET+" ]><root />";
 
         XMLStreamReader sr = getReader(VALID_TEST, nsAware);
-
-        assertEquals(DTD, sr.next());
+        assertTokenType(DTD, sr.next());
 
         /* Now... exactly what should be returned is not quite clear.
          * Let's assume that leading/trailing white space may be truncated,
@@ -167,6 +178,22 @@ public class TestDoctypeDecl
          *   it should be the full DOCTYPE declaration production...
          */
         assertEquals(INT_SUBSET, str);
+
+        sr.close();
+
+        /* 05-Apr-2006, TSa: Following is actually invalid, but
+         *   well-formed. And as such, it should not throw an exception
+         *   in non-validating mode (but should in validating mode).
+         */
+        final String VALID_TEST2 = "<!DOCTYPE root><fubar />";
+        sr = getReader(VALID_TEST2, nsAware);
+        assertTokenType(DTD, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals("fubar", sr.getLocalName());
+        assertTokenType(END_ELEMENT, sr.next());
+        assertTokenType(END_DOCUMENT, sr.next());
+
+
     }
 
     private void doTestTypicalValid(boolean nsAware)
@@ -195,15 +222,6 @@ public class TestDoctypeDecl
         final String INVALID1 = "<!DOCTYPE>  <root />";
         streamThroughFailing(getReader(INVALID1, nsAware), 
                              "invalid DOCTYPE declaration (missing root element)");
-
-        /* 23-Jan-2006, TSa: Does not necessarily fail in non-validating
-         *    mode...
-         */
-        /*
-        final String INVALID2 = "<!DOCTYPE root>  <fubar />";
-        streamThroughFailing(getReader(INVALID2, nsAware),
-                             "invalid DOCTYPE declaration (root element does not match)");
-        */
 
         final String INVALID3 = "<!DOCTYPE root SYSTEM  ><root />";
         streamThroughFailing(getReader(INVALID3, nsAware),

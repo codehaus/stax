@@ -191,12 +191,19 @@ public class TestEntityRead
         assertEquals("myent", sr.getLocalName());
 
         // Ok, let's try the other access method:
+        /* 05-Apr-2006, TSa: Actually, getTextXxx() methods are not
+         *   legal for ENTITY_REFERENCEs, can't check:
+         */
+        /*
         int len = sr.getTextLength();
         assertEquals(ENTITY_VALUE.length(), len);
         int start = sr.getTextStart();
         char[] ch = new char[len];
         sr.getTextCharacters(0, ch, 0, len);
         assertEquals(ENTITY_VALUE, new String(ch));
+        */
+        assertEquals(ENTITY_VALUE, sr.getText());
+
         assertTokenType(END_ELEMENT, sr.next());
         assertTokenType(END_DOCUMENT, sr.next());
     }
@@ -509,7 +516,7 @@ public class TestEntityRead
         }
 
         // And then let's check methods that should throw specific exception
-        for (int i = 0; i < 7; ++i) {
+        for (int i = 0; i <= 9; ++i) {
             String method = "";
 
             try {
@@ -543,6 +550,18 @@ public class TestEntityRead
                     method = "getPIData";
                     result = sr.getPIData();
                     break;
+                case 7:
+                    method = "getTextCharacters";
+                    result = sr.getTextCharacters();
+                    break;
+                case 8:
+                    method = "getTextStart";
+                    result = new Integer(sr.getTextStart());
+                    break;
+                case 9:
+                    method = "getTextLength";
+                    result = new Integer(sr.getTextLength());
+                    break;
                 }
                 fail("Expected IllegalArgumentException, when calling "
                      +method+"() for ENTITY_REFERENCE");
@@ -567,9 +586,6 @@ public class TestEntityRead
         if (text != null && text.length() > 0) {
             fail("Expected getText() for external entity 'ent2' to return null or empty String; instead got '"+text+"'");
         }
-        assertEquals(0, sr.getTextLength());
-        char[] ch = sr.getTextCharacters();
-        assertTrue((ch == null) || ch.length == 0);
 
         // // ok, should be good:
         assertTokenType(END_ELEMENT, sr.next());
