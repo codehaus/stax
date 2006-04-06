@@ -1507,26 +1507,24 @@ public class MXParser
         throw new UnsupportedOperationException();
     }
     
-    private void checkTextEvent() {
+    private final void checkTextEvent() {
         if (!hasText()) {
             throw new IllegalStateException("Current state ("+eventTypeDesc(eventType)+") does not have textual content");
         }
+    }
+
+    private final void checkTextEventXxx() {
+         if (eventType != XMLStreamConstants.CHARACTERS
+             && eventType != XMLStreamConstants.CDATA
+             && eventType != XMLStreamConstants.COMMENT
+             && eventType != XMLStreamConstants.SPACE) {
+             throw new IllegalStateException("getTextXxx methods cannot be called for "+eventTypeDesc(eventType));
+         }
     }
     
     public String getText()
     {
         checkTextEvent();
-        
-        /*
-         if(eventType == XMLStreamConstants.START_DOCUMENT || eventType == XMLStreamConstants.END_DOCUMENT) {
-         //throw new XMLStreamException("no content available to read");
-         //      if(roundtripSupported) {
-         //          text = new String(buf, posStart, posEnd - posStart);
-         //      } else {
-         return null;
-         //      }
-         } else
-         */
         if(eventType == XMLStreamConstants.ENTITY_REFERENCE) {
             // Do we have the value constructed?
             if (text == null && entityValue != null) {
@@ -1545,7 +1543,7 @@ public class MXParser
     public int getTextCharacters(int sourceStart, char[] target, int targetStart, int length)
         throws XMLStreamException
     {
-        checkTextEvent();
+        checkTextEventXxx();
 
         int intLen = getTextLength();
 
@@ -1577,7 +1575,7 @@ public class MXParser
     }
     
     public char[] getTextCharacters() {
-        checkTextEvent();
+        checkTextEventXxx();
         
         if( eventType == XMLStreamConstants.CHARACTERS ) {
             if(usePC) {
@@ -1585,19 +1583,13 @@ public class MXParser
             } else {
                 return buf;
             }
-        } else if( eventType == XMLStreamConstants.ENTITY_REFERENCE ) {
-            return entityValue;
         }
         return buf;
     }
     
     
     public int getTextStart() {
-        checkTextEvent();
-
-        if( eventType == XMLStreamConstants.ENTITY_REFERENCE) {
-            return 0;
-        }
+        checkTextEventXxx();
 
         if(usePC) {
             return pcStart;
@@ -1607,10 +1599,7 @@ public class MXParser
     }
     
     public int getTextLength() {
-        checkTextEvent();
-        if( eventType == XMLStreamConstants.ENTITY_REFERENCE) {
-            return (entityValue == null) ? 0 : entityValue.length;
-        }
+        checkTextEventXxx();
         if(usePC) {
             return pcEnd - pcStart;
         } else {
@@ -1619,13 +1608,7 @@ public class MXParser
     }
     
     public boolean hasText() {
-        /*
-         return (0 != (eventType & (XMLStreamConstants.CHARACTERS |
-         XMLStreamConstants.DTD |
-         XMLStreamConstants.COMMENT |
-         XMLStreamConstants.ENTITY_REFERENCE)));
-         */
-        return (eventType == XMLStreamConstants.CHARACTERS
+         return (eventType == XMLStreamConstants.CHARACTERS
                     || eventType == XMLStreamConstants.DTD
                     || eventType == XMLStreamConstants.CDATA
                     || eventType == XMLStreamConstants.COMMENT
