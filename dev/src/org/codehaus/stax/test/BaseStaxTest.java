@@ -293,7 +293,6 @@ public class BaseStaxTest
         throws XMLStreamException
     {
         String text = sr.getText();
-        assertNotNull("getText() should never return null.", text);
 
         /* 05-Apr-2006, TSa: Although getText() is available for DTD
          *   and ENTITY_REFERENCE, getTextXxx() are not. Thus, can not
@@ -301,6 +300,7 @@ public class BaseStaxTest
          */
         int type = sr.getEventType();
         if (type != ENTITY_REFERENCE && type != DTD) {
+            assertNotNull("getText() should never return null.", text);
             int expLen = sr.getTextLength();
             /* Hmmh. Can only return empty text for CDATA (since empty
              * blocks are legal).
@@ -320,6 +320,11 @@ public class BaseStaxTest
             int start = sr.getTextStart();
             String text2 = new String(textChars, start, expLen);
             assertEquals("Expected getText() and getTextCharacters() to return same value for event of type ("+tokenTypeDesc(sr.getEventType())+")", text, text2);
+        } else { // DTD or ENTITY_REFERENCE
+            // not sure if null is legal for these either, but...
+            if (text == null) { // let's prevent an NPE at caller
+                text = "";
+            }
         }
         return text;
     }

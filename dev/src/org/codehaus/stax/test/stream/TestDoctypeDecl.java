@@ -139,8 +139,7 @@ public class TestDoctypeDecl
          * (there are other tests for checking contents)
          */
         String str = sr.getText();
-        assertNotNull(str);
-        if (str.trim().length() == 0) {
+        if (str == null || str.trim().length() == 0) {
             fail("Internal subset not available; StreamReader.getText() returned an empty String (after trim())");
         }
     }
