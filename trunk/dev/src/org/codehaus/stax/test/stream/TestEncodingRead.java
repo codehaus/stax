@@ -131,18 +131,10 @@ public class TestEncodingRead
         
         byte[] b = XML.getBytes(javaEnc);
         if (bom != null) {
-            /* 22-Mar-2005, TSa: Hack! I'll be damned if I know for sure
-             *   whether JDK is going to add BOMs... so let's just add
-             *   a special check to make sure no duplicate BOMs are added.
-             */
-            if (bom[0] == b[0]) {
-                System.err.println("Warning: JDK implicitly added BOM for '"+xmlEnc+"'/'"+javaEnc+"'; won't try to add it implicitly...");
-            } else {
-                byte[] orig = b;
-                b = new byte[b.length + bom.length];
-                System.arraycopy(bom, 0, b, 0, bom.length);
-                System.arraycopy(orig, 0, b, bom.length, orig.length);
-            }
+            byte[] orig = b;
+            b = new byte[b.length + bom.length];
+            System.arraycopy(bom, 0, b, 0, bom.length);
+            System.arraycopy(orig, 0, b, bom.length, orig.length);
         }
         
         XMLStreamReader sr = getReader(b);
