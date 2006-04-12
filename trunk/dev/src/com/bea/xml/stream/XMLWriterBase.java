@@ -127,33 +127,42 @@ public class XMLWriterBase
         // characters in their XML so we make a pass through the char
         // array and check.  If they're all good, we can call the
         // underlying Writer once with the entire char array.  If we find
-        // a bad character then we punt it to the slow routine.  So don't
-        // benchmark an XML document that has to be escaped.
+        // a bad character then we punt it to the slow routine.
         
-        boolean fastPath = true;
-        
-        for(int i=0, len=length; i<len; i++) {
+        int i = 0;
+
+        loop:
+        for(; i<length; i++) {
             char c = characters[i+start];
             switch(c) {
-                case '&':
-                case '<':
-                case '>':
-                case '\"':
-                    fastPath = false;
-                    break;
+            case '\"':
+                if (!isAttributeValue) { // no need to escape in regular content
+                    continue;
+                }
+            case '&':
+            case '<':
+            case '>':
+                break loop;
             }
-            if (c == 13 || c == 9 || (isAttributeValue  && c < 32 ) //crude ...
-                    || (!isAttributeValue && encoder != null && !encoder.canEncode(c)))
-            {
-                fastPath = false;
-                break;
+            if (c < 32) {
+                /* All non-space white space needs to be encoded in attribute
+                 * values; in normal text tabs and LFs can be left as is,
+                 * but everything else (including CRs) needs to be quoted
+                 */
+                if (isAttributeValue || (c != '\t' && c != '\n')) {
+                    break loop;
+                }
+            } else if (c > 127) { // Above ascii range?
+                if (encoder != null && !encoder.canEncode(c)) {
+                    break loop;
+                }
             }
         }
         
-        if(fastPath) {
-            write(characters,start,length);
-        } else {
+        if (i < length) { // slow path
             slowWriteCharacters(characters,start,length, isAttributeValue);
+        } else { // fast path
+            write(characters,start,length);
         }
     }
     
@@ -163,36 +172,42 @@ public class XMLWriterBase
                                      boolean isAttributeValue)
         throws XMLStreamException
     {
-        for (int i=0,len=length; i < len; i++) {
+        loop:
+        for (int i=0; i < length; i++) {
             final char c = chars[i+start];
             switch (c) {
-                case '&':
-                    write("&amp;");
-                    break;
-                case '<':
-                    write("&lt;");
-                    break;
-                case '>':
-                    write("&gt;");
-                    break;
-                case '\"':
-                    if (isAttributeValue) {
-                        write("&quot;");
-                    } else {
-                        write('\"');
-                    }
-                    break;
-                default:
-                    if (c == 13 || c == 9 || (isAttributeValue && c < 32)
-                            || (!isAttributeValue && encoder != null && !encoder.canEncode(c)))
-                    {
+            case '&':
+                write("&amp;");
+                continue loop;
+            case '<':
+                write("&lt;");
+                continue loop;
+            case '>':
+                write("&gt;");
+                continue loop;
+            case '\"':
+                if (isAttributeValue) {
+                    write("&quot;");
+                    continue loop;
+                }
+                break;
+            default:
+                if (c < 32) {
+                    if (isAttributeValue || (c != '\t' && c != '\n')) {
                         write("&#");
                         write(Integer.toString(c));
                         write(';');
-                    } else {
-                        write(c);
+                        continue loop;
                     }
+                } else if (c > 127 && encoder != null
+                           && !encoder.canEncode(c)) {
+                    write("&#");
+                    write(Integer.toString(c));
+                    write(';');
+                    continue loop;
+                }
             }
+            write(c);
         }
     }
     
