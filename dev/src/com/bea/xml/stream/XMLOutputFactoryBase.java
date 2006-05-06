@@ -14,6 +14,8 @@
  */
 package com.bea.xml.stream;
 
+import java.io.*;
+
 import java.util.Hashtable;
 import javax.xml.transform.Result;
 import javax.xml.stream.XMLOutputFactory;
@@ -28,18 +30,12 @@ import javax.xml.stream.XMLStreamException;
 public class XMLOutputFactoryBase 
   extends XMLOutputFactory
 {
-  ConfigurationContextBase config = 
-    new ConfigurationContextBase();
-
-  public static XMLOutputFactory newInstance() {
-    return XMLOutputFactory.newInstance();
-  }
+  ConfigurationContextBase config = new ConfigurationContextBase();
 
   public XMLStreamWriter createXMLStreamWriter(java.io.Writer stream) 
     throws XMLStreamException
   {
-    XMLWriterBase b = 
-      new XMLWriterBase(stream); 
+    XMLWriterBase b = new XMLWriterBase(stream); 
     b.setConfigurationContext(config);
     return b;
   }
@@ -47,7 +43,7 @@ public class XMLOutputFactoryBase
   public  XMLStreamWriter createXMLStreamWriter(java.io.OutputStream stream) 
     throws XMLStreamException
   {
-    return createXMLStreamWriter(new java.io.OutputStreamWriter(stream)); 
+      return createXMLStreamWriter(new BufferedWriter(new OutputStreamWriter(stream), 500)); 
   }
 
   public  XMLStreamWriter createXMLStreamWriter(java.io.OutputStream stream,
@@ -55,7 +51,7 @@ public class XMLOutputFactoryBase
     throws XMLStreamException
   {
     try {
-    return createXMLStreamWriter(new java.io.OutputStreamWriter(stream,encoding)); 
+        return createXMLStreamWriter(new BufferedWriter(new OutputStreamWriter(stream,encoding), 500)); 
     } catch (java.io.UnsupportedEncodingException uee) {
       throw new XMLStreamException("Unsupported encoding "+encoding,uee);
     }
