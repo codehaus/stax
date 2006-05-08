@@ -9,16 +9,14 @@ import javax.xml.stream.*;
  * Unit test suite that ensures that the 'segmented' text accessors
  * (multi-argument getTextCharacters) works as expected, with various
  * combinations of access lengths, and orderings.
+ *
+ * @author Tatu Saloranta
  */
 public class TestGetSegmentedText
     extends BaseStreamTest
 {
     static String sXmlInput = null;
     static String sExpResult = null;
-
-    public TestGetSegmentedText(String name) {
-        super(name);
-    }
 
     public void testCoalescingAutoEntity()
         throws Exception
@@ -122,98 +120,114 @@ public class TestGetSegmentedText
             // Let's test different input methods too:
             for (int j = 0; j < 3; ++j) {
 		
-		XMLInputFactory f = getFactory(ns, coalescing, autoEntity);
-		XMLStreamReader sr;
+                XMLInputFactory f = getFactory(ns, coalescing, autoEntity);
+                XMLStreamReader sr;
 		
-		switch (j) {
-		case 0: // simple StringReader:
-		    sr = constructStreamReader(f, sXmlInput);
-		    break;
-		case 1: // via InputStream and auto-detection
+                switch (j) {
+                case 0: // simple StringReader:
+                    sr = constructStreamReader(f, sXmlInput);
+                    break;
+                case 1: // via InputStream and auto-detection
                     /* It shouldn't really contain anything outside ISO-Latin;
                      * however, detection may be tricky.. so let's just
                      * test with UTF-8, for now?
                      */
-		    {
-			ByteArrayInputStream bin = new ByteArrayInputStream
-			    (sXmlInput.getBytes("UTF-8"));
-			sr = f.createXMLStreamReader(bin);
-		    }
-		    break;
-		case 2: // explicit UTF-8 stream
-		    {
-			ByteArrayInputStream bin = new ByteArrayInputStream
-			    (sXmlInput.getBytes("UTF-8"));
-			Reader br = new InputStreamReader(bin, "UTF-8");
-			sr = f.createXMLStreamReader(br);
-		    }
-		    break;
-		default: throw new Error("Internal error");
-		}
+                    {
+                        ByteArrayInputStream bin = new ByteArrayInputStream
+                            (sXmlInput.getBytes("UTF-8"));
+                        sr = f.createXMLStreamReader(bin);
+                    }
+                    break;
+                case 2: // explicit UTF-8 stream
+                    {
+                        ByteArrayInputStream bin = new ByteArrayInputStream
+                            (sXmlInput.getBytes("UTF-8"));
+                        Reader br = new InputStreamReader(bin, "UTF-8");
+                        sr = f.createXMLStreamReader(br);
+                    }
+                    break;
+                default: throw new Error("Internal error");
+                }
 		
-		char[] cbuf;
+                char[] cbuf;
 
-		if (sz == 0) {
-		    cbuf = new char[23];
-		} else if (sz == 1) {
-		    cbuf = new char[384];
-		} else {
-		    cbuf = new char[4005];
-		}
+                if (sz == 0) {
+                    cbuf = new char[23];
+                } else if (sz == 1) {
+                    cbuf = new char[384];
+                } else {
+                    cbuf = new char[4005];
+                }
 
-		assertEquals(START_ELEMENT, sr.next());
-		int segCount = 0;
-		int totalLen = sExpResult.length();
-		StringBuffer totalBuf = new StringBuffer(totalLen);
+                assertEquals(START_ELEMENT, sr.next());
+                int segCount = 0;
+                int totalLen = sExpResult.length();
+                StringBuffer totalBuf = new StringBuffer(totalLen);
 
-		/* Ok; for each segment let's test separately first,
-		 * and then combine all the results together as well
-		 */
-		while (sr.next() == CHARACTERS) {
-		    // Where are we within the whole String?
-		    int segOffset = totalBuf.length();
+                /* Ok; for each segment let's test separately first,
+                 * and then combine all the results together as well
+                 */
+                while (sr.next() == CHARACTERS) {
+                    // Where are we within the whole String?
+                    int segOffset = totalBuf.length();
 
-		    ++segCount;
-		    // Should not get multiple when coalescing...
-		    if (coalescing && segCount > 1) {
-			fail("Didn't expect multiple CHARACTERS segments when coalescing: first segment contained "+segOffset+" chars from the whole expected "+totalLen+" chars");
-		    }
-		    StringBuffer sb = new StringBuffer();
-		    int count;
-		    int offset = 0;
-		    int readCount = 0;
+                    ++segCount;
+                    // Should not get multiple when coalescing...
+                    if (coalescing && segCount > 1) {
+                        fail("Didn't expect multiple CHARACTERS segments when coalescing: first segment contained "+segOffset+" chars from the whole expected "+totalLen+" chars");
+                    }
+                    StringBuffer sb = new StringBuffer();
+                    int count;
+                    int offset = 0;
+                    int readCount = 0;
 
-		    while ((count = sr.getTextCharacters(offset, cbuf, 0, cbuf.length)) > 0) {
-                ++readCount;
-                sb.append(cbuf, 0, count);
-                offset += count;
-		    }
-		    int expLen = sr.getTextLength();
+                    while ((count = sr.getTextCharacters(offset, cbuf, 0, cbuf.length)) > 0) {
+                        ++readCount;
+                        sb.append(cbuf, 0, count);
+                        offset += count;
+                    }
+                    int expLen = sr.getTextLength();
 
-		    // Sanity check #1: should get matching totals
-		    assertEquals
-			("Expected segment #"+segOffset+" (one-based; read with "+readCount+" reads) to have length of "
-			 +expLen+"; reported to have gotten just "+offset+" chars",
-			 expLen, offset);
+                    // Sanity check #1: should get matching totals
+                    assertEquals
+                        ("Expected segment #"+segOffset+" (one-based; read with "+readCount+" reads) to have length of "
+                         +expLen+"; reported to have gotten just "+offset+" chars",
+                         expLen, offset);
 
-		    // Sanity check #2: and string buf should have it too
-		    assertEquals
-			("Expected segment #"+segOffset+" (one-based; read with "+readCount+" reads) to get "
-			 +expLen+" chars; StringBuffer only has "+sb.length(),
-			 expLen, sb.length());
+                    // Sanity check #2: and string buf should have it too
+                    assertEquals
+                        ("Expected segment #"+segOffset+" (one-based; read with "+readCount+" reads) to get "
+                         +expLen+" chars; StringBuffer only has "+sb.length(),
+                         expLen, sb.length());
 		    
-		    totalBuf.append(sb);
-		}
-		assertTokenType(END_ELEMENT, sr.getEventType());
-
-		// Ok; all gotten, does it match?
-		assertEquals("Expected total of "+totalLen+" chars, got "+totalBuf.length(),
-			     sExpResult.length(), totalBuf.length());
-
-		// Lengths are ok,  but how about content?
-		assertEquals(sExpResult, totalBuf.toString());
+                    totalBuf.append(sb);
+                }
+                assertTokenType(END_ELEMENT, sr.getEventType());
         
-		sr.close();
+                // Ok; all gotten, does it match?
+                assertEquals("Expected total of "+totalLen+" chars, got "+totalBuf.length(),
+                             sExpResult.length(), totalBuf.length());
+
+                // Lengths are ok,  but how about content?
+                if (!sExpResult.equals(totalBuf.toString())) {
+                    // TODO: indicate where they differ?
+                    String str1 = sExpResult;
+                    String str2 = totalBuf.toString();
+                    int len = str1.length();
+                    int i = 0;
+                    char c1 = 'x', c2 = 'x';
+
+                    for (; i < len; ++i) {
+                        c1 = str1.charAt(i);
+                        c2 = str2.charAt(i);
+                        if (c1 != c2) {
+                            break;
+                        }
+                    }
+                    fail("Expected Strings to equal; differed at character #"+i+" (length "+len+" was correct); expected '"+c1+"' ("+((int) c1)+"), got '"+c2+"' ("+((int) c2)+")");
+                    
+                    sr.close();
+                }
             }
         }
     }
