@@ -14,6 +14,9 @@ public class TestLinefeeds
     final String IN_SPACES2  = "\r\r \n \r";
     final String OUT_SPACES2 = "\n\n \n \n";
 
+    final String IN_SPACES3  = "  \r\n  \r\n \r\n";
+    final String OUT_SPACES3 = "  \n  \n \n";
+
     final String IN_MIXED1  = "Something\nwonderful (?)\rhas...\r\r\n happened ";
     final String OUT_MIXED1 = "Something\nwonderful (?)\nhas...\n\n happened ";
 
@@ -155,7 +158,8 @@ public class TestLinefeeds
          * and trim such white space out...
          */
         final String contents = "<root><?target  ["
-            +IN_SPACES1+IN_SPACES2+"]?></root>";
+            +IN_SPACES1+IN_SPACES2+"]?>"
+            +"<?target ["+IN_SPACES3+"]?></root>";
 
         /* There really shouldn't be any difference between coalescing/non
          * or namespace aware/non-ns modes, let's try out the combinations
@@ -183,6 +187,16 @@ public class TestLinefeeds
 
             assertEquals(printable(exp), printable(data));
 
+            // And some more white space + lf handling:
+            assertEquals(PROCESSING_INSTRUCTION, sr.next());
+            assertEquals("target", sr.getPITarget());
+
+            data = sr.getPIData();
+            exp = "["+OUT_SPACES3+"]";
+
+System.out.println("PI: exp = '"+printable(exp)+"', act = '"+printable(data)+"'"); 
+            assertEquals(printable(exp), printable(data));
+
             // Plus, should get the close element too
             assertEquals(END_ELEMENT, sr.next());
             assertEquals("root", sr.getLocalName());
@@ -199,6 +213,7 @@ public class TestLinefeeds
         final String contents = "<root>"
             +"<!--"+IN_SPACES1+"-->"
             +"<!--"+IN_SPACES2+"-->"
+            +"<!--"+IN_SPACES3+"-->"
             +"<!--"+IN_MIXED1+"-->"
             +"</root>";
 
@@ -224,6 +239,8 @@ public class TestLinefeeds
             assertEquals(printable(OUT_SPACES1), printable(sr.getText()));
             assertEquals(COMMENT, sr.next());
             assertEquals(printable(OUT_SPACES2), printable(sr.getText()));
+            assertEquals(COMMENT, sr.next());
+            assertEquals(printable(OUT_SPACES3), printable(sr.getText()));
             assertEquals(COMMENT, sr.next());
             assertEquals(printable(OUT_MIXED1), printable(sr.getText()));
 
