@@ -2978,8 +2978,10 @@ public class MXParser
                         ch = '\n';
                     } else if(ch == '\n') { // part of \r\n?
                         if (skipLfAt == at) { // yes, let's skip
-                            anySkipped = true;
-                            posEnd = pos-1; // to replace this \n next time
+                            if (!anySkipped) {
+                                anySkipped = true;
+                                posEnd = pos-1; // to replace this \n next time
+                            }
                             continue;
                         }
                     }
@@ -3128,8 +3130,10 @@ public class MXParser
                         ch = '\n';
                     } else if(ch == '\n') { // part of \r\n?
                         if (skipLfAt == at) { // yes, let's skip
-                            anySkipped = true;
-                            posEnd = pos-1; // to replace this \n next time
+                            if (!anySkipped) {
+                                anySkipped = true;
+                                posEnd = pos-1; // to replace this \n next time
+                            }
                             continue;
                         }
                     }
