@@ -6,7 +6,7 @@
   <!-- for details see src/build.xml -->
 
   <!-- Ref. impl properties -->
-  <property name="version" value="1.2.0_rc2"/>
+  <property name="version" value="1.2.0"/>
   <property name="build_dir" value="build"/>
   <property name="class_dir" value="${build_dir}/classes"/>
   <property name="javadoc_dir" value="${build_dir}/javadoc"/>
@@ -33,7 +33,7 @@
   					javax/xml/stream/**/*.java"/>
 
   <!-- Unit test (StaxTest) package properties -->
-  <property name="test_version" value="1.0rc1"/>
+  <property name="test_version" value="1.0"/>
   <property name="test_class_dir" value="${build_dir}/test-classes"/>
   <property name="test_results_dir" value="${build_dir}/test-results"/>
   <property name="test_jar" value="staxtest_${test_version}.jar"/>
