@@ -636,14 +636,23 @@ public class XMLWriterBase
         throws XMLStreamException
     {
         closeStartElement();
-        writeCharactersInternal(text.toCharArray(),0,text.length(),false);
+        char[] ch = text.toCharArray();
+        writeCharacters(ch, 0, ch.length);
     }
     
     public void writeCharacters(char[] text, int start, int len)
         throws XMLStreamException
     {
         closeStartElement();
-        writeCharactersInternal(text,start,len,false);
+        /* 21-Jun-2006, TSa: Entities are not allowed in prolog/epilog;
+         *   also, only white space allowed. Thus, let's not try to
+         *   quote anything in these cases
+         */
+        if (prefixStack.isEmpty()) {
+            write(text, start, len);
+        } else {
+            writeCharactersInternal(text,start,len,false);
+        }
     }
     
     public String getPrefix(String uri)
