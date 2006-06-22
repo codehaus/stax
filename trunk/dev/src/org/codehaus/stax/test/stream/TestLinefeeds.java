@@ -193,8 +193,6 @@ public class TestLinefeeds
 
             data = sr.getPIData();
             exp = "["+OUT_SPACES3+"]";
-
-System.out.println("PI: exp = '"+printable(exp)+"', act = '"+printable(data)+"'"); 
             assertEquals(printable(exp), printable(data));
 
             // Plus, should get the close element too

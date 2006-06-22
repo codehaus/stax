@@ -17,6 +17,45 @@ public class TestSimpleWriter
 {
     final String ISO_LATIN_ENCODING = "ISO-8859-1";
 
+    public void testProlog()
+        throws IOException, XMLStreamException
+    {
+        StringWriter strw = new StringWriter();
+        XMLStreamWriter w = getNonRepairingWriter(strw);
+
+        w.writeStartDocument();
+        w.writeCharacters("\r\n  ");
+        w.writeEmptyElement("test");
+        w.writeCharacters("  \r");
+        w.writeEndDocument();
+        w.close();
+        
+        /* And then let's parse and verify it all. But are we guaranteed
+         * to get SPACE? Let's not assume that
+         */
+        //System.err.println("DEBUG: ["+strw.toString()+"]");
+
+        XMLStreamReader sr = constructNsStreamReader(strw.toString(), true);
+        assertTokenType(START_DOCUMENT, sr.getEventType());
+
+        int type = sr.next();
+        if (type != START_ELEMENT) {
+            assertTokenType(SPACE, type);
+            assertEquals("\n  ", getAndVerifyText(sr));
+            assertTokenType(START_ELEMENT, sr.next());
+        }
+        assertEquals("test", sr.getLocalName());
+        assertTokenType(END_ELEMENT, sr.next());
+        assertEquals("test", sr.getLocalName());
+        // Another SPACE?
+        type = sr.next();
+        if (type != END_DOCUMENT) {
+            assertTokenType(SPACE, type);
+            assertEquals("  \n", getAndVerifyText(sr));
+            assertTokenType(END_DOCUMENT, sr.next());
+        }
+    }
+
     public void testCData()
         throws IOException, XMLStreamException
     {
