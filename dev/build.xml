@@ -6,13 +6,17 @@
   <!-- for details see src/build.xml -->
 
   <!-- Ref. impl properties -->
-  <property name="version" value="1.2.0"/>
+
+  <property name="version" value="1.2.1"/>
+<!-- Should we use "-dev" suffix or not?
+  <property name="version" value="1.2.1-dev"/>
+-->
   <property name="build_dir" value="build"/>
+  <property name="src_dir" value="src"/>
   <property name="class_dir" value="${build_dir}/classes"/>
   <property name="javadoc_dir" value="${build_dir}/javadoc"/>
-  <property name="jar_ri" value="${build_dir}/stax-${version}-dev.jar"/>
-  <property name="jar_src" value="${build_dir}/stax-src-${version}-dev.zip"/>  
-  <property name="src" value="src"/>
+  <property name="jar_ri" value="${build_dir}/stax-${version}.jar"/>
+  <property name="jar_src" value="${build_dir}/stax-src-${version}.zip"/>  
   <property name="topdirs" value="com/bea/xml/stream/*.java,
                                        com/wutka/dtd/*.java,
                                        com/bea/xml/stream/samples/*.java,
@@ -81,7 +85,6 @@
       </classpath>
     </javac>
     
-
     <jar jarfile="${jar_api}">
       <!-- Let's add bit more information into jar... like version -->
       <manifest>
@@ -99,12 +102,19 @@
         "/>
     </jar>
 
+    <!-- Also, let's generate the pom for maven -->
+    <copy file="${src_dir}/maven/stax-api.pom" tofile="${build_dir}/stax-api-${api_version}.pom">
+            <filterset>
+              <filter token="IMPL_VERSION" value="${version}" />
+              <filter token="API_VERSION" value="${api_version}" />
+            </filterset>
+     </copy>
   </target>
 
   <!-- Main Ref. Impl. compilation: -->
   <target name="compile" depends="init,api">
-    <!--javac srcdir="${src}:${api_src_dir}"-->
-    <javac srcdir="${src}"
+    <!--javac srcdir="${src_dir}:${api_src_dir}"-->
+    <javac srcdir="${src_dir}"
       source="1.2" target="1.2"
       includes="${topdirs}"
       destdir="${class_dir}"
@@ -117,8 +127,8 @@
   </target>
 
   <target name="samples" depends="compile">
-    <!--javac srcdir="${src}:${api_src_dir}"-->
-    <javac srcdir="${src}" source="1.2" target="1.2"
+    <!--javac srcdir="${src_dir}:${api_src_dir}"-->
+    <javac srcdir="${src_dir}" source="1.2" target="1.2"
       destdir="${class_dir}" debug="true">
       <include name="samples/*.java" />
       <classpath>
@@ -136,7 +146,7 @@
     <mkdir dir="${test_results_dir}/xml"/>
   </target>
   <target name="test_compile" depends="api, test_init">
-    <javac srcdir="${src}" includes="org/codehaus/stax/test/**/*.java"
+    <javac srcdir="${src_dir}" includes="org/codehaus/stax/test/**/*.java"
       source="1.2" target="1.2"
       destdir="${test_class_dir}"
       debug="true">
@@ -176,6 +186,13 @@
          com/bea/xml/stream/reader/,
          com/bea/xml/stream/events/"/>
     </jar>
+    <!-- Also, let's generate the pom for maven -->
+    <copy file="${src_dir}/maven/stax.pom" tofile="${build_dir}/stax-${version}.pom">
+        <filterset>
+              <filter token="IMPL_VERSION" value="${version}" />
+              <filter token="API_VERSION" value="${api_version}" />
+        </filterset>
+    </copy>
   </target>
 
   <!-- Package the source code of the ref. impl -->
@@ -183,17 +200,17 @@
     <jar jarfile="${jar_src}">
       <fileset dir="."
         includes=
-        "${src}/com/wutka/dtd/,
-         ${src}/com/bea/xml/stream/,
-         ${src}/com/bea/xml/stream/samples/,
-         ${src}/com/bea/xml/stream/util/,
-         ${src}/com/bea/xml/stream/filters/,
-         ${src}/com/bea/xml/stream/reader/,
-         ${src}/com/bea/xml/stream/events/,
-         ${src}/org/codehaus/stax/test/**,
-         ${src}/javax/**,
-         ${src}/samples/**,
-         ${src}/test/**"/>
+        "${src_dir}/com/wutka/dtd/,
+         ${src_dir}/com/bea/xml/stream/,
+         ${src_dir}/com/bea/xml/stream/samples/,
+         ${src_dir}/com/bea/xml/stream/util/,
+         ${src_dir}/com/bea/xml/stream/filters/,
+         ${src_dir}/com/bea/xml/stream/reader/,
+         ${src_dir}/com/bea/xml/stream/events/,
+         ${src_dir}/org/codehaus/stax/test/**,
+         ${src_dir}/javax/**,
+         ${src_dir}/samples/**,
+         ${src_dir}/test/**"/>
       <fileset dir="."
         includes=
         "build.xml,
@@ -206,7 +223,7 @@
     <!-- Build a dirpath that contains just the "source" tree -->
     <javadoc windowtitle="${ProjectName}"
          destdir="${javadoc_dir}" author="true"  version="true">
-      <packageset dir="${src}" defaultexcludes="yes">
+      <packageset dir="${src_dir}" defaultexcludes="yes">
         <include name="com/bea/**" />
       </packageset>
     </javadoc>
@@ -231,7 +248,7 @@
   <!-- And test suite sources -->
   <target name="test_src_zip">
     <zip destfile="${test_src_zip}">
-      <fileset dir="${src}" includes="org/codehaus/stax/test/" />
+      <fileset dir="${src_dir}" includes="org/codehaus/stax/test/" />
     </zip>
   </target>
 

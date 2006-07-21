@@ -2,9 +2,9 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>stax</groupId>
   <artifactId>stax</artifactId>
-  <name>StAX</name>
+  <name>StAX reference implementation</name>
   <version>@IMPL_VERSION@</version>
-  <description>StAX is the reference implementation of the StAX API</description>
+  <description>This is the reference implementation of the StAX API</description>
   <url>http://stax.codehaus.org/</url>
   <issueManagement>
     <url>http://jira.codehaus.org/browse/STAX</url>
