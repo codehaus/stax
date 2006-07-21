@@ -930,12 +930,16 @@ public class MXParser
         int currentDepth = depth;
         int end = getNamespaceCount(currentDepth); //eventType == XMLStreamConstants.END_ELEMENT ? elNamespaceCount[ depth + 1 ] : namespaceEnd;
         int newpos = pos + elNamespaceCount[currentDepth-1];
-        if(pos < end) {
-            return namespaceUri[ newpos ];
-        } else {
+        if(pos >= end) {
             throw new ArrayIndexOutOfBoundsException(
-                "position "+pos+" exceedded number of available namespaces "+end);
+                "position "+pos+" exceedded number of namespaces declarad for the current element ("+end+")");
         }
+        String uri = namespaceUri[ newpos ];
+        /* 21-Jul-2006, TSa: As per discussions on stax_builders list, the
+         *   URI returned for the namespace declaration really should be the
+         *   exact lexical value, instead of null.
+         */
+        return (uri == null) ? "" : uri;
     }
     
     public String getNamespaceURI( String prefix )

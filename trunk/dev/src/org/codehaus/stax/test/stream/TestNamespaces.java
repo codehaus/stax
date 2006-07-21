@@ -431,6 +431,32 @@ public class TestNamespaces
         assertEquals(END_ELEMENT, sr.next());
     }
 
+    /**
+     * This test verifies that "no namespace" is correctly reported. At
+     * this point definition of correct handling is not complete, so
+     * it'll only test cases for which there is clear consensus.
+     */
+    public void testNoNamespace()
+        throws XMLStreamException
+    {
+        String XML = "<root xmlns=''>xyz</root>";
+        XMLStreamReader sr = getNsReader(XML, true);
+        assertEquals(START_ELEMENT, sr.next());
+        assertEquals(1, sr.getNamespaceCount());
+
+        /* 21-Jul-2006, TSa:
+         * URI returned for namespace declarations (different from URI
+         * of the element, or attributes) should be the lexical value,
+         * that is, for "no namespace" it should be "", not null.
+         */
+        assertEquals("", sr.getNamespaceURI(0));
+
+        /* Too bad there's no consensus on what actual element URI
+         * should be: both null and "" have their supporters... ;-)
+         */
+        sr.close();
+    }
+
     /*
     ////////////////////////////////////////
     // Private methods, shared test code
