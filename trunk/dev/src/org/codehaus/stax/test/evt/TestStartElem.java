@@ -195,23 +195,28 @@ public class TestStartElem
         assertTokenType(START_ELEMENT, evt.getEventType());
         StartElement se = evt.asStartElement();
 
-	assertAttr(se, "", "attr1", "value1");
-	assertAttr(se, "ns:attrs", "attr2", "value2");
-	assertAttr(se, "", "attr2", null);
-	assertAttr(se, "ns:attrs", "attr1", null);
+        assertAttr(se, "", "attr1", "value1");
+        // ... and same without ns uri being passed
+        assertNqAttr(se, "attr1", "value1");
+        assertAttr(se, "ns:attrs", "attr2", "value2");
+        assertAttr(se, "", "attr2", null);
+        assertNqAttr(se, "attr2", null);
+        assertAttr(se, "ns:attrs", "attr1", null);
 
         evt = er.nextEvent();
         assertTokenType(START_ELEMENT, evt.getEventType());
         se = evt.asStartElement();
 
-	// One we should find (note: def. ns is not used!)
-	assertAttr(se, "", "attr", "x");
-
-	// and then ones that aren't there...
-	assertAttr(se, "url:ns2", "attr", null);
-	assertAttr(se, "url:ns2", "x", null);
-	assertAttr(se, "ns:foo", "foobar", null);
-	assertAttr(se, "", "attr1", null);
+        // One we should find (note: def. ns is not used!)
+        assertAttr(se, "", "attr", "x");
+        assertNqAttr(se, "attr", "x");
+        
+        // and then ones that aren't there...
+        assertAttr(se, "url:ns2", "attr", null);
+        assertAttr(se, "url:ns2", "x", null);
+        assertAttr(se, "ns:foo", "foobar", null);
+        assertAttr(se, "", "attr1", null);
+        assertNqAttr(se, "attr1", null);
 
         assertTokenType(END_ELEMENT, er.nextEvent().getEventType());
         assertTokenType(END_ELEMENT, er.nextEvent().getEventType());
@@ -238,16 +243,30 @@ public class TestStartElem
     private void assertAttr(StartElement se, String nsURI, String localName,
 			    String expValue)
     {
-	QName qn = new QName(nsURI, localName);
-	Attribute attr = se.getAttributeByName(qn);
+        QName qn = new QName(nsURI, localName);
+        Attribute attr = se.getAttributeByName(qn);
+        
+        if (expValue == null) {
+            assertNull("Should not find attribute '"+qn+"'", attr);
+        } else {
+            assertNotNull("Should find attribute '"+qn+"' but got null", attr);
+            assertEquals("Attribute '"+qn+"' has unexpected value",
+                         expValue, attr.getValue());
+        }
+    }
 
-	if (expValue == null) {
-	    assertNull("Should not find attribute '"+qn+"'", attr);
-	} else {
-	    assertNotNull("Should find attribute '"+qn+"' but got null", attr);
-	    assertEquals("Attribute '"+qn+"' has unexpected value",
-			 expValue, attr.getValue());
-	}
+    private void assertNqAttr(StartElement se, String localName, String expValue)
+    {
+        QName qn = new QName(localName);
+        Attribute attr = se.getAttributeByName(qn);
+        
+        if (expValue == null) {
+            assertNull("Should not find attribute '"+qn+"'", attr);
+        } else {
+            assertNotNull("Should find attribute '"+qn+"' but got null", attr);
+            assertEquals("Attribute '"+qn+"' has unexpected value",
+                         expValue, attr.getValue());
+        }
     }
 
     private XMLEventReader getReader(String contents, boolean nsAware,

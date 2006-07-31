@@ -1,6 +1,7 @@
 package org.codehaus.stax.test.evt;
 
 import java.io.StringWriter;
+import java.util.*;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.*;
@@ -277,6 +278,57 @@ public class TestEventFactory
         assertEquals(LOCALNAME, n.getLocalPart());
         assertEquals(PREFIX, n.getPrefix());
         assertEquals(URI, n.getNamespaceURI());
+    }
+
+    public void testStartElementWithAttrs()
+        throws XMLStreamException
+    {
+        final String NS_URI = "http://foo";
+
+        XMLEventFactory f = getEventFactory();
+        ArrayList attrs = new ArrayList();
+        Attribute attr1 = f.createAttribute(new QName("attr1"), "value");
+        testEventWritability(attr1);
+        attrs.add(attr1);
+        checkEventIsMethods(ATTRIBUTE, attr1);
+        attrs.add(f.createAttribute(new QName(NS_URI, "attr2"), "value2"));
+
+        // Ok, so let's create the start element, and check it's ok:
+        StartElement se = f.createStartElement(new QName("root"),
+                                               attrs.iterator(), null);
+        testEventWritability(se);
+        checkEventIsMethods(START_ELEMENT, se);
+        QName n = se.getName();
+        assertNotNull(n);
+        assertEquals("root", n.getLocalPart());
+
+        // Then let's check both existing attrs:
+        Attribute resultAttr = se.getAttributeByName(new QName("attr1"));
+        assertNotNull(resultAttr);
+        n = resultAttr.getName();
+        assertEquals("attr1", n.getLocalPart());
+        assertEquals("value", resultAttr.getValue());
+
+        resultAttr = se.getAttributeByName(new QName(NS_URI, "attr2"));
+        assertNotNull(resultAttr);
+        n = resultAttr.getName();
+        assertEquals("attr2", n.getLocalPart());
+        assertEquals("value2", resultAttr.getValue());
+
+        // Then non-existing ones (switch ns URIs around)
+        assertNull(se.getAttributeByName(new QName(NS_URI, "attr1")));
+        assertNull(se.getAttributeByName(new QName("attr2")));
+
+        // and finally raw count
+        Iterator it = se.getAttributes();
+        assertNotNull(it);
+        int count = 0;
+
+        while (it.hasNext()) {
+            Attribute a = (Attribute) it.next();
+            ++count;
+        }
+        assertEquals(2, count);
     }
 
     /*
