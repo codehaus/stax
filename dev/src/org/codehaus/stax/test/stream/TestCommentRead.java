@@ -18,11 +18,11 @@ public class TestCommentRead
         throws XMLStreamException
     {
         String XML = "<!-- <comment> --><root />  ";
-        streamThrough(getReader(XML, true, true));
-        streamThrough(getReader(XML, false, true));
+        streamThrough(getReader(XML, true));
+        streamThrough(getReader(XML, false));
         XML = "  <root>  </root>  <!-- hee&haw - - -->";
-        streamThrough(getReader(XML, true, true));
-        streamThrough(getReader(XML, false, true));
+        streamThrough(getReader(XML, true));
+        streamThrough(getReader(XML, false));
     }
 
     /**
@@ -48,15 +48,14 @@ public class TestCommentRead
         String XML2 = "<root><!  -- no spaces either--></root>";
         String XML3 = "<root><!- - no spaces either--></root>";
 
-        for (int i = 0; i < 3; ++i) {
+        for (int i = 0; i < 1; ++i) {
             boolean ns = (i & 1) != 0;
-            boolean dtd = (i & 2) != 0;
 
-            streamThroughFailing(getReader(XML, ns, dtd),
+            streamThroughFailing(getReader(XML, ns),
                                  "invalid comment content (embedded \"--\")");
-            streamThroughFailing(getReader(XML2, ns, dtd),
+            streamThroughFailing(getReader(XML2, ns),
                                  "malformed comment (extra space)");
-            streamThroughFailing(getReader(XML3, ns, dtd),
+            streamThroughFailing(getReader(XML3, ns),
                                  "malformed comment (extra space)");
         }
     }
@@ -66,11 +65,10 @@ public class TestCommentRead
     {
         String XML = "<root><!-- Comment that won't end </root>";
 
-        for (int i = 0; i < 3; ++i) {
+        for (int i = 0; i < 1; ++i) {
             boolean ns = (i & 1) != 0;
-            boolean dtd = (i & 2) != 0;
 
-            streamThroughFailing(getReader(XML, ns, dtd),
+            streamThroughFailing(getReader(XML, ns),
                                  "invalid comment (unfinished)");
         }
     }
@@ -92,7 +90,7 @@ public class TestCommentRead
             +"]>"
             + "<root>&comm;   --></root>";
 
-        XMLStreamReader sr = getReader(XML, true, true);
+        XMLStreamReader sr = getReader(XML, true);
         try {
             // May get an exception when parsing entity declaration... ?
             // (since it contains partial token)
@@ -130,7 +128,7 @@ public class TestCommentRead
 +" <!-- comments in DTD --> <?proc instr too?>\n"
 +"]><root><!--"+COMMENT1+"--></root>"
             ;
-        XMLStreamReader sr = getReader(XML, true, true);
+        XMLStreamReader sr = getReader(XML, true);
         assertTokenType(COMMENT, sr.next());
         assertEquals(COMMENT1, getAndVerifyText(sr));
         assertTokenType(PROCESSING_INSTRUCTION, sr.next());
@@ -152,7 +150,7 @@ public class TestCommentRead
         throws XMLStreamException
     {
         XMLStreamReader sr = getReader("<!--comment & <content>--><root/>",
-                                       nsAware, dtd);
+                                       nsAware);
         assertEquals(COMMENT, sr.next());
 
         // Type info
@@ -227,14 +225,12 @@ public class TestCommentRead
     ////////////////////////////////////////
      */
 
-    private XMLStreamReader getReader(String contents, boolean nsAware,
-                                      boolean dtd)
+    private XMLStreamReader getReader(String contents, boolean nsAware)
         throws XMLStreamException
     {
         XMLInputFactory f = getInputFactory();
         setCoalescing(f, false); // shouldn't really matter
         setNamespaceAware(f, nsAware);
-        setSupportDTD(f, dtd);
         setValidating(f, false);
         return constructStreamReader(f, contents);
     }
