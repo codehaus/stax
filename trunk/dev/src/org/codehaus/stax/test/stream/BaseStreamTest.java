@@ -1,5 +1,6 @@
 package org.codehaus.stax.test.stream;
 
+import javax.xml.namespace.QName;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -65,6 +66,7 @@ public class BaseStreamTest
     {
         int result = 0;
 
+        assertNotNull(sr);
         while (sr.hasNext()) {
             int type = sr.next();
             result += type;
@@ -75,7 +77,9 @@ public class BaseStreamTest
                 result += getAndVerifyText(sr).hashCode();
             }
             if (sr.hasName()) {
-                result += sr.getName().hashCode();
+                QName n = sr.getName();
+                assertNotNull(n);
+                result += n.hashCode();
             }
         }
 
