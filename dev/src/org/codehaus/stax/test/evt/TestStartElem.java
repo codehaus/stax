@@ -34,6 +34,7 @@ public class TestStartElem
         // Ok, got the start element... is it ok?
         assertTrue(evt.isStartElement());
         StartElement se = evt.asStartElement();
+        testEventWritability(se);
 
         NamespaceContext nsCtxt = se.getNamespaceContext();
 
@@ -80,6 +81,7 @@ public class TestStartElem
         XMLEvent evt = er.nextEvent();
         assertTokenType(START_ELEMENT, evt.getEventType());
         StartElement se = evt.asStartElement();
+        testEventWritability(se);
 
         // Let's first check that it has 1 declaration:
         assertEquals(0, countElements(se.getNamespaces()));
@@ -98,8 +100,11 @@ public class TestStartElem
         nsCtxt = se.getNamespaceContext();
         assertEquals("x", nsCtxt.getNamespaceURI(""));
         assertEquals("", nsCtxt.getPrefix("x"));
+        testEventWritability(se);
 
-        assertTrue(er.nextEvent().isEndElement());
+        evt = er.nextEvent();
+        assertTrue(evt.isEndElement());
+        testEventWritability(evt);
 
         // Ok, branch:
         evt = er.nextEvent();
@@ -112,6 +117,7 @@ public class TestStartElem
         assertEquals("b", nsCtxt.getNamespaceURI("a"));
         assertEquals("x", nsCtxt.getPrefix("url"));
         assertEquals("url", nsCtxt.getNamespaceURI("x"));
+        testEventWritability(se);
 
         // second leaf
         evt = er.nextEvent();
