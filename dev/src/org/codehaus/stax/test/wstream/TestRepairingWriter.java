@@ -251,4 +251,84 @@ public class TestRepairingWriter
 
         assertTokenType(END_DOCUMENT, sr.next(), sr);
     }
+
+    /**
+     * Although repairing writers are allowed to output any number of
+     * namespace declarations they want to, let's still check that
+     * unnecessary ones are not output in simple cases. While doing
+     * that is not strictly an error, it seems reasonable fail the
+     * test, to let implementors know about sub-optimal behavior.
+     */
+    public void testOptimalDefaultNsDecls()
+        throws IOException, XMLStreamException
+    {
+        StringWriter strw = new StringWriter();
+        XMLStreamWriter w = getRepairingWriter(strw);
+        final String URL_P1 = "http://p1.org";
+
+        w.writeStartDocument();
+        // Let's try to enforce using of the default ns by passing empty prefix
+        // (writer is not required to honor that request though)
+        w.writeStartElement("", "test", URL_P1);
+        w.writeStartElement("", "leaf", URL_P1);
+        w.writeEndElement();
+        w.writeEndElement();
+        w.writeEndDocument();
+        w.close();
+
+//System.err.println("DEBUG: doc = '"+strw+"'");
+        // And then let's parse and verify it all:
+        XMLStreamReader sr = constructNsStreamReader(strw.toString());
+        assertTokenType(START_DOCUMENT, sr.getEventType(), sr);
+
+        // root element
+        assertTokenType(START_ELEMENT, sr.next(), sr);
+        assertEquals("test", sr.getLocalName());
+        assertEquals(URL_P1, sr.getNamespaceURI());
+        assertEquals(1, sr.getNamespaceCount());
+        assertEquals(URL_P1, sr.getNamespaceURI(0));
+
+        // leaf: should be able to use parent's namespace decl
+        assertTokenType(START_ELEMENT, sr.next(), sr);
+        assertEquals("leaf", sr.getLocalName());
+        assertEquals(URL_P1, sr.getNamespaceURI());
+        assertEquals(0, sr.getNamespaceCount());
+
+        sr.close();
+    }
+
+    public void testOptimalNonDefaultNsDecls()
+        throws IOException, XMLStreamException
+    {
+        StringWriter strw = new StringWriter();
+        XMLStreamWriter w = getRepairingWriter(strw);
+        final String URL_P1 = "http://p1.org";
+
+        w.writeStartDocument();
+        w.writeStartElement(URL_P1, "test");
+        w.writeStartElement(URL_P1, "leaf");
+        w.writeEndElement();
+        w.writeEndElement();
+        w.writeEndDocument();
+        w.close();
+
+        // And then let's parse and verify it all:
+        XMLStreamReader sr = constructNsStreamReader(strw.toString());
+        assertTokenType(START_DOCUMENT, sr.getEventType(), sr);
+
+        // root element
+        assertTokenType(START_ELEMENT, sr.next(), sr);
+        assertEquals("test", sr.getLocalName());
+        assertEquals(URL_P1, sr.getNamespaceURI());
+        assertEquals(1, sr.getNamespaceCount());
+        assertEquals(URL_P1, sr.getNamespaceURI(0));
+
+        // leaf: should be able to use parent's namespace decl
+        assertTokenType(START_ELEMENT, sr.next(), sr);
+        assertEquals("leaf", sr.getLocalName());
+        assertEquals(URL_P1, sr.getNamespaceURI());
+        assertEquals(0, sr.getNamespaceCount());
+
+        sr.close();
+    }
 }
