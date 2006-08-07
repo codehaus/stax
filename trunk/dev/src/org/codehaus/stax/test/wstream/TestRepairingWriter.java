@@ -253,6 +253,67 @@ public class TestRepairingWriter
     }
 
     /**
+     * This test specifically checks that namespace bindings for
+     * sub-trees do not "leak" into following sibling elements or
+     * trees.
+     */
+    public void testSiblingNsBinding()
+        throws IOException, XMLStreamException
+    {
+        StringWriter strw = new StringWriter();
+        XMLStreamWriter w = getRepairingWriter(strw);
+        final String URL_P1 = "http://p1.org";
+
+        w.writeStartDocument();
+        w.writeStartElement("root");
+
+        // First leaf:
+        w.writeStartElement("leaf1");
+        w.writeAttribute(URL_P1, "attr1", "1");
+        w.writeEndElement();
+
+        // Second leaf:
+        w.writeStartElement("leaf2");
+        w.writeAttribute(URL_P1, "attr2", "2");
+        w.writeEndElement();
+
+        w.writeEndDocument();
+        w.close();
+
+//System.err.println("doc = '"+strw+"'");
+
+        XMLStreamReader sr = constructNsStreamReader(strw.toString());
+        // root element
+        assertTokenType(START_ELEMENT, sr.next(), sr);
+        assertEquals("root", sr.getLocalName());
+
+        // First leaf:
+        assertTokenType(START_ELEMENT, sr.next(), sr);
+        assertEquals("leaf1", sr.getLocalName());
+        assertEquals(1, sr.getAttributeCount());
+        assertEquals("attr1", sr.getAttributeLocalName(0));
+        assertEquals("1", sr.getAttributeValue(0));
+        assertEquals(URL_P1, sr.getAttributeNamespace(0));
+        assertEquals(1, sr.getNamespaceCount());
+        assertTokenType(END_ELEMENT, sr.next(), sr);
+        assertEquals(URL_P1, sr.getNamespaceURI(0));
+
+        // Second leaf:
+        assertTokenType(START_ELEMENT, sr.next(), sr);
+        assertEquals("leaf2", sr.getLocalName());
+        assertEquals(1, sr.getAttributeCount());
+        assertEquals("attr2", sr.getAttributeLocalName(0));
+        assertEquals("2", sr.getAttributeValue(0));
+        assertEquals(URL_P1, sr.getAttributeNamespace(0));
+        assertEquals(1, sr.getNamespaceCount());
+        assertTokenType(END_ELEMENT, sr.next(), sr);
+        assertEquals(URL_P1, sr.getNamespaceURI(0));
+
+        assertTokenType(END_ELEMENT, sr.next(), sr);
+        assertTokenType(END_DOCUMENT, sr.next(), sr);
+    }
+
+    /**
      * Although repairing writers are allowed to output any number of
      * namespace declarations they want to, let's still check that
      * unnecessary ones are not output in simple cases. While doing
