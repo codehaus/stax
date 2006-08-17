@@ -1,6 +1,10 @@
 package org.codehaus.stax.test.stream;
 
+import java.util.List;
+
 import javax.xml.stream.*;
+import javax.xml.stream.events.EntityDeclaration;
+import javax.xml.stream.events.NotationDeclaration;
 
 /**
  * Unit test suite that tests handling of the DOCTYPE declaration event
@@ -50,6 +54,40 @@ public class TestDoctypeDecl
     {
         doTestSimpleInvalid(false);
         doTestSimpleInvalid(true);
+    }
+
+    final static String UNPARSED_ENTITY_XML =
+        "<!DOCTYPE root [\n"
+        +"<!NOTATION mynot PUBLIC 'some-notation'>\n"
+        +"<!ENTITY unp SYSTEM 'http://foo' NDATA mynot>\n"
+        +"]>";
+
+
+    public void testSimpleEntity()
+        throws XMLStreamException
+    {
+        XMLStreamReader sr = getReader(UNPARSED_ENTITY_XML, true);
+        assertEquals(DTD, sr.next());
+        List l = (List) sr.getProperty("javax.xml.stream.entities");
+        assertNotNull(l);
+        assertEquals(1, l.size());
+        EntityDeclaration ed = (EntityDeclaration) l.get(0);
+        assertEquals("unp", ed.getName());
+        assertEquals("mynot", ed.getNotationName());
+
+        sr.close();
+    }
+
+    public void testSimpleNotation()
+        throws XMLStreamException
+    {
+        XMLStreamReader sr = getReader(UNPARSED_ENTITY_XML, true);
+        assertEquals(DTD, sr.next());
+        List l = (List) sr.getProperty("javax.xml.stream.notations");
+        assertNotNull(l);
+        assertEquals(1, l.size());
+        NotationDeclaration nd = (NotationDeclaration) l.get(0);
+        assertEquals("mynot", nd.getName());
     }
 
     /*
