@@ -60,7 +60,7 @@ public class TestDoctypeDecl
         "<!DOCTYPE root [\n"
         +"<!NOTATION mynot PUBLIC 'some-notation'>\n"
         +"<!ENTITY unp SYSTEM 'http://foo' NDATA mynot>\n"
-        +"]>";
+        +"]><root />";
 
 
     public void testSimpleEntity()
