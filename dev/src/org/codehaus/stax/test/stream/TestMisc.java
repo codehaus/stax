@@ -199,6 +199,34 @@ public class TestMisc
         assertEquals("root", sr.getLocalName());
     }
 
+    /**
+     * Test that checks that stream reader's behavior at the end of
+     * input is compliant. Specifically, an exception should be thrown
+     * if one tries to access events beyond END_DOCUMENT.
+     */
+    public void testEndOfStream()
+        throws XMLStreamException
+    {
+        String XML = "<root>x</root>";
+        XMLStreamReader sr = getReader(XML, true, true);
+
+        assertTokenType(START_DOCUMENT, sr.getEventType());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertTokenType(CHARACTERS, sr.next());
+        assertTokenType(END_ELEMENT, sr.next());
+        assertTokenType(END_DOCUMENT, sr.next());
+        assertFalse(sr.hasNext());
+
+        try {
+            int type = sr.next();
+            fail("Expected NoSuchElementException when trying to access events after END_DOCUMENT returned (but received event "+tokenTypeDesc(type)+")");
+        } catch (java.util.NoSuchElementException ne) {
+            // good
+        } catch (XMLStreamException e) { // wrong exception
+            fail("Expected NoSuchElementException; received (type "+e.getClass()+"): "+e);
+        }
+    }
+
     /*
     ////////////////////////////////////////
     // Private methods, other
