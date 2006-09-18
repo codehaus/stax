@@ -163,7 +163,11 @@ public class TestRandomStream
                 act.append('>');
             } else if (type == CHARACTERS || type == SPACE || type == CDATA) {
                 // No quoting, doesn't have to result in legal XML
-                act.append(getAndVerifyText(sr));
+                try { // note: entity expansion may fail...
+                    act.append(getAndVerifyText(sr));
+                } catch (XMLStreamException xse) {
+                    fail("Expected succesful entity expansion, got: "+xse);
+                }
             } else if (type == COMMENT) {
                 act.append("<!--");
                 act.append(sr.getText());

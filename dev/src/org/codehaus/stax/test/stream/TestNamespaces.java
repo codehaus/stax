@@ -513,7 +513,7 @@ public class TestNamespaces
                  nsAware);
             streamThrough(sr);
             if (nsAware) {
-                fail("Was expecting an exception for content that has duplicate attribute (even though prefixes differe, as they point to the same URI)");
+                fail("Was expecting an exception for content that has duplicate attribute (even though prefixes differ, they point to the same URI)");
             }
         } catch (Exception e) {
             if (!nsAware) {
