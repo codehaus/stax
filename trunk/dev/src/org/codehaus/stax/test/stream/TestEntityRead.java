@@ -98,7 +98,11 @@ public class TestEntityRead
             type = sr.next();
         }
         assertTokenType(START_ELEMENT, type);
-        assertTokenType(CHARACTERS, sr.next());
+        try {
+            assertTokenType(CHARACTERS, sr.next());
+        } catch (XMLStreamException xse) {
+            fail("Expected succesful entity expansion, got: "+xse);
+        }
 
         String actual = getAndVerifyText(sr);
         assertEquals(EXP, actual);
@@ -236,7 +240,11 @@ public class TestEntityRead
         assertEquals("root", sr.getLocalName());
 
         // First, entity that expands to element
-        type = sr.next();
+        try {
+            type = sr.next();
+        } catch (XMLStreamException xse) {
+            fail("Expected succesful entity expansion, got: "+xse);
+        }
         if (type != START_ELEMENT) { // failure
             if (type == ENTITY_REFERENCE) { // most likely failure?
                 fail("Implementation fails to re-parse general entity expansion text: instead of element <tag>, received entity reference &"+sr.getLocalName()+";");

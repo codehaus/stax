@@ -159,7 +159,7 @@ public class TestGetSegmentedText
                     cbuf = new char[4005];
                 }
 
-                assertEquals(START_ELEMENT, sr.next());
+                assertTokenType(START_ELEMENT, sr.next());
                 int segCount = 0;
                 int totalLen = sExpResult.length();
                 StringBuffer totalBuf = new StringBuffer(totalLen);
