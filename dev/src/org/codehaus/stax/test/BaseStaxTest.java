@@ -122,7 +122,13 @@ public class BaseStaxTest
     protected static XMLStreamReader constructStreamReader(XMLInputFactory f, String content)
         throws XMLStreamException
     {
-        return f.createXMLStreamReader(new StringReader(content));
+        //return f.createXMLStreamReader(new StringReader(content));
+        try {
+            byte[] data = content.getBytes("UTF-8");
+            return constructStreamReader(f, data);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected static XMLStreamReader constructStreamReader(XMLInputFactory f, byte[] b)

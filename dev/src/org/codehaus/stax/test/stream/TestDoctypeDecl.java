@@ -8,15 +8,18 @@ import javax.xml.stream.events.NotationDeclaration;
 
 /**
  * Unit test suite that tests handling of the DOCTYPE declaration event
- * (XMLStreamConstants.DTD)
+ * (XMLStreamConstants.DTD).
+ * Note that these tests are all related to the non-validating DTD-aware
+ * mode: actual validation tests are in separate package. Some of the
+ * tests are complementary to the validating mode, however, often testing
+ * explicitly that validity violations are not to be reported as exceptions
+ * in non-validating mode.
+ *
+ * @author Tatu Saloranta
  */
 public class TestDoctypeDecl
     extends BaseStreamTest
 {
-    public TestDoctypeDecl(String name) {
-        super(name);
-    }
-
     /**
      * Method that verifies properties that should be active when
      * DTD is the current event.
@@ -67,7 +70,7 @@ public class TestDoctypeDecl
         throws XMLStreamException
     {
         XMLStreamReader sr = getReader(UNPARSED_ENTITY_XML, true);
-        assertEquals(DTD, sr.next());
+        assertTokenType(DTD, sr.next());
         List l = (List) sr.getProperty("javax.xml.stream.entities");
         assertNotNull(l);
         assertEquals(1, l.size());
@@ -82,12 +85,79 @@ public class TestDoctypeDecl
         throws XMLStreamException
     {
         XMLStreamReader sr = getReader(UNPARSED_ENTITY_XML, true);
-        assertEquals(DTD, sr.next());
+        assertTokenType(DTD, sr.next());
         List l = (List) sr.getProperty("javax.xml.stream.notations");
         assertNotNull(l);
         assertEquals(1, l.size());
         NotationDeclaration nd = (NotationDeclaration) l.get(0);
         assertEquals("mynot", nd.getName());
+    }
+
+    /**
+     * This test specifically checks to see that xml validation is
+     * only to be done when enabled; not just because DTD-awareness
+     * is enabled.
+     */
+    public void testNonVldWithEmptyContentModel()
+        throws XMLStreamException
+    {
+        final boolean NS = true;
+        final String XML1 = 
+            "<!DOCTYPE root [\n"
+            +"<!ELEMENT root EMPTY>\n"
+            +"<!ELEMENT leaf ANY>\n"
+            +"]>"
+            +"<root>";
+        final String XML2 = "</root>";
+
+        // First, let's verify regular text is ok
+        XMLStreamReader sr = getReader(XML1 + "some text" + XML2, NS);
+        assertTokenType(DTD, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertTokenType(CHARACTERS, sr.next());
+        streamThrough(sr);
+        sr.close();
+
+        // Then that char/general entities are
+        sr = getReader(XML1 + "&amp;" + XML2, NS);
+        assertTokenType(DTD, sr.next());
+        streamThrough(sr);
+        sr.close();
+
+        /* And then that a (declared) element is fine too
+         * (undeclared should be, too, but there's separate test
+         * elsewhere for that)
+         */
+        sr = getReader(XML1 + "<leaf></leaf>" + XML2, NS);
+        assertTokenType(DTD, sr.next());
+        streamThrough(sr);
+        sr.close();
+    }
+
+    public void testNonVldWithNonMixedContentModel()
+        throws XMLStreamException
+    {
+        final boolean NS = true;
+        final String XML1 = 
+            "<!DOCTYPE root [\n"
+            +"<!ELEMENT root (leaf+)>\n"
+            +"<!ELEMENT leaf ANY>\n"
+            +"]>"
+            +"<root>";
+        final String XML2 = "</root>";
+
+        XMLStreamReader sr = getReader(XML1 + "some text<leaf />" + XML2, NS);
+        assertTokenType(DTD, sr.next());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertTokenType(CHARACTERS, sr.next());
+        streamThrough(sr);
+        sr.close();
+
+        // Then that entities are ok too
+        sr = getReader(XML1 + "&amp; xxx<leaf></leaf>" + XML2, NS);
+        assertTokenType(DTD, sr.next());
+        streamThrough(sr);
+        sr.close();
     }
 
     /*
