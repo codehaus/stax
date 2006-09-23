@@ -6,6 +6,9 @@ import javax.xml.stream.*;
  * Unit test suite that tests handling of the XML attributes, both
  * in namespace aware and non-namespace modes, including ensuring
  * that values are properly normalized with regards to white space.
+ * There are tests for both well-formed and non-wellformed cases.
+ *
+ * @author Tatu Saloranta
  */
 public class TestAttributeRead
     extends BaseStreamTest
@@ -292,12 +295,83 @@ public class TestAttributeRead
         }
     }
 
+    /**
+     * This test verifies that handling of multiple attributes should
+     * work as expected
+     */
+    public void testManyAttrsNs()
+        throws Exception
+    {
+        doTestManyAttrs(true);
+    }
+
+    public void testManyAttrsNonNs()
+        throws Exception
+    {
+        doTestManyAttrs(false);
+    }
 
     /*
     ////////////////////////////////////////
     // Private methods, other
     ////////////////////////////////////////
      */
+
+    final static String[] ATTR11_NAMES = new String[] {
+        "method", "activeShell", "source", "data",
+        "widget", "length", "start", "styledTextNewValue",
+        "replacedText", "styledTextFunction", "raw"
+    };
+    final static String[] ATTR11_VALUES = new String[] {
+        "a", "x", "y", "z",
+        "a", "1", "2", "t",
+        "", "f", "b"
+    };
+
+    private String get11AttrDoc()
+    {
+        StringBuffer sb = new StringBuffer();
+        sb.append("<root");
+        for (int i = 0; i < ATTR11_NAMES.length; ++i) {
+            sb.append(' ');
+            sb.append(ATTR11_NAMES[i]);
+            sb.append('=');
+            sb.append(((i & 1) == 0) ? '"' : '\'');
+            // Assuming no quoting needed
+            sb.append(ATTR11_VALUES[i]);
+            sb.append(((i & 1) == 0) ? '"' : '\'');
+        }
+        sb.append(" />");
+        return sb.toString();
+    }
+
+    private void doTestManyAttrs(boolean ns)
+        throws XMLStreamException
+    {
+        XMLStreamReader sr = getReader(get11AttrDoc(), ns);
+        // If non-ns mode not available, that's ok; we'll skip the test
+        if (sr == null) {
+            return;
+        }
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals(11, sr.getAttributeCount());
+        /* Let's verify we can find them all
+         */
+        for (int i = ATTR11_NAMES.length; --i >= 0; ) {
+            String name = ATTR11_NAMES[i];
+            String value = ATTR11_VALUES[i];
+            // First, via string constant:
+            assertEquals(value, sr.getAttributeValue(null, name));
+            // Then via new String (non-interned)
+            assertEquals(value, sr.getAttributeValue(null, ""+name));
+
+            // Then that non-existing ones are not found:
+            String start = name.substring(0, 1);
+            assertNull(value, sr.getAttributeValue(null, name+start));
+            assertNull(value, sr.getAttributeValue(null, start+name));
+        }
+        assertTokenType(END_ELEMENT, sr.next());
+    }
 
     /**
      * @return Stream reader constructed if initialization succeeded (all

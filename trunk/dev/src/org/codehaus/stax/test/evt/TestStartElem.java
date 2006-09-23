@@ -229,11 +229,72 @@ public class TestStartElem
         assertTokenType(END_DOCUMENT, er.nextEvent().getEventType());
     }
 
+    public void testStartElemManyAttrsNs()
+        throws XMLStreamException
+    {
+        XMLEventReader er = getReader(get11AttrDoc(), true, false);
+        assertTokenType(START_DOCUMENT, er.nextEvent().getEventType());
+        XMLEvent evt = er.nextEvent();
+        assertTokenType(START_ELEMENT, evt.getEventType());
+        StartElement se = evt.asStartElement();
+        assertEquals(11, countElements(se.getAttributes()));
+
+        // Let's verify we can find all attrs:
+        for (int i = ATTR11_NAMES.length; --i >= 0; ) {
+            String name = ATTR11_NAMES[i];
+            String value = ATTR11_VALUES[i];
+            // First, via string constant:
+            String msg = "Wrong value for attribute #"+i+", '"+name+"'; ";
+            assertEquals(msg, value, se.getAttributeByName(new QName(name)));
+            assertEquals(msg, value, se.getAttributeByName(new QName("", name)));
+            // Then via new String (non-interned)
+            assertEquals(msg, value, se.getAttributeByName(new QName(""+name)));
+            assertEquals(msg, value, se.getAttributeByName(new QName("", name+"")));
+
+            // Then that non-existing ones are not found:
+            String start = name.substring(0, 1);
+            assertEquals(value, se.getAttributeByName(new QName(name+start)));
+            assertEquals(value, se.getAttributeByName(new QName(name+start)));
+            assertEquals(value, se.getAttributeByName(new QName("", start+name)));
+            assertEquals(value, se.getAttributeByName(new QName("", start+name)));
+        }
+        assertTokenType(END_ELEMENT, er.nextEvent().getEventType());
+        er.close();
+    }
+
     /*
     /////////////////////////////////////////////////
     // Internal methods:
     /////////////////////////////////////////////////
      */
+
+    final static String[] ATTR11_NAMES = new String[] {
+        "method", "activeShell", "source", "data",
+        "widget", "length", "start", "styledTextNewValue",
+        "replacedText", "styledTextFunction", "raw"
+    };
+    final static String[] ATTR11_VALUES = new String[] {
+        "a", "x", "y", "z",
+        "a", "1", "2", "t",
+        "", "f", "b"
+    };
+
+    private String get11AttrDoc()
+    {
+        StringBuffer sb = new StringBuffer();
+        sb.append("<root");
+        for (int i = 0; i < ATTR11_NAMES.length; ++i) {
+            sb.append(' ');
+            sb.append(ATTR11_NAMES[i]);
+            sb.append('=');
+            sb.append(((i & 1) == 0) ? '"' : '\'');
+            // Assuming no quoting needed
+            sb.append(ATTR11_VALUES[i]);
+            sb.append(((i & 1) == 0) ? '"' : '\'');
+        }
+        sb.append(" />");
+        return sb.toString();
+    }
 
     private int countElements(Iterator it) {
         int count = 0;
@@ -266,6 +327,19 @@ public class TestStartElem
         QName qn = new QName(localName);
         Attribute attr = se.getAttributeByName(qn);
         
+        if (expValue == null) {
+            assertNull("Should not find attribute '"+qn+"'", attr);
+        } else {
+            assertNotNull("Should find attribute '"+qn+"' but got null", attr);
+            assertEquals("Attribute '"+qn+"' has unexpected value",
+                         expValue, attr.getValue());
+        }
+
+        /* 21-Sep-2006, TSa: Let's also try it with different QName
+         *   constructor, just to be sure
+         */
+        qn = new QName("", localName);
+        attr = se.getAttributeByName(qn);
         if (expValue == null) {
             assertNull("Should not find attribute '"+qn+"'", attr);
         } else {
