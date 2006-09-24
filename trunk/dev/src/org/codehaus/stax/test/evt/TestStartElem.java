@@ -244,19 +244,14 @@ public class TestStartElem
             String name = ATTR11_NAMES[i];
             String value = ATTR11_VALUES[i];
             // First, via string constant:
-            String msg = "Wrong value for attribute #"+i+", '"+name+"'; ";
-            assertEquals(msg, value, se.getAttributeByName(new QName(name)));
-            assertEquals(msg, value, se.getAttributeByName(new QName("", name)));
-            // Then via new String (non-interned)
-            assertEquals(msg, value, se.getAttributeByName(new QName(""+name)));
-            assertEquals(msg, value, se.getAttributeByName(new QName("", name+"")));
+            assertAttr11Value(se, name, value);
+            // Then using non-interned:
+            assertAttr11Value(se, ""+name, value);
 
             // Then that non-existing ones are not found:
             String start = name.substring(0, 1);
-            assertEquals(value, se.getAttributeByName(new QName(name+start)));
-            assertEquals(value, se.getAttributeByName(new QName(name+start)));
-            assertEquals(value, se.getAttributeByName(new QName("", start+name)));
-            assertEquals(value, se.getAttributeByName(new QName("", start+name)));
+            assertAttr11Value(se, name+start, null);
+            assertAttr11Value(se, start+name, null);
         }
         assertTokenType(END_ELEMENT, er.nextEvent().getEventType());
         er.close();
@@ -278,6 +273,36 @@ public class TestStartElem
         "a", "1", "2", "t",
         "", "f", "b"
     };
+
+    private void assertAttr11Value(StartElement elem, String localName, String expValue)
+    {
+        String msg = "Wrong value for attribute '"+localName+"'; ";
+
+        Attribute attr = elem.getAttributeByName(new QName(localName));
+        String actValue = (attr == null) ? null : attr.getValue();
+        if (expValue == null) {
+            assertNull(msg, actValue);
+        } else {
+            assertEquals(msg, expValue, actValue);
+        }
+
+        // Let's also try with the other qname constructors, just to be sure
+        attr = elem.getAttributeByName(new QName("", localName));
+        actValue = (attr == null) ? null : attr.getValue();
+        if (expValue == null) {
+            assertNull(msg, actValue);
+        } else {
+            assertEquals(msg, expValue, actValue);
+        }
+
+        attr = elem.getAttributeByName(new QName("", localName, ""));
+        actValue = (attr == null) ? null : attr.getValue();
+        if (expValue == null) {
+            assertNull(msg, actValue);
+        } else {
+            assertEquals(msg, expValue, actValue);
+        }
+    }
 
     private String get11AttrDoc()
     {
