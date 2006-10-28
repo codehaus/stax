@@ -44,10 +44,6 @@ public class TestCDataRead
         +"<![CDATA["+CDATA3+"]]>"
         +"</root>";
 
-    public TestCDataRead(String name) {
-        super(name);
-    }
-
     public void testCDataCoalescing()
         throws XMLStreamException
     {

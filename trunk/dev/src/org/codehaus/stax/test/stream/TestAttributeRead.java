@@ -214,16 +214,23 @@ public class TestAttributeRead
     public void testInvalidAttrNames()
         throws XMLStreamException
     {
-	// First NS-aware, then non-NS:
-	streamThroughFailing(getReader("<tree .attr='value' />", true),
-			     "invalid attribute name; can not start with '.'");
-	streamThroughFailing(getReader("<tree .attr='value' />", false),
-			     "invalid attribute name; can not start with '.'");
-
-	streamThroughFailing(getReader("<tree attr?='value' />", false),
-			     "invalid attribute name can not contain '?'");
-	streamThroughFailing(getReader("<tree attr?='value' />", true),
-			     "invalid attribute name can not contain '?'");
+        // First NS-aware, then non-NS:
+        XMLStreamReader sr = getReader("<tree .attr='value' />", true);
+        if (sr != null) {
+            streamThroughFailing(sr, "invalid attribute name; can not start with '.'");
+        }
+        sr = getReader("<tree .attr='value' />", false);
+        if (sr != null) {
+            streamThroughFailing(sr, "invalid attribute name; can not start with '.'");
+        }
+        sr = getReader("<tree attr?='value' />", false);
+        if (sr != null) {
+            streamThroughFailing(sr, "invalid attribute name can not contain '?'");
+        }
+        sr = getReader("<tree attr?='value' />", true);
+        if (sr != null) {
+            streamThroughFailing(sr, "invalid attribute name can not contain '?'");
+        }
     }
 
     public void testInvalidAttrValue()
@@ -233,8 +240,13 @@ public class TestAttributeRead
             boolean ns = (i > 0);
             // Invalid, '<' not allowed in attribute value
             String XML = "<root a='<' />";
-            streamThroughFailing(getReader(XML, ns),
-                                 "unquoted '<' in attribute value");
+
+            XMLStreamReader sr = getReader(XML, ns);
+            // Does the impl support non-ns mode?
+            if (sr == null) { // nope! shouldn't test...
+                continue;
+            }
+            streamThroughFailing(sr, "unquoted '<' in attribute value");
             
             XML = "<root a />";
             streamThroughFailing(getReader(XML, ns),
@@ -251,8 +263,12 @@ public class TestAttributeRead
         for (int i = 0; i < 2; ++i) {
             boolean ns = (i > 0);
             String XML = "<root a='b'b='a' />";
-            streamThroughFailing(getReader(XML, ns),
-                                 "missing space between attributes");
+            XMLStreamReader sr = getReader(XML, ns);
+            // Does the impl support non-ns mode?
+            if (sr == null) { // nope! shouldn't test...
+                continue;
+            }
+            streamThroughFailing(sr, "missing space between attributes");
             XML = "<root a=\"b\"b=\"a\" />";
             streamThroughFailing(getReader(XML, ns),
                                  "missing space between attributes");
@@ -277,14 +293,15 @@ public class TestAttributeRead
     {
         // Invalid; duplicate attrs even without namespaces
         String XML = "<root xmlns:a='xxx' a:attr='1' a:attr='2' />";
-        streamThroughFailing(getReader(XML, false),
-                             "duplicate attributes");
+        XMLStreamReader sr = getReader(XML, false);
+        if (sr != null) {
+            streamThroughFailing(sr, "duplicate attributes");
+        }
         
         // Valid when namespaces not enabled:
         XML = "<root xmlns:a='xxx' xmlns:b='xxx' a:attr='1' b:attr='2' />";
         try {
-            XMLStreamReader sr = getReader(XML, false);
-
+            sr = getReader(XML, false);
             // Does the impl support non-ns mode?
             if (sr == null) { // nope! shouldn't test...
                 return;
