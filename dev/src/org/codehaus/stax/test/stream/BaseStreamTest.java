@@ -88,7 +88,6 @@ public class BaseStreamTest
 
     protected int streamThroughFailing(XMLInputFactory f, String contents,
                                        String msg)
-        throws XMLStreamException
     {
         int result = 0;
         try {
@@ -100,15 +99,16 @@ public class BaseStreamTest
                                    +"(matching message: '"+msg+"')");
             }
             return 0;
-        } catch (RuntimeException ex2) { // ok
-            if (PRINT_EXP_EXCEPTION) {
-                System.out.println("Expected failure: '"+ex2.getMessage()+"' "
-                                   +"(matching message: '"+msg+"')");
+        } catch (Exception ex2) { // may still be ok:
+            if (ex2.getCause() instanceof XMLStreamException) {
+                if (PRINT_EXP_EXCEPTION) {
+                    System.out.println("Expected failure: '"+ex2.getMessage()+"' "
+                                       +"(matching message: '"+msg+"')");
+                }
+                return 0;
             }
-            return 0;
-        } catch (Throwable t) { // not so good
-            fail("Expected an XMLStreamException or RuntimeException for "+msg
-                 +", got: "+t);
+            fail("Expected an XMLStreamException (either direct, or getCause() of a primary exception) for "+msg
+                 +", got: "+ex2);
         }
 
         fail("Expected an exception for "+msg);
@@ -116,7 +116,6 @@ public class BaseStreamTest
     }
 
     protected int streamThroughFailing(XMLStreamReader sr, String msg)
-        throws XMLStreamException
     {
         int result = 0;
         try {
@@ -127,15 +126,16 @@ public class BaseStreamTest
                                    +"(matching message: '"+msg+"')");
             }
             return 0;
-        } catch (RuntimeException ex2) { // ok
-            if (PRINT_EXP_EXCEPTION) {
-                System.out.println("Expected failure: '"+ex2.getMessage()+"' "
-                                   +"(matching message: '"+msg+"')");
+        } catch (Exception ex2) { // ok; iff links to XMLStreamException
+            if (ex2.getCause() instanceof XMLStreamException) {
+                if (PRINT_EXP_EXCEPTION) {
+                    System.out.println("Expected failure: '"+ex2.getMessage()+"' "
+                                       +"(matching message: '"+msg+"')");
+                }
+                return 0;
             }
-            return 0;
-        } catch (Throwable t) { // not so good
-            fail("Expected an XMLStreamException or RuntimeException for "+msg
-                 +", got: "+t);
+            fail("Expected an XMLStreamException (either direct, or getCause() of a primary exception) for "+msg
+                 +", got: "+ex2);
         }
 
         fail("Expected an exception for "+msg);

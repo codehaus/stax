@@ -167,6 +167,16 @@ public class TestRandomStream
                     act.append(getAndVerifyText(sr));
                 } catch (XMLStreamException xse) {
                     fail("Expected succesful entity expansion, got: "+xse);
+                } catch (RuntimeException rex) {
+                    /* 28-Oct-2006, TSa: since getText() may not be able
+                     *   to throw XMLStreamException, let's see if we got
+                     *   a runtime excpetion with root cause of stream exc
+                     */
+                    if (rex.getCause() instanceof XMLStreamException) {
+                        fail("Expected succesful entity expansion, got: "+rex);
+                    } else {
+                        throw rex;
+                    }
                 }
             } else if (type == COMMENT) {
                 act.append("<!--");
