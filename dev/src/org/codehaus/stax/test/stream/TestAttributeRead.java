@@ -280,10 +280,19 @@ public class TestAttributeRead
     {
         // Invalid; straight duplicate attrs:
         String XML = "<root xmlns:a='xxx' a:attr='1' a:attr='2' />";
-        streamThroughFailing(getReader(XML, true),
-                             "duplicate attributes");
+        streamThroughFailing(getReader(XML, true), "duplicate attributes");
         // Invalid; sneakier duplicate attrs:
         XML = "<root xmlns:a='xxx' xmlns:b='xxx' a:attr='1' b:attr='2' />";
+        streamThroughFailing(getReader(XML, true),
+                             "duplicate attributes (same URI, different prefix)");
+
+        /* Also, let's add some more, in case parser just checks for adjacent
+         * ones, or has special cases for small number of attrs...
+         */
+        XML = "<a xmlns:a='abc' a:a='1' a:b='2' a:c='3' a:d='1' a:e='' a:b='2' />";
+        streamThroughFailing(getReader(XML, true), "duplicate attributes");
+
+        XML = "<a xmlns:a='abc' xmlns:b='abc' a:a='1' a:b='2' a:c='3' a:d='1' a:e='' b:c='2' />";
         streamThroughFailing(getReader(XML, true),
                              "duplicate attributes (same URI, different prefix)");
     }
