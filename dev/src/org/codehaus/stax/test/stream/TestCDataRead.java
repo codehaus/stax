@@ -44,13 +44,30 @@ public class TestCDataRead
         +"<![CDATA["+CDATA3+"]]>"
         +"</root>";
 
+    /**
+     * This test verifies that no character quoting need (or can) be
+     * done within CDATA section.
+     */
+    public void testCDataSimple()
+        throws XMLStreamException
+    {
+        String XML = "<doc><![CDATA[<&]>]]]></doc>";
+        String EXP = "<&]>]";
+        XMLStreamReader sr = getReader(XML, true);
+        assertTokenType(START_ELEMENT, sr.next());
+        // In coalescing mode, all CDATA are reported as CHARACTERS
+        assertTokenType(CHARACTERS, sr.next());
+        String act = getAndVerifyText(sr);
+        assertEquals(EXP, act);
+        assertTokenType(END_ELEMENT, sr.next());
+    }
+
     public void testCDataCoalescing()
         throws XMLStreamException
     {
         XMLStreamReader sr = getReader(VALID_XML, true);
         assertTokenType(START_ELEMENT, sr.next());
-        /* In coalescing mode, all CDATA are reported as CHARACTERS
-         */
+        // In coalescing mode, all CDATA are reported as CHARACTERS
         assertTokenType(CHARACTERS, sr.next());
         String act = getAndVerifyText(sr);
         assertEquals(EXP_CDATA, act);
