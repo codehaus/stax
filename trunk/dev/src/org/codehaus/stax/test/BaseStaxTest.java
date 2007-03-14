@@ -318,7 +318,9 @@ public class BaseStaxTest
              *  mode is not coalescing? Or something
              */
             if (sr.getEventType() == CHARACTERS) {
-                assertTrue("Stream reader should never return empty Strings.",  (expLen > 0));
+                if (expLen == 0) {
+                    fail("Stream reader should never return empty Strings.");
+                }
             }
             assertEquals("Expected text length of "+expLen+", got "+text.length(),
                          expLen, text.length());
@@ -432,9 +434,15 @@ public class BaseStaxTest
         String uri = sr.getNamespaceURI();
         if (uri != null) {
             if (uri.length() == 0) { // most likely
-                fail("Excepted no (null) namespace URI: got empty string; non-conformant");
+                /* 20-Jan-2007, tatus: It actually seems like the ns URI
+                 *   should really be empty String. So, for now, let's
+                 *   accept that as well as null. Hopefully can be finalized
+                 *   with Stax 1.1 specs?
+                 */
+                //fail("Excepted no (null) namespace URI: got empty string; non-conformant");
+            } else {
+                fail("Excepted no (null) namespace URI: got '"+uri+"'");
             }
-            fail("Excepted no (null) namespace URI: got '"+uri+"'");
         }
     }
 

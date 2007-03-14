@@ -71,7 +71,6 @@ public class TestOutputEncoding
         w.close();
         
         // And then let's parse and verify it all:
-
         XMLStreamReader sr = constructNsStreamReader(strw.toString(), true);
         assertTokenType(START_DOCUMENT, sr.getEventType());
         assertEquals(encoding, sr.getCharacterEncodingScheme());
@@ -96,9 +95,8 @@ public class TestOutputEncoding
         w.writeEndElement();
         w.writeEndDocument();
         w.close();
-        
-        // And then let's parse and verify it all:
 
+        // And then let's parse and verify it all:
         XMLStreamReader sr = constructNsStreamReader(strw.toString(), true);
         assertTokenType(START_DOCUMENT, sr.getEventType());
         assertEquals(encoding, sr.getCharacterEncodingScheme());

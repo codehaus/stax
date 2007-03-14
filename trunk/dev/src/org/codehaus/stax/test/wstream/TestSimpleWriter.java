@@ -33,8 +33,6 @@ public class TestSimpleWriter
         /* And then let's parse and verify it all. But are we guaranteed
          * to get SPACE? Let's not assume that
          */
-        //System.err.println("DEBUG: ["+strw.toString()+"]");
-
         XMLStreamReader sr = constructNsStreamReader(strw.toString(), true);
         assertTokenType(START_DOCUMENT, sr.getEventType());
 
@@ -252,10 +250,8 @@ public class TestSimpleWriter
         w.writeEndElement(); // root elem
         w.writeEndDocument();
         w.close();
-        
-        /* And then let's parse and verify it all:
-         */
 
+        // And then let's parse and verify it all:
         XMLStreamReader sr = constructNsStreamReader(strw.toString());
         assertTokenType(START_DOCUMENT, sr.getEventType());
 
@@ -416,9 +412,7 @@ public class TestSimpleWriter
         w.writeEndDocument();
         w.close();
         
-        /* And then let's parse and verify it all:
-         */
-//System.err.println("DEBUG: doc = '"+strw.toString()+"'");
+        // And then let's parse and verify it all:
         XMLStreamReader sr = constructNsStreamReader(strw.toString());
         assertTokenType(START_DOCUMENT, sr.getEventType());
 
