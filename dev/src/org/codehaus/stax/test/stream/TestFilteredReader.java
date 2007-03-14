@@ -39,11 +39,42 @@ public class TestFilteredReader
         assertTokenType(END_DOCUMENT, sr.next());
     }
 
+    public void testStartElemFilter1()
+        throws XMLStreamException
+    {
+        XMLStreamReader sr = createFilteredReader
+            (getElementFilter("elem"),
+             "<elem>text</elem>", true);
+        // Should skip the START_DOCUMENT due to filter
+        assertTokenType(START_ELEMENT, sr.getEventType());
+    }
+
+    public void testStartElemFilter2()
+        throws XMLStreamException
+    {
+        XMLStreamReader sr = createFilteredReader
+            (getElementFilter("elem"),
+             "<root>...<elem>text</elem></root>", true);
+        // Should skip START_DOCUMENT, START_ELEMENT and CHARACTERS
+        assertTokenType(START_ELEMENT, sr.getEventType());
+        assertEquals("elem", sr.getLocalName());
+    }
+
     /*
     ////////////////////////////////////////
     // Non-test methods
     ////////////////////////////////////////
      */
+
+    private StreamFilter getElementFilter(final String localName)
+    {
+        return new StreamFilter() {
+                public boolean accept(XMLStreamReader r) {
+                    return r.getEventType() == XMLStreamConstants.START_ELEMENT &&
+                        r.getLocalName().equals(localName);
+                }
+            };
+    }
     
     private XMLStreamReader createFilteredReader(StreamFilter filter, String content,
                                                  boolean nsAware)
