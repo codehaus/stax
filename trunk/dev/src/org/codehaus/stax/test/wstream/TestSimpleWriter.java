@@ -614,19 +614,17 @@ public class TestSimpleWriter
          */
         writer.writeNamespace("ns", NS2);
         writer.writeDefaultNamespace(NS1);
-        writer.writeEndElement();
 
         assertEquals("", writer.getPrefix(NS1));
         assertEquals("ns", writer.getPrefix(NS2));
-        writer.writeEndElement();
 
         /* Not quite sure if these should/need be scoped?
          * Probably?
          */
-        assertNull(writer.getPrefix("ns"));
-        assertNull(writer.getPrefix(""));
+        writer.writeEndElement();
+        assertNull(writer.getPrefix(NS1));
+        assertNull(writer.getPrefix(NS2));
 
-        writer.writeEndElement(); // root
         writer.writeEndDocument();
     }
 
