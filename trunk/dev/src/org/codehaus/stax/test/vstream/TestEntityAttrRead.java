@@ -5,14 +5,12 @@ import javax.xml.stream.*;
 /**
  * Unit test suite that tests handling of attributes that are declared
  * by DTD to be of type NOTATION.
+ *
+ * @author Tatu Saloranta
  */
 public class TestEntityAttrRead
     extends BaseVStreamTest
 {
-    public TestEntityAttrRead(String name) {
-        super(name);
-    }
-
     /*
     ///////////////////////////////////////
     // Test cases
@@ -37,6 +35,19 @@ public class TestEntityAttrRead
             +"<!NOTATION not1 PUBLIC 'public-notation-id'>\n"
             +"<!ENTITY unpEnt SYSTEM 'system-ent-id' NDATA not1>\n"
             +"<!ATTLIST root ent ENTITY 'unpEnt'>\n"
+            +"]>\n<root />";
+        streamThrough(getValidatingReader(XML));
+    }
+
+    public void testValidUnorderedEntityAttrDecl()
+        throws XMLStreamException
+    {
+        // Following should be ok even though ordering is reversed
+        String XML = "<!DOCTYPE root [\n"
+            +"<!ELEMENT root EMPTY>\n"
+            +"<!ENTITY unpEnt SYSTEM 'system-ent-id' NDATA not1>\n"
+            +"<!NOTATION not1 PUBLIC 'public-notation-id'>\n"
+            +"<!ATTLIST root attr ENTITY #IMPLIED>\n"
             +"]>\n<root />";
         streamThrough(getValidatingReader(XML));
     }

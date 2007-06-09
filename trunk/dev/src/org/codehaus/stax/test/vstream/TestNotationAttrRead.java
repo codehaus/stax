@@ -5,16 +5,12 @@ import javax.xml.stream.*;
 /**
  * Unit test suite that tests handling of attributes that are declared
  * by DTD to be of type NOTATION.
+ *
+ * @author Tatu Saloranta
  */
 public class TestNotationAttrRead
     extends BaseVStreamTest
 {
-    public TestNotationAttrRead(String name) {
-        super(name);
-        // To see if we get exceptions we should be getting:
-        //PRINT_EXP_EXCEPTION = true;
-    }
-
     /*
     ///////////////////////////////////////
     // Test cases
@@ -39,6 +35,30 @@ public class TestNotationAttrRead
             +"<!NOTATION not1 PUBLIC 'some-public-id'>\n"
             +"<!NOTATION not2 PUBLIC 'other-public-id'>\n"
             +"<!ATTLIST root notation NOTATION (not1 | not2) 'not1'>"
+            +"]>\n<root />";
+        streamThrough(getValidatingReader(XML));
+    }
+
+    /**
+     * This unit test verifies that the ordering of ATTLIST declaration
+     * and NOTATION(s) it refers to need not be done in a specific
+     * order.
+     */
+    public void testValidUnorderedAttrDecl()
+        throws XMLStreamException
+    {
+        String XML = "<!DOCTYPE root [\n"
+            +"<!ELEMENT root EMPTY>\n"
+            +"<!ATTLIST root attr NOTATION (notation) #IMPLIED>"
+            +"<!NOTATION notation PUBLIC 'some-public-id'>\n"
+            +"]>\n<root />";
+        streamThrough(getValidatingReader(XML));
+
+        // Likewise for default values
+        XML = "<!DOCTYPE root [\n"
+            +"<!ELEMENT root EMPTY>\n"
+            +"<!ATTLIST root attr NOTATION (notation) 'notation'>"
+            +"<!NOTATION notation PUBLIC 'some-public-id'>\n"
             +"]>\n<root />";
         streamThrough(getValidatingReader(XML));
     }
