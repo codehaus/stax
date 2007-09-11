@@ -67,22 +67,35 @@ public class BaseStreamTest
         int result = 0;
 
         assertNotNull(sr);
-        while (sr.hasNext()) {
-            int type = sr.next();
-            result += type;
-            if (sr.hasText()) {
-                /* will also do basic verification for text content, to 
-                 * see that all text accessor methods return same content
-                 */
-                result += getAndVerifyText(sr).hashCode();
+        try {
+            while (sr.hasNext()) {
+                int type = sr.next();
+                result += type;
+                if (sr.hasText()) {
+                    /* will also do basic verification for text content, to 
+                     * see that all text accessor methods return same content
+                     */
+                    result += getAndVerifyText(sr).hashCode();
+                }
+                if (sr.hasName()) {
+                    QName n = sr.getName();
+                    assertNotNull(n);
+                    result += n.hashCode();
+                }
             }
-            if (sr.hasName()) {
-                QName n = sr.getName();
-                assertNotNull(n);
-                result += n.hashCode();
+        } catch (RuntimeException rex) {
+            // Let's try to find a nested XMLStreamException, if possible
+            Throwable t = rex;
+            while (t != null) {
+                t = t.getCause();
+                if (t instanceof XMLStreamException) {
+                    throw (XMLStreamException) t;
+                }
             }
+            // Nope, just a runtime exception
+            throw rex;
         }
-
+            
         return result;
     }
 
@@ -127,15 +140,23 @@ public class BaseStreamTest
             }
             return 0;
         } catch (Exception ex2) { // ok; iff links to XMLStreamException
-            if (ex2.getCause() instanceof XMLStreamException) {
+            Throwable t = ex2;
+            while (t.getCause() != null && !(t instanceof XMLStreamException)) {
+                t = t.getCause();
+            }
+            if (t instanceof XMLStreamException) {
                 if (PRINT_EXP_EXCEPTION) {
                     System.out.println("Expected failure: '"+ex2.getMessage()+"' "
                                        +"(matching message: '"+msg+"')");
                 }
                 return 0;
             }
-            fail("Expected an XMLStreamException (either direct, or getCause() of a primary exception) for "+msg
-                 +", got: "+ex2);
+            if (t == ex2) {
+                fail("Expected an XMLStreamException (either direct, or getCause() of a primary exception) for "+msg
+                     +", got: "+ex2);
+            }
+                fail("Expected an XMLStreamException (either direct, or getCause() of a primary exception) for "+msg
+                 +", got: "+ex2+" (root: "+t+")");
         }
 
         fail("Expected an exception for "+msg);

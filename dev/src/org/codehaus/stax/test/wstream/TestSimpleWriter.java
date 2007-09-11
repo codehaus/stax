@@ -690,7 +690,7 @@ public class TestSimpleWriter
              * both for now (but let's not accept mixed cases)
              */
             if (!"utf-8".equals(enc) && !"UTF-8".equals(enc)) {
-                fail("Expected either 'UTF-8' (xml specs) or 'utf-8' (stax specs) as the encoding output with no-arg 'writeStartDocument()' call");
+                fail("Expected either 'UTF-8' (xml specs) or 'utf-8' (stax specs) as the encoding output with no-arg 'writeStartDocument()' call (result doc = '"+strw.toString()+"')");
             }
             break;
         case 1:

@@ -55,7 +55,6 @@ public class TestRepairingWriter
         w.close();
 
         // And then let's parse and verify it all:
-//System.err.println("Doc -> '"+strw.toString()+"'");
         XMLStreamReader sr = constructNsStreamReader(strw.toString());
         assertTokenType(START_DOCUMENT, sr.getEventType(), sr);
 
@@ -97,7 +96,15 @@ public class TestRepairingWriter
         assertEquals(URL_P1, sr.getNamespaceURI());
 
         // "third"
-        assertTokenType(START_ELEMENT, sr.next(), sr);
+        /* Adding explicit catching to print more diagnostics, as one
+         * of the tested impls did fail here:
+         */
+        try {
+            assertTokenType(START_ELEMENT, sr.next(), sr);
+        } catch (XMLStreamException e) {
+            fail("Unexpected problems when parsing document [\""+strw.toString()+"\"], expecting element 'third': "+e.getMessage());
+            throw e;
+        }
         assertEquals("third", sr.getLocalName());
         assertNoNsURI(sr);
         assertTokenType(END_ELEMENT, sr.next(), sr);
@@ -222,10 +229,10 @@ public class TestRepairingWriter
         // empty leaf
         assertTokenType(START_ELEMENT, sr.next(), sr);
         assertEquals("leaf", sr.getLocalName());
-        assertNull("Element <leaf/> should not be in a namespace", sr.getNamespaceURI());
+        assertNoNsURI(sr);
         assertTokenType(END_ELEMENT, sr.next(), sr);
         assertEquals("leaf", sr.getLocalName());
-        assertNull(sr.getNamespaceURI());
+        assertNoNsURI(sr);
         
         // third leaf
         assertTokenType(START_ELEMENT, sr.next(), sr);
@@ -234,10 +241,7 @@ public class TestRepairingWriter
 
         assertEquals(1, sr.getAttributeCount());
         assertEquals("attr2", sr.getAttributeLocalName(0));
-        String nsURI = sr.getAttributeNamespace(0);
-        if (nsURI != null) {
-            fail("Attribute 'attr2' should not belong to a namespace; reported to belong to '"+nsURI+"'");
-        }
+        assertNoAttrNamespace(sr.getAttributeNamespace(0));
         assertEquals(ATTR_VALUE2, sr.getAttributeValue(0));
 
         assertTokenType(END_ELEMENT, sr.next(), sr);

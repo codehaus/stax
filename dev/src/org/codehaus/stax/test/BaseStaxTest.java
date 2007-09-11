@@ -8,6 +8,13 @@ import junit.framework.TestCase;
 import javax.xml.stream.*;
 import javax.xml.stream.events.XMLEvent;
 
+/* Latest updates:
+ *
+ * - 07-Sep-2007, TSa: Updating based on latest understanding of
+ *   the proper use of null and Empty String wrt. "no prefix" and
+ *   "no namespace" cases.
+ */
+
 /**
  * Base class for all StaxTest unit test classes. Contains shared
  * functionality for many common set up tasks, as well as for
@@ -51,9 +58,9 @@ public class BaseStaxTest
 
     /**
      * Expected return value for streamReader.getNamespaceURI() in
-     * non-namespace-aware mode
+     * non-namespace-aware mode.
      */
-    protected final String DEFAULT_URI_NON_NS = null;
+    protected final String DEFAULT_URI_NON_NS = "";
 
     protected final String DEFAULT_URI_NS = "";
 
@@ -412,37 +419,62 @@ public class BaseStaxTest
     }
 
     /**
-     * Specific method makes sense, since it's not 100% clear whether
-     * it's legal to use both null and "" when no prefix was found
+     * Specific method makes sense, since earlier it was not clear
+     * whether null or empty string (or perhaps both) would be the
+     * right answer when there is no prefix.
+     *<p>
+     * However: as per
+     * javadocs of {@link XMLStreamReader#getPrefix}, from
+     * JDK 1.6 indicate, the current understanding is that
+     *  <b>null</b> is the ultimate right answer here.
      */
     protected static void assertNoPrefix(XMLStreamReader sr)
         throws XMLStreamException
     {
         String prefix = sr.getPrefix();
-        if (prefix != null && prefix.length() > 0) {
-            fail("Excepted no (or empty) prefix: got '"+prefix+"'");
+        if (prefix != null) {
+            if (prefix.length() != 0) {
+                fail("Current element should not have a prefix: got '"+prefix+"'");
+            } else {
+                fail("Expected null to signify missing prefix (see XMLStreamReader#getPrefix() JavaDocs): got empty String");
+            }
+        }
+    }
+
+    protected static void assertNoAttrPrefix(String attrPrefix)
+        throws XMLStreamException
+    {
+        if (attrPrefix != null) {
+            if (attrPrefix.length() != 0) {
+                fail("Attribute should not have a prefix: got '"+attrPrefix+"'");
+            } else {
+                fail("Expected null to signify missing attribute prefix (see XMLStreamReader#getAttributePrefix() JavaDocs): got empty String");
+            }
         }
     }
 
     /**
      * Similar to {@link #assertNoPrefix}, but here we do know that unbound
-     * namespace URI should be indicated as null, not empty String.
+     * namespace URI should be indicated as empty String.
      */
     protected static void assertNoNsURI(XMLStreamReader sr)
         throws XMLStreamException
     {
         String uri = sr.getNamespaceURI();
-        if (uri != null) {
-            if (uri.length() == 0) { // most likely
-                /* 20-Jan-2007, tatus: It actually seems like the ns URI
-                 *   should really be empty String. So, for now, let's
-                 *   accept that as well as null. Hopefully can be finalized
-                 *   with Stax 1.1 specs?
-                 */
-                //fail("Excepted no (null) namespace URI: got empty string; non-conformant");
-            } else {
-                fail("Excepted no (null) namespace URI: got '"+uri+"'");
-            }
+        if (uri == null) {
+            fail("Expected empty String to indicate \"no namespace\": got null");
+        } else if (uri.length() != 0) {
+            fail("Expected empty String to indicate \"no namespace\": got '"+uri+"'");
+        }
+    }
+
+    protected static void assertNoAttrNamespace(String attrNsURI)
+        throws XMLStreamException
+    {
+        if (attrNsURI == null) {
+            fail("Expected empty String to indicate \"no namespace\" (for attribute): got null");
+        } else if (attrNsURI.length() != 0) {
+            fail("Expected empty String to indicate \"no namespace\" (for attribute): got '"+attrNsURI+"'");
         }
     }
 

@@ -34,7 +34,7 @@ public class TestStartDocument
             assertTrue(evt.isStartDocument());
             StartDocument devt = (StartDocument) evt;
             assertFalse(devt.encodingSet());
-            assertFalse(devt.standaloneSet());
+            assertFalse("Stand-alone should not be assumed true if not included in xml declaration", devt.standaloneSet());
             // Version is to default to "1.0", as per stax 1.0 javadocs
             assertEquals("1.0", devt.getVersion());
             er.close();

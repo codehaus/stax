@@ -9,6 +9,8 @@ import javax.xml.stream.*;
 /**
  * Unit test suite that tests handling of the namespace declarations,
  * both in namespace aware and non-namespace modes.
+ *
+ * @author Tatu Saloranta
  */
 public class TestNamespaces
     extends BaseStreamTest
@@ -20,10 +22,6 @@ public class TestNamespaces
         +"</a:branch>"
         +"</root>";
 
-    public TestNamespaces(String name) {
-        super(name);
-    }
-
     public void testValidNs()
         throws XMLStreamException
     {
@@ -32,12 +30,9 @@ public class TestNamespaces
         assertEquals(1, sr.getNamespaceCount());
         assertEquals(2, sr.getAttributeCount());
         // element properties:
-        assertNull(sr.getPrefix());
+        assertNoPrefix(sr);
         assertEquals("root", sr.getLocalName());
-        String uri = sr.getNamespaceURI();
-        if (uri != null) {
-            fail("Undeclared (default) namespace should have null URI; had \""+uri+"\" (len "+uri.length()+")");
-        }
+        assertNoNsURI(sr);
         // ns/attr properties:
         assertEquals("value", sr.getAttributeValue(null, "attr1"));
         assertEquals("", sr.getAttributeValue("myurl", "attr1"));
@@ -53,7 +48,13 @@ public class TestNamespaces
         assertNull(sr.getAttributeValue("xmlns", "a"));
         assertEquals("myurl", sr.getNamespaceURI("a"));
         assertNull(sr.getNamespaceURI("myurl"));
-        assertNull(sr.getNamespaceURI(""));
+        /* 07-Sep-2007, TSa: This is a tough call, but I do believe
+         *   we should expect "no namespace" as the answer (== ""), not
+         *   "unbound" (null).
+         */
+        //assertNull(sr.getNamespaceURI(""));
+        assertEquals("", sr.getNamespaceURI(""));
+
         assertNull(sr.getNamespaceURI("nosuchurl"));
 
         NamespaceContext nc = sr.getNamespaceContext();
@@ -97,15 +98,15 @@ public class TestNamespaces
         assertEquals(START_ELEMENT, sr.next());
         assertEquals(0, sr.getNamespaceCount());
         assertEquals(2, sr.getAttributeCount());
-        assertNull(sr.getPrefix());
         assertEquals("leaf", sr.getLocalName());
+        assertNoPrefix(sr);
         assertEquals("yyy", sr.getAttributeValue("whatever", "a"));
         assertEquals("xxx", sr.getAttributeValue(null, "a"));
 
         assertEquals(END_ELEMENT, sr.next());
         assertEquals(0, sr.getNamespaceCount());
-        assertNull(sr.getPrefix());
         assertEquals("leaf", sr.getLocalName());
+        assertNoPrefix(sr);
 
         assertEquals(END_ELEMENT, sr.next());
         assertEquals(2, sr.getNamespaceCount());
@@ -114,7 +115,7 @@ public class TestNamespaces
 
         assertEquals(END_ELEMENT, sr.next());
         assertEquals(1, sr.getNamespaceCount());
-        assertNull(sr.getPrefix());
+        assertNoNsURI(sr);
         assertEquals("root", sr.getLocalName());
 
         assertEquals(END_DOCUMENT, sr.next());
@@ -139,7 +140,7 @@ public class TestNamespaces
         // Let's thoroughly check the root elem
         assertEquals(2, sr.getNamespaceCount());
         assertEquals(0, sr.getAttributeCount());
-        assertNull(sr.getPrefix());
+        assertNoPrefix(sr);
         assertEquals("root", sr.getLocalName());
         assertEquals("http://foo", sr.getNamespaceURI());
         assertEquals("myurl", sr.getNamespaceURI("a"));
@@ -149,12 +150,12 @@ public class TestNamespaces
         assertTokenType(START_ELEMENT, sr.getEventType());
         assertEquals(0, sr.getNamespaceCount());
         assertEquals(1, sr.getAttributeCount());
-        assertNull(sr.getPrefix());
+        assertNoPrefix(sr);
         assertEquals("empty", sr.getLocalName());
         assertEquals("http://foo", sr.getNamespaceURI());
         assertEquals("myurl", sr.getNamespaceURI("a"));
-        assertNull(sr.getAttributeNamespace(0));
-        assertNull(sr.getAttributePrefix(0));
+        assertNoAttrNamespace(sr.getAttributeNamespace(0));
+        assertNoAttrPrefix(sr.getAttributePrefix(0));
         assertEquals("&", sr.getAttributeValue(0));
         assertTokenType(END_ELEMENT, sr.next());
 
@@ -195,11 +196,10 @@ public class TestNamespaces
         assertEquals(0, sr.getNamespaceCount());
         assertEquals(3, sr.getAttributeCount());
         // element properties:
-        assertNull(sr.getPrefix());
+        assertNoPrefix(sr);
         assertEquals("root", sr.getLocalName());
 
-        // Hmmmh. Should we expect null here or not?
-        assertEquals(null, sr.getNamespaceURI());
+        assertNoNsURI(sr);
         // ns/attr properties:
 
         assertEquals("value", sr.getAttributeValue(null, "attr1"));
@@ -224,16 +224,16 @@ public class TestNamespaces
         assertEquals(START_ELEMENT, sr.next());
         assertEquals(0, sr.getNamespaceCount());
         assertEquals(3, sr.getAttributeCount());
-        assertNull(sr.getPrefix());
         assertEquals("a:branch", sr.getLocalName());
+        assertNoPrefix(sr);
 
         // // And finally the third
 
         assertEquals(START_ELEMENT, sr.next());
         assertEquals(0, sr.getNamespaceCount());
         assertEquals(2, sr.getAttributeCount());
-        assertNull(sr.getPrefix());
         assertEquals("leaf", sr.getLocalName());
+        assertNoPrefix(sr);
         assertEquals("xxx", sr.getAttributeValue(null, "a"));
         assertEquals("yyy", sr.getAttributeValue(null, "a:a"));
 
@@ -241,17 +241,17 @@ public class TestNamespaces
 
         assertEquals(END_ELEMENT, sr.next());
         assertEquals(0, sr.getNamespaceCount());
-        assertNull(sr.getPrefix());
         assertEquals("leaf", sr.getLocalName());
+        assertNoPrefix(sr);
 
         assertEquals(END_ELEMENT, sr.next());
         assertEquals(0, sr.getNamespaceCount());
-        assertNull(sr.getPrefix());
         assertEquals("a:branch", sr.getLocalName());
+        assertNoPrefix(sr);
 
         assertEquals(END_ELEMENT, sr.next());
         assertEquals(0, sr.getNamespaceCount());
-        assertNull(sr.getPrefix());
+        assertNoPrefix(sr);
         assertEquals("root", sr.getLocalName());
 
         assertEquals(END_DOCUMENT, sr.next());
@@ -293,12 +293,12 @@ public class TestNamespaces
         XMLStreamReader sr = getNsReader(XML, true);
         assertEquals(START_ELEMENT, sr.next());
         assertEquals("root", sr.getLocalName());
-        assertNull(sr.getPrefix());
         assertEquals("url", sr.getNamespaceURI());
+        assertNoPrefix(sr);
         NamespaceContext ctxt = sr.getNamespaceContext();
         assertEquals(1, sr.getNamespaceCount());
         assertEquals("url", sr.getNamespaceURI(0));
-        assertNull(sr.getNamespacePrefix(0));
+        assertNoAttrPrefix(sr.getNamespacePrefix(0));
 
         assertEquals("url", ctxt.getNamespaceURI(""));
         assertEquals("", ctxt.getPrefix("url"));
@@ -311,8 +311,8 @@ public class TestNamespaces
         sr = getNsReader(XML, true);
         assertEquals(START_ELEMENT, sr.next());
         assertEquals("root", sr.getLocalName());
-        assertNull(sr.getPrefix());
-        assertNull(sr.getNamespaceURI());
+        assertNoPrefix(sr);
+        assertNoNsURI(sr);
         assertEquals(1, sr.getNamespaceCount());
         assertEquals("url", sr.getNamespaceURI(0));
         assertEquals("a", sr.getNamespacePrefix(0));
@@ -407,6 +407,33 @@ public class TestNamespaces
 
         assertEquals(END_ELEMENT, sr.next()); // root
         assertEquals(1, sr.getNamespaceCount());
+    }
+
+    /**
+     * This specialized test case verifies that there are no
+     * unbinding of explict namespace prefixes in xml 1.0
+     * documents. While namespaces 1.1 (and hence, xml 1.0)
+     * makes such use legal, xml 1.0 does not allow it.
+     */
+    public void testUnbindingInvalindInXml10()
+        throws XMLStreamException
+    {
+        final String XML =
+            "<?xml version='1.0'?><root xmlns:ns='http://ns'><branch xmlns:ns='' /></root>";
+
+        XMLStreamReader sr = getNsReader(XML, true);
+        assertEquals(START_ELEMENT, sr.next());
+        assertEquals("root", sr.getLocalName());
+        assertNoPrefix(sr);        
+
+        try {
+            sr.next(); // start_element, usually throws exc her
+            sr.next(); // but if not, at least should do it before end element
+            fail("Expected an exception when trying to unbind namespace mapping for prefix 'ns': not legal in xml 1.0 documents");
+        } catch (XMLStreamException e) {
+            // good
+        }
+        sr.close();
     }
 
     /**
@@ -643,17 +670,5 @@ public class TestNamespaces
         setCoalescing(f, true);
         setValidating(f, false);
         return constructStreamReader(f, contents);
-    }
-
-    /*
-    ////////////////////////////////////////////////////////////
-    // Local test driver, for quick access to individual cases...
-    ////////////////////////////////////////////////////////////
-     */
-
-    public static void main(String[] args)
-        throws Exception
-    {
-        new TestNamespaces("TestNamespaces").testValidNs();
     }
 }

@@ -52,7 +52,11 @@ public class TestNotationAttrRead
             +"<!ATTLIST root attr NOTATION (notation) #IMPLIED>"
             +"<!NOTATION notation PUBLIC 'some-public-id'>\n"
             +"]>\n<root />";
-        streamThrough(getValidatingReader(XML));
+        try {
+            streamThrough(getValidatingReader(XML));
+       } catch (XMLStreamException e) {
+            fail("Notation declaration order should not matter, but failed due to: "+e.getMessage());
+        }
 
         // Likewise for default values
         XML = "<!DOCTYPE root [\n"
@@ -60,7 +64,11 @@ public class TestNotationAttrRead
             +"<!ATTLIST root attr NOTATION (notation) 'notation'>"
             +"<!NOTATION notation PUBLIC 'some-public-id'>\n"
             +"]>\n<root />";
-        streamThrough(getValidatingReader(XML));
+        try {
+            streamThrough(getValidatingReader(XML));
+       } catch (XMLStreamException e) {
+            fail("Notation declaration order should not matter, but failed due to: "+e.getMessage());
+        }
     }
 
     public void testInvalidAttrDecl()
