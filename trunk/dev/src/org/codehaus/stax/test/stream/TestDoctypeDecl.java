@@ -236,7 +236,7 @@ public class TestDoctypeDecl
                     result = new Integer(sr.getTextLength());
                     break;
                 }
-                fail("Expected IllegalArgumentException, when calling "
+                fail("Expected IllegalStateException, when calling "
                      +method+"() for DTD");
             } catch (IllegalStateException iae) {
                 ; // good

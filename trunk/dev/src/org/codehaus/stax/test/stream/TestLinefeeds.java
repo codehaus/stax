@@ -56,12 +56,12 @@ public class TestLinefeeds
             // Either way, needs to have the root element now
             assertEquals(START_ELEMENT, type);
             assertEquals("root", sr.getLocalName());
-            assertEquals(null, sr.getPrefix());
+            assertNoPrefix(sr);
 
             // And then matching virtual close
             assertEquals(END_ELEMENT, sr.next());
             assertEquals("root", sr.getLocalName());
-            assertEquals(null, sr.getPrefix());
+            assertNoPrefix(sr);
 
             // And then we may get more whitespace:
             type = sr.next();
@@ -108,7 +108,7 @@ public class TestLinefeeds
         // Either way, needs to have the root element now
         assertEquals(START_ELEMENT, sr.next());
         assertEquals("root", sr.getLocalName());
-        assertEquals(null, sr.getPrefix());
+        assertNoPrefix(sr);
         
         /* Then we will get either CDATA or CHARACTERS type; let's
          * NOT do thorough check here -- that'll be up to specific
@@ -144,7 +144,7 @@ public class TestLinefeeds
         // Plus, should get the close element too
         assertEquals(END_ELEMENT, type);
         assertEquals("root", sr.getLocalName());
-        assertEquals(null, sr.getPrefix());
+        assertNoPrefix(sr);
         
         // And then the end doc
         assertEquals(END_DOCUMENT, sr.next());
@@ -176,7 +176,7 @@ public class TestLinefeeds
             // Either way, needs to have the root element now
             assertEquals(START_ELEMENT, sr.next());
             assertEquals("root", sr.getLocalName());
-            assertEquals(null, sr.getPrefix());
+            assertNoPrefix(sr);
 
             assertEquals(PROCESSING_INSTRUCTION, sr.next());
             assertEquals("target", sr.getPITarget());
@@ -198,7 +198,7 @@ public class TestLinefeeds
             // Plus, should get the close element too
             assertEquals(END_ELEMENT, sr.next());
             assertEquals("root", sr.getLocalName());
-            assertEquals(null, sr.getPrefix());
+            assertNoPrefix(sr);
 
             // And then the end doc
             assertEquals(END_DOCUMENT, sr.next());
@@ -231,7 +231,7 @@ public class TestLinefeeds
             // Either way, needs to have the root element now
             assertEquals(START_ELEMENT, sr.next());
             assertEquals("root", sr.getLocalName());
-            assertEquals(null, sr.getPrefix());
+            assertNoPrefix(sr);
 
             assertEquals(COMMENT, sr.next());
             assertEquals(printable(OUT_SPACES1), printable(sr.getText()));
@@ -245,7 +245,7 @@ public class TestLinefeeds
             // Plus, should get the close element too
             assertEquals(END_ELEMENT, sr.next());
             assertEquals("root", sr.getLocalName());
-            assertEquals(null, sr.getPrefix());
+            assertNoPrefix(sr);
 
             // And then the end doc
             assertEquals(END_DOCUMENT, sr.next());

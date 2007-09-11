@@ -49,7 +49,11 @@ public class TestEntityAttrRead
             +"<!NOTATION not1 PUBLIC 'public-notation-id'>\n"
             +"<!ATTLIST root attr ENTITY #IMPLIED>\n"
             +"]>\n<root />";
-        streamThrough(getValidatingReader(XML));
+        try {
+            streamThrough(getValidatingReader(XML));
+        } catch (XMLStreamException e) {
+            fail("Entity declaration order should not matter, but failed due to: "+e.getMessage());
+        }
     }
 
     public void testValidEntitiesAttrDecl()

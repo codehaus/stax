@@ -6,14 +6,12 @@ import javax.xml.stream.*;
 /**
  * Unit test suite that tests handling of XML elements, both in namespace
  * aware and non-namespace modes.
+ *
+ * @author Tatu Saloranta
  */
 public class TestElements
     extends BaseStreamTest
 {
-    public TestElements(String name) {
-        super(name);
-    }
-
     /**
      * Method that checks properties of START_ELEMENT and END_ELEMENT
      * returned by the stream reader are correct according to StAX specs.
@@ -83,13 +81,13 @@ public class TestElements
         // Documents without root are not valid
         streamThroughFailing(getElemReader(NOROOT_XML, true),
                              "document without root element");
-
-	XMLStreamReader sr = getElemReader(NOROOT_XML, false);
-	if (sr != null) { // only if non-ns-aware mode supported
-	    streamThroughFailing(sr, "document without root element");
-	}
+        
+        XMLStreamReader sr = getElemReader(NOROOT_XML, false);
+        if (sr != null) { // only if non-ns-aware mode supported
+            streamThroughFailing(sr, "document without root element");
+        }
     }
-
+    
     public void testInvalidEmptyElem()
         throws XMLStreamException
     {
@@ -148,21 +146,13 @@ public class TestElements
         QName n = sr.getName();
         assertNotNull(n);
         assertEquals("root", n.getLocalPart());
-        /* Hmmh. Seems like QName won't return null no matter what...
-         * so let's just check it's null or empty
+        /* 07-Sep-2007, TSa: The current thinking within Stax community
+         *   is that empty String is the right answer for all unbound
+         *   prefixes and namespace URIs, unless explicitly defined
+         *   that null is to be used for individual methods.
          */
-        //assertEquals(null, n.getPrefix());
-        {
-            String prefix = n.getPrefix();
-            assertTrue((prefix == null) || prefix.length() == 0);
-        }
-
-        // Similarly, ns URI (from QName) apparently is never null...
-        //assertEquals((nsAware ? DEFAULT_URI_NS : DEFAULT_URI_NON_NS), n.getNamespaceURI());
-        {
-            String uri = n.getNamespaceURI();
-            assertTrue((uri == null) || uri.length() == 0);
-        }
+        assertEquals("", n.getPrefix());
+        assertNoNsURI(sr);
 
         if (isStart) {
             assertEquals(0, sr.getAttributeCount());
@@ -244,27 +234,14 @@ public class TestElements
         // First, need to get <root>
         assertTokenType(START_ELEMENT, sr.next());
         assertEquals("root", sr.getLocalName());
-        String prefix = sr.getPrefix();
-        assertNull("Missing prefix should be reported as null", prefix);
-        String nsURI = sr.getNamespaceURI();
-
-        /* Hmmh. It's not defined by StAX API, whether null or "" is expected
-         * in non-ns mode... so let's accept either:
-         */
-        if (nsAware) {
-            // In NS-mode, null is not allowed however
-            assertNull("Default (non-defined) namespace should be reported as empty String", nsURI);
-        } else {
-            assertNull("Default (non-defined) namespace should be reported as NULL in non-NS mode", nsURI);
-        }
+        assertNoPrefix(sr);
+        assertNoNsURI(sr);
 
         // Let's also check QName seems valid:
         QName name = sr.getName();
         assertNotNull("Shouldn't get null QName for any start element", name);
         assertEquals(name, new QName("root"));
-
-        // Hmmh. In ns-aware mode, is it ok to get null, ever?
-        assertNull(sr.getNamespaceURI());
+        assertNoNsURI(sr);
         assertEquals(0, sr.getAttributeCount());
         assertEquals(0, sr.getNamespaceCount());
 
@@ -276,8 +253,8 @@ public class TestElements
             assertEquals(NS_URL1, sr.getNamespaceURI());
         } else {
             assertEquals(NS_PREFIX1+":elem", sr.getLocalName());
-            assertEquals(null, sr.getPrefix());
-            assertNull(sr.getNamespaceURI());
+            assertNoPrefix(sr);
+            assertNoNsURI(sr);
         }
 
         int expNs = nsAware ? 1 : 0;
@@ -299,19 +276,19 @@ public class TestElements
             assertEquals(NS_URL1, sr.getNamespaceURI());
         } else {
             assertEquals(NS_PREFIX1+":elem", sr.getLocalName());
-            assertNull(sr.getPrefix());
-            assertNull(sr.getNamespaceURI());
+            assertNoPrefix(sr);
+            assertNoNsURI(sr);
         }
         assertEquals(expNs, sr.getNamespaceCount());
 
         assertEquals(START_ELEMENT, sr.next());
         assertEquals("elem2", sr.getLocalName());
 
-        assertEquals(null, sr.getPrefix());
+        assertNoPrefix(sr);
         if (nsAware) {
             assertEquals(NS_URL2, sr.getNamespaceURI());
         } else {
-            assertNull(sr.getNamespaceURI());
+            assertNoNsURI(sr);
         }
         assertEquals(expAttr, sr.getAttributeCount());
         assertEquals(expNs, sr.getNamespaceCount());
@@ -319,19 +296,18 @@ public class TestElements
         assertEquals(END_ELEMENT, sr.next());
         assertEquals("elem2", sr.getLocalName());
 
-        assertEquals(null, sr.getPrefix());
+        assertNoPrefix(sr);
         if (nsAware) {
             assertEquals(NS_URL2, sr.getNamespaceURI());
         } else {
-            assertNull(sr.getNamespaceURI());
+            assertNoNsURI(sr);
         }
         assertEquals(expNs, sr.getNamespaceCount());
 
         assertEquals(END_ELEMENT, sr.next());
         assertEquals("root", sr.getLocalName());
-        assertEquals(null, sr.getPrefix());
-
-        assertNull(sr.getNamespaceURI());
+        assertNoNsURI(sr);
+        assertNoPrefix(sr);
         assertEquals(0, sr.getNamespaceCount());
     }
 
@@ -381,8 +357,8 @@ public class TestElements
     {
         XMLInputFactory f = getInputFactory();
         if (!setNamespaceAware(f, nsAware)) {
-	    return null;
-	}
+            return null;
+        }
         setCoalescing(f, true);
         setValidating(f, false);
         return constructStreamReader(f, contents);

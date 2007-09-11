@@ -6,14 +6,12 @@ import javax.xml.stream.*;
  * Unit test suite that tests handling of XML comments (except for the
  * linefeed normalization which is tested elsewhere); mostly just what
  * properties is the stream reader returning when pointing to a comment.
+ *
+ * @author Tatu Saloranta
  */
 public class TestCommentRead
     extends BaseStreamTest
 {
-    public TestCommentRead(String name) {
-        super(name);
-    }
-
     public void testValidComments()
         throws XMLStreamException
     {

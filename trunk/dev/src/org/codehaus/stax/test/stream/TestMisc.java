@@ -38,6 +38,8 @@ public class TestMisc
             fail("Should have thrown an exception when checking local name of a COMMENT");
         } catch (XMLStreamException e) {
             ; // good
+        } catch (IllegalStateException ise) {
+            ; // likewise this is ok, as getName() can throw it
         }
 
         assertTokenType(PROCESSING_INSTRUCTION, sr.next());
@@ -45,7 +47,13 @@ public class TestMisc
 
         assertTokenType(START_ELEMENT, sr.next());
         sr.require(START_ELEMENT, null, "tag");
-        sr.require(START_ELEMENT, "", "tag");
+
+        try {
+            sr.require(START_ELEMENT, "", "tag");
+        } catch (XMLStreamException e) {
+            fail("Did not expect problems with <tag> match, got: "+e.getMessage());
+        }
+
         try { // should get an exception due to incorrect ns URI
             sr.require(START_ELEMENT, "http://foo", "tag");
             fail("Should have thrown an exception for incorrect NS URI");

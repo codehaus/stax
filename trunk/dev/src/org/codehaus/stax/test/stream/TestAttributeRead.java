@@ -88,8 +88,7 @@ public class TestAttributeRead
             fail("Expected null as prefix for attribute 'a', got '"+prefix+"'");
         }
         assertEquals("a", sr.getAttributePrefix(index2));
-        String ns = sr.getAttributeNamespace(index1);
-        assertNull("Unbound attribute should return null for XMLStreamReader.sr.getAttributeNamespace(int): got '"+ns+"'", ns);
+        assertNoAttrNamespace(sr.getAttributeNamespace(index1));
         assertEquals("url", sr.getAttributeNamespace(index2));
     }
 
@@ -104,8 +103,8 @@ public class TestAttributeRead
         assertEquals("root", sr.getLocalName());
         assertEquals(1, sr.getNamespaceCount());
         assertEquals(1, sr.getAttributeCount());
-        assertNull(sr.getAttributePrefix(0));
-        assertNull(sr.getAttributeNamespace(0));
+        assertNoAttrPrefix(sr.getAttributePrefix(0));
+        assertNoAttrNamespace(sr.getAttributeNamespace(0));
         assertEquals("xyz", sr.getAttributeValue(0));
 
         assertEquals(START_ELEMENT, sr.next());
@@ -184,11 +183,11 @@ public class TestAttributeRead
         
         assertEquals("\"", sr.getAttributeValue(index1));
         assertEquals("url", sr.getAttributeValue(index2));
-        assertNull(sr.getAttributePrefix(index1));
-        assertNull(sr.getAttributePrefix(index2));
+        assertNoAttrPrefix(sr.getAttributePrefix(index1));
+        assertNoAttrPrefix(sr.getAttributePrefix(index2));
 
-        assertNull(sr.getAttributeNamespace(index1));
-        assertNull(sr.getAttributeNamespace(index2));
+        assertNoAttrNamespace(sr.getAttributeNamespace(index1));
+        assertNoAttrNamespace(sr.getAttributeNamespace(index2));
     }
 
     public void testQuotesViaEntities()

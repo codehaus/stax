@@ -75,28 +75,33 @@ public class TestEventReader
 
     /**
      * Test that checks that entity objects are properly returned in
-     * non-expanding mode
+     * non-expanding mode.
      */
     public void testNonExpandingEntities()
         throws XMLStreamException
     {
-        /* Let's test all entity types
-         */
+        // Let's test all entity types
+        final String URL1 = "nosuchdir/dummyent.xml";
         String XML = "<?xml version='1.0' ?>"
             +"<!DOCTYPE root [\n"
             +"<!ENTITY intEnt 'internal'>\n"
-            +"<!ENTITY extParsedEnt SYSTEM 'url:dummy'>\n"
+            +"<!ENTITY extParsedEnt SYSTEM '"+URL1+"'>\n"
             +"<!NOTATION notation PUBLIC 'notation-public-id'>\n"
             // Hmmh: can't test this, but let's declare it anyway
-            +"<!ENTITY extUnparsedEnt SYSTEM 'url:dummy2' NDATA notation>\n"
+            +"<!ENTITY extUnparsedEnt SYSTEM 'http://localhost/dummy2' NDATA notation>\n"
             +"]>"
             //+"<root>&intEnt;&extParsedEnt;&extUnparsedEnt;</root>"
             +"<root>&intEnt;&extParsedEnt;</root>"
             ;
 
-        for (int i = 0; i < 4; ++i) {
+        for (int i = 0; i < 2; ++i) {
             boolean ns = (i & 1) != 0;
-            boolean coal = (i & 2) != 0;
+            /* 08-Sep-2007, TSa: Alas, not all impls (like sjsxp) support
+             *   combination of non-expanding and coalescing; thus,
+             *   can only test non-coalescing mode here.
+             */
+            //boolean coal = (i & 2) != 0;
+            boolean coal = false;
             // false -> do not expand entities
             XMLEventReader er = getReader(XML, ns, coal, false);
             
@@ -130,7 +135,7 @@ public class TestEventReader
             assertEquals("extParsedEnt", ed.getName());
             assertNullOrEmpty(ed.getNotationName());
             assertNullOrEmpty(ed.getPublicId());
-            assertEquals("url:dummy", ed.getSystemId());
+            assertEquals(URL1, ed.getSystemId());
 
             /*
             evt = er.nextEvent();
@@ -455,10 +460,8 @@ public class TestEventReader
             assertTokenType(START_DOCUMENT, er.nextEvent().getEventType());
             XMLEvent elem = er.nextEvent();
             assertTokenType(START_ELEMENT, elem.getEventType());
-
             XMLEvent peeked = er.peek();
             assertTokenType(CHARACTERS, peeked.getEventType());
-
             assertEquals(TEXT1+TEXT2, er.getElementText());
 
             /* 06-Jan-2006, TSa: I'm really not sure whether to expect
@@ -466,6 +469,7 @@ public class TestEventReader
              *   makes more sense? For now let's accept both, however.
              */
             elem = er.nextEvent();
+
             if (elem.getEventType() != END_DOCUMENT
                 && elem.getEventType() != END_ELEMENT) {
                 fail("Expected END_DOCUMENT or END_ELEMENT, got "+tokenTypeDesc(elem.getEventType()));
@@ -490,7 +494,8 @@ public class TestEventReader
                                      boolean coalesce, boolean expandEnt)
         throws XMLStreamException
     {
-        XMLInputFactory f = getInputFactory();
+        //XMLInputFactory f = getInputFactory();
+        XMLInputFactory f = getNewInputFactory();
         setNamespaceAware(f, nsAware);
         setCoalescing(f, coalesce);
         setSupportDTD(f, true);

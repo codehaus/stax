@@ -59,7 +59,6 @@ public class TestEntityRead
         XMLStreamReader sr = getReader(XML, true, true, true);
 
         assertTokenType(START_ELEMENT, sr.next());
-
         assertTokenType(CHARACTERS, sr.next());
         // may still be split, though (buggy coalescing)
         StringBuffer sb = new StringBuffer(getAndVerifyText(sr));
@@ -628,6 +627,7 @@ public class TestEntityRead
         setNamespaceAware(f, nsAware);
         setSupportDTD(f, true);
         setCoalescing(f, coalescing);
+        setSupportExternalEntities(f, true);
         setReplaceEntities(f, replEntities);
         setValidating(f, false);
         return f;

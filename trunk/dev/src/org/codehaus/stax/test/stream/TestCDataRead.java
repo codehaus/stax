@@ -142,7 +142,7 @@ public class TestCDataRead
             assertTokenType(START_ELEMENT, sr.next());
             // Ok, now should get an exception...
             StringBuffer sb = new StringBuffer();
-            int type;
+            int type = -1;
             try {
                 while (true) {
                     type = sr.next();
@@ -154,12 +154,20 @@ public class TestCDataRead
             } catch (XMLStreamException sex) {
                 // good
                 continue;
-            } catch (RuntimeException sex) {
+            } catch (RuntimeException rex) {
                 /* Hmmh. Some implementations may throw a runtime exception,
-                 * if things are lazily parsed (for example, Woodstox)
+                 * if things are lazily parsed (for example, Woodstox).
+                 * But let's allow this only if a nested exception is
+                 * of proper type
                  */
-                // acceptable too
-                continue;
+                Throwable t = rex;
+                while (t != null) {
+                    if (t instanceof XMLStreamException) {
+                        continue;
+                    }
+                    t = t.getCause();
+                }
+                fail("Expected an XMLStreamException for nested CDATA section (coalescing: "+coal+"); instead got exception ("+rex.getClass()+"): "+rex.getMessage());
             }
             fail("Expected an exception for nested CDATA section (coalescing: "+coal+"); instead got text \""+sb.toString()+"\" (next event "+tokenTypeDesc(type)+")");
         }
