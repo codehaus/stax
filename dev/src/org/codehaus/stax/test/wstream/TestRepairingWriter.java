@@ -317,6 +317,51 @@ public class TestRepairingWriter
         assertTokenType(END_DOCUMENT, sr.next(), sr);
     }
 
+    public void testSiblingNs2()
+        throws IOException, XMLStreamException
+    {
+        StringWriter strw = new StringWriter();
+        XMLStreamWriter w = getRepairingWriter(strw);
+
+        String ns1 = "urn://namespace1";
+        String ns2 = "urn://namespace2";
+        w.writeStartDocument();
+        w.writeStartElement(ns1, "root");
+        w.writeStartElement(ns2, "first");
+        w.writeEndElement();
+        w.writeStartElement(ns2, "second");
+        w.writeEndElement();
+        w.writeEndElement();
+        w.writeEndDocument();
+        w.close();
+
+        // And then let's parse and verify it all:
+        XMLStreamReader sr = constructNsStreamReader(strw.toString());
+        assertTokenType(START_DOCUMENT, sr.getEventType(), sr);
+
+        assertTokenType(START_ELEMENT, sr.next(), sr);
+        assertEquals("root", sr.getLocalName());
+        // Can't assume anything about prefix assigned (if any), just ns uri
+        assertEquals(ns1, sr.getNamespaceURI());
+        assertEquals(0, sr.getAttributeCount());
+
+        assertTokenType(START_ELEMENT, sr.next(), sr);
+        assertEquals("first", sr.getLocalName());
+        assertEquals(ns2, sr.getNamespaceURI());
+        assertEquals(0, sr.getAttributeCount());
+        assertTokenType(END_ELEMENT, sr.next(), sr);
+        assertEquals("first", sr.getLocalName());
+
+        assertTokenType(START_ELEMENT, sr.next(), sr);
+        assertEquals("second", sr.getLocalName());
+        assertEquals(ns2, sr.getNamespaceURI());
+        assertEquals(0, sr.getAttributeCount());
+        assertTokenType(END_ELEMENT, sr.next(), sr);
+        assertEquals("second", sr.getLocalName());
+        assertTokenType(START_ELEMENT, sr.next(), sr);
+        assertEquals("root", sr.getLocalName());
+    }
+
     /**
      * Although repairing writers are allowed to output any number of
      * namespace declarations they want to, let's still check that
