@@ -358,7 +358,7 @@ public class TestRepairingWriter
         assertEquals(0, sr.getAttributeCount());
         assertTokenType(END_ELEMENT, sr.next(), sr);
         assertEquals("second", sr.getLocalName());
-        assertTokenType(START_ELEMENT, sr.next(), sr);
+        assertTokenType(END_ELEMENT, sr.next(), sr);
         assertEquals("root", sr.getLocalName());
     }
 
