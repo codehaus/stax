@@ -136,6 +136,7 @@ public class TestCDataRead
             +"<![CDATA[XML doesn't allow CDATA sections to nest]]>\n"
             +"\n]]>\n</doc>";
 
+        main_loop:
         for (int i = 0; i < 2; ++i) {
             boolean coal = (i > 0);
             XMLStreamReader sr = getReader(XML, coal);
@@ -163,7 +164,7 @@ public class TestCDataRead
                 Throwable t = rex;
                 while (t != null) {
                     if (t instanceof XMLStreamException) {
-                        continue;
+                        continue main_loop;
                     }
                     t = t.getCause();
                 }
