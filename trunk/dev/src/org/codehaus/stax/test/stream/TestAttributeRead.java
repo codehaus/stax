@@ -19,6 +19,9 @@ public class TestAttributeRead
     final String VALID_XML2
         = "<root a:b=\"&quot;\" xmlns:a='url' />";
 
+    final String VALID_XML3
+        = "<root><e1 a='123' /><e2 /></root>";
+
     /**
      * Test to make sure that quotes can be used in attribute values
      * via entity expansion
@@ -90,6 +93,38 @@ public class TestAttributeRead
         assertEquals("a", sr.getAttributePrefix(index2));
         assertNoAttrNamespace(sr.getAttributeNamespace(index1));
         assertEquals("url", sr.getAttributeNamespace(index2));
+    }
+
+    public void testValidNsAttrs2()
+        throws XMLStreamException
+    {
+        XMLStreamReader sr = getReader(VALID_XML3, true);
+        assertEquals(START_ELEMENT, sr.next());
+        assertEquals("root", sr.getLocalName());
+
+        assertEquals(START_ELEMENT, sr.next());
+        assertEquals("e1", sr.getLocalName());
+        assertEquals(1, sr.getAttributeCount());
+        assertEquals("a", sr.getAttributeLocalName(0));
+        assertEquals("123", sr.getAttributeValue(0));
+        assertEquals("123", sr.getAttributeValue(null, "a"));
+        assertEquals(END_ELEMENT, sr.next());
+        assertEquals("e1", sr.getLocalName());
+
+        assertEquals(START_ELEMENT, sr.next());
+        assertEquals("e2", sr.getLocalName());
+        assertEquals(0, sr.getAttributeCount());
+        String val = sr.getAttributeValue(null, "a");
+        if (val != null) {
+            fail("Should not find a value for attribute 'a', found '"+val+"'");
+        }
+
+        assertEquals(END_ELEMENT, sr.next());
+        assertEquals("e2", sr.getLocalName());
+
+        assertEquals(END_ELEMENT, sr.next());
+        assertEquals("root", sr.getLocalName());
+        sr.close();
     }
 
     public void testValidNsAttrNsInfo()
