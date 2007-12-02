@@ -350,7 +350,7 @@ public class BaseStaxTest
         StringBuffer sb = new StringBuffer();
         while (true) {
             int tt = sr.getEventType();
-            if (tt != CHARACTERS && tt != SPACE) {
+            if (tt != CHARACTERS && tt != SPACE && tt != CDATA) {
                 break;
             }
             sb.append(getAndVerifyText(sr));
