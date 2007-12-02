@@ -10,10 +10,6 @@ import javax.xml.stream.*;
 public class TestNmTokenAttrRead
     extends BaseVStreamTest
 {
-    public TestNmTokenAttrRead(String name) {
-        super(name);
-    }
-
     /*
     ///////////////////////////////////////
     // Test cases
