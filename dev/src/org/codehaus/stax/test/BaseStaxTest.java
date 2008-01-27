@@ -624,4 +624,11 @@ public class BaseStaxTest
         String msg = (type > 0) ? " (next event: "+tokenTypeDesc(type)+")" : "";
         System.err.println("Skipping "+clsName+"#"+method+": entity expansion does not seem to be functioning properly"+msg+".");
     }
+
+    protected void warn(String msg)
+    {
+        // Hmmh. Should we add a dependency to log4j or j.u.l?
+        // For now let's just dump to console.
+        System.err.println("WARN: "+msg);
+    }
 }
