@@ -48,10 +48,11 @@ public class TestMisc
         assertTokenType(START_ELEMENT, sr.next());
         sr.require(START_ELEMENT, null, "tag");
 
+        String nsURI = sr.getNamespaceURI();
         try {
             sr.require(START_ELEMENT, "", "tag");
         } catch (XMLStreamException e) {
-            fail("Did not expect problems with <tag> match, got: "+e.getMessage());
+            fail("Did not expect problems with <tag> match (current ns URI as reported by stream reader = '"+nsURI+"'), got: "+e.getMessage());
         }
 
         try { // should get an exception due to incorrect ns URI

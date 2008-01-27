@@ -36,14 +36,9 @@ public class TestNamespaces
         // ns/attr properties:
         assertEquals("value", sr.getAttributeValue(null, "attr1"));
         assertEquals("", sr.getAttributeValue("myurl", "attr1"));
-        try {
-            String str = sr.getAttributeValue(-1);
-            fail("Expected an exception when trying to access attribute #-1.");
-        } catch (Exception e) { }
-        try {
-            String str = sr.getAttributeValue(2);
-            fail("Expected an exception when trying to access attribute #2 (only 2 attibutes, #0 and #1.");
-        } catch (Exception e) { }
+
+        checkIllegalAttributeIndexes(sr);
+
         // Shouldn't be able to use prefix, just URI:
         assertNull(sr.getAttributeValue("xmlns", "a"));
         assertEquals("myurl", sr.getNamespaceURI("a"));
@@ -205,15 +200,7 @@ public class TestNamespaces
         assertEquals("value", sr.getAttributeValue(null, "attr1"));
         assertEquals(null, sr.getAttributeValue(null, "foobar"));
 
-        try {
-            String str = sr.getAttributeValue(-1);
-            fail("Expected an exception when trying to access attribute #-1.");
-        } catch (Exception e) { }
-        try {
-            String str = sr.getAttributeValue(3);
-            fail("Expected an exception when trying to access attribute #3 (only 3 attibutes, #0 and #1.");
-        } catch (Exception e) { }
-
+        checkIllegalAttributeIndexes(sr);
 
         /* ... not sure if how namespace access should work, ie. is it ok
          * to throw an exception, return null or what
@@ -489,6 +476,38 @@ public class TestNamespaces
     // Private methods, shared test code
     ////////////////////////////////////////
      */
+
+    private void checkIllegalAttributeIndexes(XMLStreamReader sr)
+        throws XMLStreamException
+    {
+        /* 26-Jan-2008, TSa: Javadocs/stax specs do not actually specify
+         *   what should happen if an illegal index is given.
+         *   So while it seems logical that we'd throw an exception,
+         *   we can not count on that. Let's rather just check that
+         *   we either get an exception, or empty (null or "") value;
+         *   and if latter, just warn.
+         */
+        try {
+            String str = sr.getAttributeValue(-1);
+            if (str != null) {
+                if (str.length() > 0) {
+                    fail("Did not expect to find a non-empty value when trying to access attribute #-1, got '"+str+"'");
+                }
+            }
+            warn("Did not get an exception when calling sr.getAttributeValue(-1): seems odd, but legal?");
+        } catch (Exception e) { }
+
+        int count = sr.getAttributeCount();
+        try {
+            String str = sr.getAttributeValue(count);
+            if (str != null) {
+                if (str.length() > 0) {
+                    fail("Did not expect to find a non-empty value when trying to access attribute #"+count+" [with element only having "+count+" attribute(s)], got '"+str+"'");
+                }
+            }
+            warn("Did not get an exception when calling sr.getAttributeValue("+count+"): [with element only having "+count+" attribute(s)] seems odd, but legal?");
+        } catch (Exception e) { }
+    }
 
     private void testPotentiallyInvalid(boolean nsAware, String method)
         throws XMLStreamException

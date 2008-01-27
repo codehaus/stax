@@ -257,7 +257,7 @@ public class TestEventFactory
         final String VERSION = "1.0";
         sd = f.createStartDocument(ENCODING, VERSION, true);
         checkEventIsMethods(START_DOCUMENT, sd);
-        assertTrue(sd.encodingSet());
+        assertTrue("Expected StartDocument.encodingSet() to be true when constructing via factory method that passes in non-empty encoding value", sd.encodingSet());
         assertTrue(sd.standaloneSet());
         assertEquals(ENCODING, sd.getCharacterEncodingScheme());
         assertEquals(VERSION, sd.getVersion());
