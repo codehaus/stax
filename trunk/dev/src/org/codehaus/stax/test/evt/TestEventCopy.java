@@ -125,7 +125,7 @@ public class TestEventCopy
 
         evt = er.nextEvent();
         assertTrue(evt.isCharacters());
-        assertTrue(evt.asCharacters().isCData());
+        assertTrue("Expected CDATA block to generate a Characters event for which isCData() returns true", evt.asCharacters().isCData());
         assertEquals("a&b", evt.asCharacters().getData());
 
         evt = er.nextEvent();
