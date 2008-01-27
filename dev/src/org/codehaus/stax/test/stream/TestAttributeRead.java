@@ -86,10 +86,8 @@ public class TestAttributeRead
         
         assertEquals("r&b", sr.getAttributeValue(index1));
         assertEquals("\"", sr.getAttributeValue(index2));
-        String prefix = sr.getAttributePrefix(index1);
-        if (prefix != null) {
-            fail("Expected null as prefix for attribute 'a', got '"+prefix+"'");
-        }
+
+        assertNoAttrPrefix(sr.getAttributePrefix(index1));
         assertEquals("a", sr.getAttributePrefix(index2));
         assertNoAttrNamespace(sr.getAttributeNamespace(index1));
         assertEquals("url", sr.getAttributeNamespace(index2));
