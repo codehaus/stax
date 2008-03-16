@@ -35,15 +35,7 @@ public class BaseStreamTest
 
     protected BaseStreamTest() { super(); }
 
-    protected BaseStreamTest(String name) {
-        super(name);
-    }
-
-    /*
-    //////////////////////////////////////////////////
-    // "Special" accessors
-    //////////////////////////////////////////////////
-     */
+    protected BaseStreamTest(String name) { super(name); }
 
     /*
     //////////////////////////////////////////////////
