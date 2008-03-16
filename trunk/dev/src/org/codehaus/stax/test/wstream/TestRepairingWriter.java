@@ -200,7 +200,7 @@ public class TestRepairingWriter
         w.close();
 
         // And then let's parse and verify it all:
-//System.err.println("testAttributes: doc = '"+strw+"'");
+        //System.err.println("testAttributes: doc = '"+strw+"'");
 
         XMLStreamReader sr = constructNsStreamReader(strw.toString());
         assertTokenType(START_DOCUMENT, sr.getEventType(), sr);

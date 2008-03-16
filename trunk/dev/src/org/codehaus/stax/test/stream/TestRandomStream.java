@@ -148,6 +148,7 @@ public class TestRandomStream
         assertEquals(START_ELEMENT, type);
         
         StringBuffer act = new StringBuffer(1000);
+
         do {
             if (type == START_ELEMENT || type == END_ELEMENT) {
                 act.append('<');
@@ -187,7 +188,12 @@ public class TestRandomStream
             } else {
                 fail("Unexpected event type "+type);
             }
-        } while ((type = sr.next()) != END_DOCUMENT);
+            try {
+                type = sr.next();
+            } catch (XMLStreamException xse) {
+                fail("Parse problem: "+xse);
+            }
+        } while (type != END_DOCUMENT);
         
         return act.toString();
     }

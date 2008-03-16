@@ -80,9 +80,7 @@ public class BaseStaxTest
     XMLOutputFactory mOutputFactory;
     XMLEventFactory mEventFactory;
 
-    protected BaseStaxTest(String name) {
-        super(name);
-    }
+    protected BaseStaxTest(String name) { super(name); }
 
     protected BaseStaxTest() { super(); }
 
@@ -129,6 +127,9 @@ public class BaseStaxTest
     protected static XMLStreamReader constructStreamReader(XMLInputFactory f, String content)
         throws XMLStreamException
     {
+        /* Can either create a simple reader from String, or go with
+         * input stream & decoding?
+         */
         //return f.createXMLStreamReader(new StringReader(content));
         try {
             byte[] data = content.getBytes("UTF-8");
@@ -419,36 +420,45 @@ public class BaseStaxTest
     }
 
     /**
+     * Helper method for ensuring that the current element
+     * (START_ELEMENT, END_ELEMENT) has no prefix
+     *<p>
      * Specific method makes sense, since earlier it was not clear
      * whether null or empty string (or perhaps both) would be the
      * right answer when there is no prefix.
      *<p>
-     * However: as per
-     * javadocs of {@link XMLStreamReader#getPrefix}, from
-     * JDK 1.6 indicate, the current understanding is that
-     *  <b>null</b> is the ultimate right answer here.
+     * Current thinking (early 2008) is that empty string is the
+     * expected value
      */
     protected static void assertNoPrefix(XMLStreamReader sr)
         throws XMLStreamException
     {
         String prefix = sr.getPrefix();
-        if (prefix != null) {
-            if (prefix.length() != 0) {
+        if (prefix == null) {
+            fail("Expected \"\" to signify missing prefix (see XMLStreamReader#getPrefix() JavaDocs): got null");
+        } else {
+            if (prefix.length() > 0) {
                 fail("Current element should not have a prefix: got '"+prefix+"'");
-            } else {
-                fail("Expected null to signify missing prefix (see XMLStreamReader#getPrefix() JavaDocs): got empty String");
             }
         }
     }
 
+    /**
+     * Helper method for ensuring that the given return value for
+     * attribute prefix accessor has returned a value that
+     * represents "no prefix" value.
+     *<p>
+     * Current thinking (early 2008) is that empty string is the
+     * expected value here.
+     */
     protected static void assertNoAttrPrefix(String attrPrefix)
         throws XMLStreamException
     {
-        if (attrPrefix != null) {
-            if (attrPrefix.length() != 0) {
-                fail("Attribute should not have a prefix: got '"+attrPrefix+"'");
-            } else {
-                fail("Expected null to signify missing attribute prefix (see XMLStreamReader#getAttributePrefix() JavaDocs): got empty String");
+        if (attrPrefix == null) {
+            fail("Attribute that does not have a prefix should be indicated with \"\", not null");
+        } else {
+            if (attrPrefix.length() > 0) {
+                fail("Attribute should not have prefix (had '"+attrPrefix+"')");
             }
         }
     }
