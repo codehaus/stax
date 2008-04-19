@@ -124,6 +124,49 @@ public class TestMisc
         }
     }
 
+    /**
+     * Additional simple test that verifies that element text for
+     * an empty element is returned as empty String.
+     */
+    public void testGetElementTextEmpty()
+        throws XMLStreamException
+    {
+        // First simple case
+
+        String XML = "<root />";
+        XMLStreamReader sr = getReader(XML, true, false);
+
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals("", sr.getElementText());
+        // and then invalid
+        assertTokenType(END_ELEMENT, sr.getEventType());
+        assertEquals("root", sr.getLocalName());
+        assertTokenType(END_DOCUMENT, sr.next());
+        sr.close();
+
+        // Then similar but longer
+        XML = "<root><a></a><b /></root>";
+        sr = getReader(XML, true, false);
+
+        assertTokenType(START_ELEMENT, sr.next()); // root
+
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals("a", sr.getLocalName());
+        assertEquals("", sr.getElementText());
+        // and then invalid
+        assertTokenType(END_ELEMENT, sr.getEventType());
+
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals("b", sr.getLocalName());
+        assertEquals("", sr.getElementText());
+        // and then invalid
+        assertTokenType(END_ELEMENT, sr.getEventType());
+
+        assertTokenType(END_ELEMENT, sr.next());
+        assertEquals("root", sr.getLocalName());
+        assertTokenType(END_DOCUMENT, sr.next());
+    }
+
     public void testNextTag()
         throws XMLStreamException
     {
