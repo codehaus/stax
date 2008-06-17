@@ -54,6 +54,33 @@ public class TestAttributeRead
         assertEquals(END_DOCUMENT, sr.next());
     }
 
+    /**
+     * Additional unit test that verifies that empty namespace URI
+     * can be used as expected
+     */
+    public void testValidNsAttrsByName2()
+        throws XMLStreamException
+    {
+        XMLStreamReader sr = getReader("<root attr='1' />", true);
+        assertEquals(START_ELEMENT, sr.next());
+        assertEquals(0, sr.getNamespaceCount());
+        assertEquals(1, sr.getAttributeCount());
+
+        /* Both null and "" should work as well
+         * (note: specs are bit confusing and contradictory wrt
+         * how null is to be handled, but in this case all interpretations
+         * would produce same result)
+         */
+        assertEquals("1", sr.getAttributeValue(null, "attr"));
+        assertEquals("1", sr.getAttributeValue("", "attr"));
+
+        assertNull(sr.getAttributeValue(null, "b"));
+        assertNull(sr.getAttributeValue("", "b"));
+
+        assertEquals(END_ELEMENT, sr.next());
+        assertEquals(END_DOCUMENT, sr.next());
+    }
+
     public void testValidNsAttrsByIndex()
         throws XMLStreamException
     {
