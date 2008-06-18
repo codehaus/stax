@@ -5,14 +5,11 @@ import javax.xml.stream.*;
 /**
  * Unit test suite that tests miscallenous stream reader methods, such
  * as require(), getElementText() and nextTag()
+ * @author Tatu Saloranta
  */
 public class TestMisc
     extends BaseStreamTest
 {
-    public TestMisc(String name) {
-        super(name);
-    }
-
     public void testRequire()
         throws XMLStreamException
     {
@@ -277,6 +274,34 @@ public class TestMisc
         } catch (XMLStreamException e) { // wrong exception
             fail("Expected NoSuchElementException; received (type "+e.getClass()+"): "+e);
         }
+    }
+
+    /**
+     * Simple test case to verify an edge case with isWhiteSpace().
+     */
+    public void testIsWhiteSpace()
+        throws XMLStreamException
+    {
+        // First, simplest possible
+        XMLStreamReader sr = getReader("<root>&#65;?</root>", true, true);
+        assertTokenType(START_DOCUMENT, sr.getEventType());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertTokenType(CHARACTERS, sr.next());
+        if (sr.isWhiteSpace()) {
+            fail("XMLStreamReader.isWhiteSpace() should return false, text = '"+sr.getText()+"'");
+        }
+        sr.close();
+
+        // Then just bit more complex
+        sr = getReader("<root>\n<x>&#65;?</x></root>", true, true);
+        assertTokenType(START_DOCUMENT, sr.getEventType());
+        assertTokenType(START_ELEMENT, sr.nextTag());
+        assertTokenType(START_ELEMENT, sr.nextTag());
+        assertTokenType(CHARACTERS, sr.next());
+        if (sr.isWhiteSpace()) {
+            fail("XMLStreamReader.isWhiteSpace() should return false, text = '"+sr.getText()+"'");
+        }
+        sr.close();
     }
 
     /*
