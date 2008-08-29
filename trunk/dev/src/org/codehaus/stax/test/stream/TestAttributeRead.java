@@ -1,5 +1,6 @@
 package org.codehaus.stax.test.stream;
 
+import javax.xml.namespace.QName;
 import javax.xml.stream.*;
 
 /**
@@ -395,6 +396,76 @@ public class TestAttributeRead
     {
         doTestManyAttrs(false);
     }
+
+    /**
+     * Unit test that verifies that by-index attribute accessors
+     * will throw proper exception when using invalid index to
+     * access data (value, name, uri/prefix).
+     */
+    public void testInvalidAccessByIndex()
+        throws Exception
+    {
+        String XML = "<root attr1='1' attr2='2'><leaf attr3='3' /></root>";
+
+        XMLStreamReader sr = getReader(XML, true);
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals(2, sr.getAttributeCount());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals(1, sr.getAttributeCount());
+
+        try {
+            String str = sr.getAttributeValue(1);
+            fail("Expected IllegalArgumentException for sr.getAttributeValue() with illegal index, no exception, value = ["+str+"]");
+        } catch (IllegalArgumentException iae) {
+            ; // good
+        } catch (Exception e) {
+            // almost ok
+            fail("Expected IllegalArgumentException for sr.getAttributeValue() with illegal index, got: "+e);
+        }
+
+        try {
+            QName n = sr.getAttributeName(1);
+            fail("Expected IllegalArgumentException for sr.getAttributeName() with illegal index, no exception, name = ["+n+"]");
+        } catch (IllegalArgumentException iae) {
+            ; // good
+        } catch (Exception e) {
+            // almost ok
+            fail("Expected IllegalArgumentException for sr.getAttributeName() with illegal index, got: "+e);
+        }
+
+        try {
+            String n = sr.getAttributeLocalName(1);
+            fail("Expected IllegalArgumentException for sr.getAttributeLocalName() with illegal index, no exception, got = ["+n+"]");
+        } catch (IllegalArgumentException iae) {
+            ; // good
+        } catch (Exception e) {
+            // almost ok
+            fail("Expected IllegalArgumentException for sr.getAttributeLocalName() with illegal index, got: "+e);
+        }
+
+        try {
+            String n = sr.getAttributeNamespace(1);
+            fail("Expected IllegalArgumentException for sr.getAttributeNamespace() with illegal index, no exception, got = ["+n+"]");
+        } catch (IllegalArgumentException iae) {
+            ; // good
+        } catch (Exception e) {
+            // almost ok
+            fail("Expected IllegalArgumentException for sr.getAttributeNamespace() with illegal index, got: "+e);
+        }
+
+        try {
+            String n = sr.getAttributePrefix(1);
+            fail("Expected IllegalArgumentException for sr.getAttributePrefix() with illegal index, no exception, got = ["+n+"]");
+        } catch (IllegalArgumentException iae) {
+            ; // good
+        } catch (Exception e) {
+            // almost ok
+            fail("Expected IllegalArgumentException for sr.getAttributePrefix() with illegal index, got: "+e);
+        }
+
+        sr.close();
+    }
+
 
     /*
     ////////////////////////////////////////

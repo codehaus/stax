@@ -37,7 +37,7 @@
   					javax/xml/stream/**/*.java"/>
 
   <!-- Unit test (StaxTest) package properties -->
-  <property name="test_version" value="1.1.1"/>
+  <property name="test_version" value="1.1.2"/>
   <property name="test_class_dir" value="${build_dir}/test-classes"/>
   <property name="test_results_dir" value="${build_dir}/test-results"/>
   <property name="test_jar" value="staxtest_${test_version}.jar"/>
