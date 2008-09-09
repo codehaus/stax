@@ -1,9 +1,11 @@
 package org.codehaus.stax.test.stream;
 
+import java.util.Random;
+
 import javax.xml.stream.*;
 
 /**
- * Unit test suite that tests miscallenous stream reader methods, such
+ * Unit test suite that tests miscellaneous stream reader methods, such
  * as require(), getElementText() and nextTag()
  * @author Tatu Saloranta
  */
@@ -97,7 +99,6 @@ public class TestMisc
             "<root>"
             +"<tag>Got some <!-- comment --> text &apos;n stuff!</tag>"
             +"<tag><?proc instr?>more <![CDATA[stuff]]> </tag>"
-            +"<tag><empty /></tag>"
             +"</root>"
             ;
         XMLStreamReader sr = getReader(XML, true, false);
@@ -111,13 +112,96 @@ public class TestMisc
         assertEquals("more stuff ", sr.getElementText());
         assertTokenType(END_ELEMENT, sr.getEventType());
 
-        // and then invalid
+        assertTokenType(END_ELEMENT, sr.next());
+        sr.close();
+    }
+
+    public void testGetElementTextInvalid()
+        throws XMLStreamException
+    {
+        String XML = "<root>Invalid: <tag><empty /> (no kids allowed!)</tag></root>";
+        XMLStreamReader sr = getReader(XML, true, false);
         assertTokenType(START_ELEMENT, sr.next());
+
+        // And then should get proper exception
         try {
             String str = sr.getElementText();
             fail("Expected an exception for nested start element");
         } catch (XMLStreamException ex) {
-            ; // ok!
+            ; // ok! (would be nice to check error message but...)
+        }
+    }
+
+    /**
+     * Alternative test that tries to verify that handling of long
+     * and non-contiguous text segment also works acceptably.
+     */
+    public void testGetElementTextLong()
+        throws XMLStreamException
+    {
+        /* Let's do multiple passes, starting with shorter Strings;
+         * easier to troubleshoot with shorter, better coverage with
+         * longer
+         */
+
+        int[] lengths = new int[] { 50, 190, 2400, 9300, 42000 };
+
+        for (int i = 0; i < lengths.length; ++i) {
+            int len = lengths[i];
+            StringBuffer input = new StringBuffer(len * 3 / 2);
+            StringBuffer output = new StringBuffer(len + 100);
+
+            Random r = new Random(i);
+
+            while (output.length() < len) {
+                String str = null;
+                switch (Math.abs(r.nextInt()) % 7) {
+                case 0:
+                    {
+                        int nr = r.nextInt();
+                        // note: linefeed normalization
+                        input.append(" ").append(nr).append("\r\n");
+                        output.append(" ").append(nr).append("\n");
+                    }
+                    break;
+                case 1:
+                    input.append("&amp;");
+                    output.append("&");
+                    break;
+                case 2:
+                    input.append("<?processing instr \n.... ?>");
+                    break;
+                case 3:
+                    input.append("<!-- comment\r nr ").append(r.nextInt()).append(" -->");
+                    break;
+                case 4:
+                    str = "abc "+((char) ('A' + i))+" xyz";
+                    break;
+                case 5:
+                    str = ">>> ";
+                    break;
+                case 6:
+                    str = "; ?? (\u00A0, \u1123)";
+                    break;        
+                }
+                if (str != null) {
+                    if ((r.nextInt() & 0x3) == 1) {
+                        input.append("<![CDATA[").append(str).append("]]>");
+                    } else {
+                        input.append(str);
+                    }
+                    output.append(str);
+                }
+            }
+
+            final String XML = "<root>"+input.toString()+"</root>";
+            XMLStreamReader sr = getReader(XML, true, false);
+            
+            assertTokenType(START_ELEMENT, sr.next());
+            String act = sr.getElementText();
+            String exp = output.toString();
+            assertEquals(exp, act);
+            sr.close();
         }
     }
 
