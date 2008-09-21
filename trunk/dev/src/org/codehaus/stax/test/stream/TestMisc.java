@@ -95,13 +95,25 @@ public class TestMisc
     public void testGetElementText()
         throws XMLStreamException
     {
-        String XML =
-            "<root>"
+        _testGetElementText(false);
+        _testGetElementText(true);
+    }
+
+    private void _testGetElementText(boolean textual)
+        throws XMLStreamException
+    {
+        String XML = "<root>"
             +"<tag>Got some <!-- comment --> text &apos;n stuff!</tag>"
             +"<tag><?proc instr?>more <![CDATA[stuff]]> </tag>"
+            +"<tag>a<?pi?>b<!--comment-->c<!--c-2--><?pi -3?>de</tag>"
             +"</root>"
             ;
-        XMLStreamReader sr = getReader(XML, true, false);
+        // Special: let's verify using both utf-8 and text-based readers
+        XMLInputFactory f = getInputFactory();
+        setNamespaceAware(f, true);
+
+        XMLStreamReader sr = textual ? constructCharStreamReader(f, XML)
+            : constructUtf8StreamReader(f, XML);
 
         // First 2 valid cases:
         assertTokenType(START_ELEMENT, sr.next());
@@ -110,6 +122,9 @@ public class TestMisc
         assertTokenType(END_ELEMENT, sr.getEventType());
         assertTokenType(START_ELEMENT, sr.next());
         assertEquals("more stuff ", sr.getElementText());
+        assertTokenType(END_ELEMENT, sr.getEventType());
+        assertTokenType(START_ELEMENT, sr.next());
+        assertEquals("abcde", sr.getElementText());
         assertTokenType(END_ELEMENT, sr.getEventType());
 
         assertTokenType(END_ELEMENT, sr.next());
