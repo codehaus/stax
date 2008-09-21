@@ -116,20 +116,23 @@ public class TestRandomStream
                     actual = runTest(sr);
                 } catch (Exception e) {
                     // For debugging uncomment:
+                    /*
                     System.err.println("Error: "+e);
                     System.err.println("Ns: "+ns+", coalescing: "+coalescing+", auto-ent: "+autoEntity);
                     System.err.println("Input was '"+input+"'");
+                    */
 
                     throw e;
                 }
         
                 // uncomment for debugging:
+                /*
                 if (!expOutput.equals(actual)) {
                     System.err.println("Input:  '"+input+"'");
                     System.err.println("Exp:    '"+expOutput+"'");
                     System.err.println("Actual: '"+actual+"'");
                 }
-                    
+                */
                 assertEquals(expOutput, actual);
             }
         }

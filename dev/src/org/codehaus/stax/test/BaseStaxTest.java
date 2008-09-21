@@ -124,19 +124,30 @@ public class BaseStaxTest
         return mEventFactory;
     }
 
+    protected static XMLStreamReader constructUtf8StreamReader(XMLInputFactory f, String content)
+        throws XMLStreamException
+    {
+        try {
+            return f.createXMLStreamReader(new ByteArrayInputStream(content.getBytes("UTF-8")));
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected static XMLStreamReader constructCharStreamReader(XMLInputFactory f, String content)
+        throws XMLStreamException
+    {
+        return f.createXMLStreamReader(new StringReader(content));
+    }
+
     protected static XMLStreamReader constructStreamReader(XMLInputFactory f, String content)
         throws XMLStreamException
     {
         /* Can either create a simple reader from String, or go with
          * input stream & decoding?
          */
-        //return f.createXMLStreamReader(new StringReader(content));
-        try {
-            byte[] data = content.getBytes("UTF-8");
-            return constructStreamReader(f, data);
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        //return constructCharStreamReader(f, content);
+        return constructUtf8StreamReader(f, content);
     }
 
     protected static XMLStreamReader constructStreamReader(XMLInputFactory f, byte[] b)
