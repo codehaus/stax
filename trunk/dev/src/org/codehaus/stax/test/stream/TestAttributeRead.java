@@ -23,17 +23,6 @@ public class TestAttributeRead
     final String VALID_XML3
         = "<root><e1 a='123' /><e2 /></root>";
 
-    /**
-     * Test to make sure that quotes can be used in attribute values
-     * via entity expansion
-     */
-    final String VALID_ATTRS_WITH_QUOTES
-        = "<!DOCTYPE tree [\n"
-        + "<!ENTITY val1 '\"quoted\"'>\n"
-        + "<!ENTITY val2 \"'quoted too'\"> ]>\n"
-        + "<tree attr='&val1;' attr2=\"&val1;\" "
-        +" attr3='&val2;' attr4=\"&val2;\" />";
-
     public void testValidNsAttrsByName()
         throws XMLStreamException
     {
@@ -249,26 +238,6 @@ public class TestAttributeRead
 
         assertNoAttrNamespace(sr.getAttributeNamespace(index1));
         assertNoAttrNamespace(sr.getAttributeNamespace(index2));
-    }
-
-    public void testQuotesViaEntities()
-        throws XMLStreamException
-    {
-        XMLInputFactory ifact = getNewInputFactory();
-        setNamespaceAware(ifact, false); // shouldn't matter
-        // These are needed to get entities read and expanded:
-        setSupportDTD(ifact, true); 
-        setReplaceEntities(ifact, true); 
-
-        XMLStreamReader sr = constructStreamReader(ifact,
-                                                   VALID_ATTRS_WITH_QUOTES);
-        // Shouldn't get exceptions...
-
-        try {
-            streamThrough(sr);
-        } catch (XMLStreamException ex) {
-            fail("Failed to parse attributes with quotes expanded from entities: "+ex);
-        }
     }
 
     public void testInvalidAttrNames()
